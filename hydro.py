@@ -7,6 +7,7 @@
     python hydro.py latest          re-fetch only the current fiscal year (198 GETs)
     python hydro.py meta            re-fetch the plant register       (198 GETs)
     python hydro.py geo             re-fetch coordinates, districts, outline, terrain
+    python hydro.py companies       rebuild the listed-company -> plant map
     python hydro.py mapsvg          export the fleet map as a standalone SVG
     python hydro.py map3d           MapLibre terrain map (local file, not an Artifact)
     python hydro.py all             scrape + meta + geo + build
@@ -801,6 +802,153 @@ def resolve_coords():
     print("positions:", df.precision.value_counts().to_dict())
 
 
+# ══════════════════════════════════════════════ listed companies -> plants ══
+# The scalper series is filed per NEPSE ticker; the register is filed per plant,
+# joined by a company name the register frequently misspells -- Panchakanya Mai
+# "Hydropwer", Himal "Dolkha", "Surya Kund", "Snow River", "Bindhabasini",
+# "Chhyandi", "Divyaswori", "Ingwa Hydopower". No normaliser reaches those, so
+# scalper_company_lookup.csv holds every ticker and is read first; the matcher
+# runs only for one the file has never seen.
+#
+# Bound at company level, never at plant level, for two reasons. The financials
+# are a company's -- splitting one revenue line across the two or three plants it
+# owns would be invention. And deriving the plants from the company means a plant
+# joins the map on the run after it joins the register, with nothing to edit.
+CO_DROP = {"ltd","limited","pvt","private","company","co","the","nepal","and","public","p","group",
+           "development","project","corporation","enterprises"}
+CO_EXPAND = {"hp":"hydropower","hpc":"hydropower","dev":"development","devt":"development",
+             "hydro":"hydropower","power":"hydropower","hydel":"hydropower","energy":"hydropower",
+             "electric":"hydropower","electricity":"hydropower","pariyojana":"project",
+             "corp":"corporation","ent":"enterprises","jal":"","khola":"","nadi":"","rivers":"river"}
+CO_JV = re.compile(r"^(jala?)?[bv]i?dh?ya?ut$")   # jalvidyut/jalbidhyut/vidhyut/jalavidyut
+# A qualifier is the whole difference between two companies, so these are compared
+# separately and must agree exactly. Super Khudi is not Khudi, Super Mai is not Mai
+# Khola, Solu is not Mid Solu -- and each of those pairs really is two companies
+# with two sets of filings. Same rule as _is_match applies to plant names.
+#
+# Words only. A bare number in a company name is part of its address -- Pokhra-6,
+# Baneshwor-10, Dhobighat-3 -- never an ordinal, and reading one as a qualifier
+# splits a company from itself. Roman ordinals and single letters go the same way
+# for the same reason. Plant names are the opposite and QUALIFIERS keeps them.
+CO_QUAL = {"upper","lower","middle","mid","madhya","mathillo","tallo","super","sano","thulo",
+           "chhoto","small","mini","micro","big","main","cascade","beni"}
+
+
+def _co_key(s):
+    """Company name -> (core tokens, qualifier tokens).
+
+    The register glues a postal address onto most company names -- "Union
+    Hydropower Limited Dhobighat-3, Lalitpur" -- and there is no list of Kathmandu
+    suburbs worth maintaining. So nothing is stripped by name; the extra tokens are
+    simply tolerated by the subset test below, which is what an address is: tokens
+    the listed name does not have.
+    """
+    if not isinstance(s, str): return frozenset(), frozenset()
+    s = re.sub(r"[^a-z0-9\s]", " ", s.lower().replace(".", " ").replace("-", " ")
+                                     .replace(",", " ").replace("/", " "))
+    core, qual = set(), set()
+    for t in s.split():
+        if t.isdigit() or len(t) == 1: continue        # address fragment, not an ordinal
+        if CO_JV.match(t): t = "hydropower"
+        t = CO_EXPAND.get(t, t)
+        if not t or t in CO_DROP: continue
+        if t in CO_QUAL: qual.add(t); continue
+        for a, b in TRANSLIT: t = t.replace(a, b)
+        core.add(re.sub(r"(.)\1+", r"\1", t))
+    return frozenset(core), frozenset(qual)
+
+
+def _co_match(listed, reg):
+    """The register company for `listed`, or None. reg maps key -> [names].
+
+    Equal cores bind. Otherwise the listed name may be a subset of the register's,
+    which is the address case, but only when it is a subset of exactly one -- two
+    candidates mean the name does not identify a company and a human must say.
+    Qualifiers must agree throughout; that is what keeps the siblings apart.
+    """
+    lc, lq = listed
+    if not lc: return None
+    hits = [names[0] for (rc, rq), names in reg.items() if rq == lq and rc == lc]
+    if hits: return hits[0]
+    sub = [names[0] for (rc, rq), names in reg.items()
+           if rq == lq and lc < rc]
+    return sub[0] if len(sub) == 1 else None
+
+
+def cmd_companies(path="scalper_company_map.csv"):
+    """Rebuild the listed-company -> plant map. Generated file; safe to overwrite."""
+    try:
+        v = pd.read_csv(P("scalper_hydro_comparative.csv"))
+    except FileNotFoundError:
+        print("no scalper_hydro_comparative.csv - the sync has not run"); return None
+    m = pd.read_csv(P("rms_plants_meta.csv"), dtype=str).replace(r"^\s*$", np.nan, regex=True)
+    m["Cap_kW"] = pd.to_numeric(m.PlantCapacity, errors="coerce")
+    try:
+        o = pd.read_csv(P("scalper_company_lookup.csv"), comment="#", dtype=str).fillna("")
+        ov = {x.Ticker: x for x in o.itertuples()}
+    except FileNotFoundError:
+        ov = {}
+
+    reg = {}
+    for cid in m.CompanyId.dropna().unique():
+        reg.setdefault(_co_key(cid), []).append(cid)
+
+    rows, unmapped = [], []
+    for t in v.sort_values("Ticker").itertuples():
+        note = ""
+        # The lookup is the authority. Matching only ever runs for a ticker it has
+        # never seen, which in practice means a company that listed since the last
+        # edit -- everything settled stays settled, and a register rename cannot
+        # quietly rebind a company that someone already decided.
+        hit = ov.get(t.Ticker)
+        if hit is not None:
+            regname, note = hit.RegisterCompany, hit.Note
+            src = "lookup" if regname else hit.Status
+        else:
+            hit = None
+            regname = _co_match(_co_key(t.Company), reg)
+            src = "auto" if regname else "unmapped"
+            if not regname: unmapped.append((t.Ticker, t.Company))
+        p = m[m.CompanyId == regname] if regname else m.iloc[0:0]
+        # A company the register does not carry still runs something, and the lookup
+        # is the only place that is written down. Carry it through rather than
+        # emitting an empty row: a project under construction is a fact about the
+        # ticker, not an absence of one.
+        if len(p):
+            mw = r(p.Cap_kW.sum()/1000, 2)
+            names = " | ".join(x.strip() for x in p.PlantName.fillna(""))
+            dist = " | ".join(sorted({x for x in p.DistrictId.dropna()}))
+        else:
+            mw = r(hit.MW) if hit is not None else ""
+            names = hit.Project if hit is not None else ""
+            dist = hit.District if hit is not None else ""
+        rows.append({"Ticker": t.Ticker, "Company": t.Company, "RegisterCompany": regname or "",
+                     "PlantIds": ";".join(p.Id.astype(str)), "Plants": len(p),
+                     "MW": mw, "PlantNames": names, "District": dist,
+                     "Source": src, "Note": note})
+
+    out = pd.DataFrame(rows)[["Ticker","Company","RegisterCompany","PlantIds","Plants",
+                              "MW","PlantNames","District","Source","Note"]]
+    with io.open(P(path), "w", encoding="utf-8", newline="\n") as fh:
+        out.to_csv(fh, index=False)
+    linked = out[out.Plants > 0]
+    off = out[(out.Plants == 0) & (out.PlantNames != "")]
+    print(f"companies: {len(out)} tickers {out.Source.value_counts().to_dict()}")
+    print(f"  linked {len(linked)} -> {int(linked.Plants.sum())} plants, "
+          f"{pd.to_numeric(linked.MW, errors='coerce').sum():.0f} MW")
+    if len(off):
+        print(f"  outside the register {len(off)} -> "
+              f"{pd.to_numeric(off.MW, errors='coerce').sum():.0f} MW: "
+              + ", ".join(f"{x.Ticker} {x.PlantNames}" for x in off.itertuples()))
+    # A new listing is the routine reason for this and the one thing here that
+    # needs a person. Name it, rather than letting the map sit at 109 of 110.
+    if unmapped:
+        print(f"  UNMAPPED {len(unmapped)}:")
+        for tk, co in unmapped: print(f"    {tk:8} {co}")
+        print("  add each to scalper_company_lookup.csv, blank if it files no royalties")
+    return out
+
+
 # ═════════════════════════════════════════════════════════════════ payload ══
 def load():
     d = pd.read_csv(P("rms_monthly_clean.csv"))
@@ -1372,6 +1520,7 @@ if __name__ == "__main__":
     elif cmd == "meta": cmd_meta()
     elif cmd == "geo": cmd_geo()
     elif cmd == "coords": resolve_coords()
+    elif cmd == "companies": cmd_companies()
     elif cmd == "terrain": fetch_terrain()
     elif cmd == "grid": fetch_grid()
     elif cmd == "mapsvg": export_map_svg()

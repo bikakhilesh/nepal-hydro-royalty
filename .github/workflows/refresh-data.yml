@@ -78,6 +78,13 @@ jobs:
 
       # A scrape that half-fails still writes CSVs. Committing that would quietly
       # destroy the history, so refuse to go on if the dataset shrank materially.
+      # Also offline. The map keys on the register's company names, so a plant that
+      # arrives under a company already mapped joins the map in the same run that
+      # first scrapes it -- the sync workflow rebuilds it too, but only the RMS
+      # refresh knows the register just moved.
+      - name: Refresh the company map
+        run: python hydro.py companies
+
       - name: Guard against a truncated scrape
         run: python .github/scripts/guard.py
 

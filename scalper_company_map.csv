@@ -1,111 +1,111 @@
-Ticker,Company,RegisterCompany,PlantIds,Plants,MW,PlantNames,Source,Note
-AHL,Asian Hydropower Limited,Asian Hydropower Ltd New Baneshwor,119,1,6.2,Lower Jogmai Khola HPP,auto,
-AHPC,Arun Valley Hydropower Development,Arun Valley HP Dev.  Ltd,5;123,2,13.1,Piluwa Khola HP | Kabeli B-1 Cascade,auto,
-AKJCL,Ankhu Khola Jalvidhyut Company Ltd.,Ankhu Khola Hydropower Co. Ltd.,44,1,8.4,Ankhukhola Small HP,auto,
-AKPL,Arun Kabeli Power Ltd.,Arun Kabeli Power Limited. Baneshwor,102,1,25.0,Kabeli B - 1,auto,
-APHL,Appolo Hydropower Limited,"Apolo Hydropower Pvt. Ltd. Maharajgunj, Kathmandu",207,1,6.0,Buku Khola HPP,auto,
-API,Api Power,Api Power Company Ltd.,61;101;155,3,56.5,Nau gad khola | Upper Naugad Gad  | Upper Chameliya,auto,
-BARUN,Barun Hydropower,Barun Hydropower,36,1,4.5,Hewa Khola HP,auto,
-BEDC,Bhugol Energy Development Company Limited,"Bhugol Energy Development Company Pvt Ltd Baneshwor-10, Kathmandu",69,1,3.8,Dwari Khola SHP,auto,
-BGWT,Bhagawati Hydropower Development Company Limited,Bhagawati Hydropower Development Company Ltd. Bijaypur,38,1,4.5,Bijaypur-1 Small HP,auto,
-BHCL,Bikash Hydropower Company Limited,Bikash Hydropower Co. Pvt. Ltd.,147,1,4.6,Upper Machha Khola Small,auto,
-BHDC,Bindhyabasini Hydropower Development Company Limited,"Bindhabasini Hydropower Dev Co. Ltd P.O.Box.10242, Newbaneswor, Kathmandu",88;93,2,15.4,Rudi A | Rudi Khola-B,researched,
-BHL,Balephi Hydropower Limited,Balephi Hydropower Ltd. Koteshwor 35,140,1,36.0,Upper Balephi A,auto,
-BHPL,Barahi Hydropower Public Limited,Barahi Hydropower Ltd Lakeside Pokhra-6,85,1,1.5,Theule Khola HPP,auto,
-BJHL,Bhujung Hydropower Limited,Bhujung Hydropower Ltd. Baneshwor-34,163,1,7.5,Upper Midim Khola SHP,auto,
-BNHC,Buddha Bhumi Nepal Hydropower Company Limited,Buddha Bhumi Nepal Hydropower Company Limited,122,1,5.0,Lower Tadi Khola,auto,
-BPCL,Butwal Power,Ridi Hydro Power Development Company Limited Ridi,6,1,2.4,Ridi Khola HP,auto,
-BUNGAL,Bungal Hydro Limited ,Bungal Hydro Limited,159,1,10.7,Upper Sanigad,auto,
-CHCL,Chilime Hydropower,Chilime Hydropower Company Ltd. Kathmandu,1,1,22.1,Chilime Plant,auto,
-CHL,Chhyangdi Hydropower Ltd.,Chhyandi Hydropower Co. Ltd,49;125,2,6.0,Chhandi Khola | Upper Chhandi Khola Small,researched,
-CKHL,Chirkhwa Hydropower Limited,,,0,,Upper Chirkhwa 4.7MW,not-in-register,no RMS filings
-DHEL,Daramkhola Hydro Energy Limited,Daram Khola Hydro Energy Limited Galkot-11,201,1,9.6,Daram Khola HEP,researched,
-DHPL,Dibyashwori Hydropower Ltd.,"Divyaswori Hydropower Ltd. Purano Baneshwor-31, Kathmandu",71,1,4.0,Sabha Khola HPP,researched,
-DOLTI,Dolti Power Company Limited,Dolti Power Company P. Ltd,103,1,4.8,Padam Khola SHP,auto,
-DORDI,Dordi Khola Jal Bidyut Company Limited,Dordi Khola Jalvidyut Co. Limited,142,1,12.0,Dordi 1,auto,
-EHPL,Eastern Hydropower Limited,Eastern Hydropower Ltd Kathmandu,91,1,5.0,Pikhuwa Khola,auto,
-GHL,Ghalemdi Hydro Limited,Ghalemdi Hydro Limited,104,1,5.0,Ghalemdi Khola,auto,
-GLH,GreenLife Hydropower Limited,,,0,,Khani Khola-1 40MW,not-in-register,under construction
-GVL,Green Ventures Limited,Green Ventures Co. Ltd,116,1,52.4,Likhu-4,auto,
-HDHPC,Himal Dolakha Hydropower Company Limited,Himal Dolkha Hydropower Company Limited Kathmadnu,37;84,2,12.5,Mai Khola Small HP | Mai Sana Cascade HPP,researched,
-HHL,Himalayan Hydropower Limited,Himalayan Hydropower Pvt.Ltd,107,1,12.0,Namarjun Madi,auto,
-HIMSTAR,Him Star Urja Company Limited,Him Star Urja Company Ltd.,198,1,5.0,Buku-Kapati HPP,auto,
-HPPL,Himalayan Power Partner Ltd.,Himalayan Power Partner Limited Maharajgunj,134,1,27.0,Dordi Khola,auto,
-HURJA,Himalaya Urja Bikas Company Limited,Himalaya Urja Bikash Company Limited,131;132,2,19.0,Upper Khimti II | Uppallo Khimti,auto,
-IHL,Ingwa Hydropower Limited,"Ingwa Hydopower Ltd. Trade Tower, Thapathali, Kathmandu",165,1,9.7,Upper Ingwa Khola,researched,
-JOSHI,Joshi Hydropower Development Company Ltd,Joshi Hydropower Co. P. Ltd,53,1,3.0,Upper Puwa-1,researched,
-KAHL,Kalanga Hydro Limited ,Kalanga Hydropower Limited,145,1,15.3,Kalanga,auto,
-KBSH,Kutheli Bukhari Small Hydropower Limited,,,0,,Suspa Bukhari 1MW,not-in-register,no RMS filings
-KHPL,Kalinchock Hydropower Limited ,,,0,,Kalinchowk Khola 3MW,not-in-register,no RMS filings
-KKHC,Khanikhola Hydropower Co. Ltd.,Khani Khola Hydropower Company Ltd Lalitpur,63;64,2,6.36,Khani Khola | Tungun - Thosne Khola,researched,
-KPCL,Kalika Power Company,"Kalika Power Company Limited Samakhusi, Kathmandu, Nepal.",77,1,6.0,Daraundi A,auto,
-LEC,Liberty Energy Company Limited,Liberty Energy Company Limited,136,1,25.0,Upper Dordi A,auto,
-MABEL,Mabilung Energy Limited,"Mabilung Energy Ltd Kathmandu-34,Sachetanmarg New Baneshower, house no. 162",197,1,5.0,Upper Piluwa 3 HPP,auto,
-MAKAR,Makar Jitumaya Suri Hydropower Limited,Makar Jitumaya Suri Khola Hydropower Limited,129;161,2,14.0,Suri Khola | Upper Suri,auto,
-MANDU,Mandu Hydropower Limited,"Mandu Hydropower Pvt. Ltd. Kamaladi 13, Kathmandu",89,1,32.0,Bagmati Nadi,auto,
-MBJC,Madhya Bhotekoshi Jalavidyut Company Limited,Madhya Bhotekoshi Jalbidyut Company Ltd. Maharajgunj,190,1,102.0,Madhya Bhotekoshi HPP,auto,
-MCHL,Menchhiyam Hydropower Limited,Menchhiyam Hydropower Pvt. Ltd.,148,1,4.7,Upper Piluwa Khola 2,auto,
-MEHL,Manakamana Engineering Hydropower Limited,Manakamana Engineering HP,108,1,5.0,Ghatte Khola,auto,
-MEL,Modi Energy Limited,Modi Energy Pvt . Ltd Naxal,120,1,20.0,Lower Modi Khola,auto,
-MEN,Mountain Energy Nepal Limited,Mountain Hydro Power Nepal P Ltd. New Baneshwor,96,1,22.1,Lower Hewa,auto,
-MHCL,Molung Hydropower Company Limited,,,0,,Molung Khola 7MW,not-in-register,no RMS filings
-MHL,Mandakini Hydropower Limited,"Mandakini Hydropower Ltd. Sinamangal-9, Kathmandu",74,1,4.0,Sardi Khola HPP,auto,
-MHNL,Mountain Hydro Nepal Limited,Mountain Hydro Power Nepal P Ltd. New Baneshwor,96,1,22.1,Lower Hewa,auto,
-MKHC,Maya Khola Hydropower Company Limited,Maya Khola Hydropower Co. Ltd.,153,1,14.9,Maya Khola,auto,
-MKHL,Mai Khola Hydropower Limited,"Mai Khola Hydropower Ltd. Kathmandu-10, Thapagaun;  9851018025",95,1,3.0,Super Mai Khola Cascade HPP,auto,
-MKJC,Mailung Khola Jal Vidhyut Company Limited,Mailung Khola Hydropower Company Ltd,55,1,5.0,Mailung Khola,auto,
-MMKJL,Mathillo Mailun Khola Jalvidhyut Limited,"Upper Mailung Khola Hydropower Limited, Baluwatar, Kathmandu",167,1,14.3,Upper Mailun Khola,researched,
-MSHL,Mid Solu Hydropower Limited,Mid Solu Hydropower Co. Ltd.  Baneshwor-10,141,1,9.5,Mid Solu Khola ,auto,
-NGPL,Ngadi Group Power Ltd.,Nyadi Group (P) Ltd. Lamjung,40,1,5.0,Siuri HP,researched,
-NHDL,Nepal Hydro Developers Ltd.,Nepal Hydro Developer Ltd.,47,1,3.52,Charnawati khola HP,researched,
-NHPC,National Hydro Power,National Hydropower Company Limited Katmandu,10,1,7.5,Indrawati 3,auto,
-NYADI,Nyadi Hydropower Limited,Nyadi Hydropower Limited,130,1,30.0,Nyadi,auto,
-PHCL,Peoples Hydropower Company Limited,Peoples Power Limited,143,1,5.0,Puwa 2,auto,
-PMHPL,Panchakanya Mai Hydropower,"Panchakanya Mai Hydropwer limited Harihar bhawan, Pulchowk, Lalitpur",62;70,2,18.1,Upper Mai | Upper Mai -C,researched,
-PPCL,Panchthar Power Company Ltd.,"Panchthar Power Company Pvt. Ltd. Hativan 15, Lalitpur",68,1,14.9,Hewa Khola A,auto,
-PPL,Peoples Power Limited,Peoples Power Limited,143,1,5.0,Puwa 2,auto,
-RADHI,Radhi Bidhyut Company,Radhi Bidyut Co. Ltd,52,1,4.4,Radhi Small,auto,
-RAWA,Rawa Energy Development Limited,Rawa Energy Development Pvt Ltd,106,1,3.0,Rawa Khola,auto,
-RFPL,River Falls Power Limited,RIver Falls Power Limited,156,1,10.3,Down Piluwa,auto,
-RHGCL,Rapti Hydro And General Construction Limited,Rapti Hydro and General Construction Limited,150,1,5.0,Rukum gad,auto,
-RHPL,Rasuwagadhi Hydropower Company Limited,Rasuwagadhi Hydropower Company Ltd. Maharajgunj,180,1,111.0,Rasuwagadhi HPP,auto,
-RIDI,Ridi Power Company Limited,Ridi Hydro Power Development Company Limited Ridi,6,1,2.4,Ridi Khola HP,auto,
-RLEL,Ridge Line Energy Limited,Ridge Line Energy Limited Kupandole,160,1,9.0,Super Chepe,auto,
-RURU,Ru Ru Jalbidhyut Pariyojana Limited,Ruru Jalbidyut Pariyojana Pvt. Ltd,48,1,5.0,Upper Hugdi,researched,
-SAHAS,Sahas Urja Limited,Sahas Urja Limited,139,1,86.0,Solu Khola (Dudhkoshi),auto,
-SANVI,Sanvi Energy Limited,"Sanvi Energy Pvt. Ltd. Pulchok, Lalitpur",76;188,2,12.8,Jogmai Khola | Jogmai Cascade HPP,auto,
-SGHC,Swet-Ganga Hydropower & Construction Limited,Swet Ganga Hydropower and Construction Limited,137,1,28.1,Lower Likhu,auto,
-SGHL,Sanigad Hydro Limited,Sanigad Hydro Limited,146,1,38.5,Upper Kalangad,auto,
-SHEL,Singati Hydro Energy Limited,Singati Hydro Energy Pvt. Ltd.,113,1,25.0,Singati,auto,
-SHPC,Sanima Mai Hydropower,Sanima Mai Hydropower Limited,50;51,2,29.0,Sanima Mai | Mai Cascade,auto,
-SIKLES,Sikles Hydropower Limited,"Sikles Hydropower Pvt.Ltd P.O.Box. 170, Lekhnath Nagar Palika - 3, Kaski,",83,1,13.0,Madkyu Khola,researched,
-SIPD,Shikhar Power Development Limited,"Shikhar Power Development Ltd. Tokha-10, Kathmandu",184,1,5.0,Bhim Khola Small HPP,auto,
-SJCL,Sanjen Jalavidhyut Company Limited,"Sanjen Jalvidyut Company Limited P.O.Box 25210, Gyaneswor",158;179,2,57.3,Upper Sanjen | Sanjen,researched,
-SKHEL,Suryakunda Hydro Electric Limited,Surya Kund Hydro Electric Pvt. Ltd. Anam Nagar,193,1,11.0,Upper Tadi,researched,
-SKHL,Super Khudi Hydropower Limited,,,0,,Upper Khudi 26MW,not-in-register,no RMS filings
-SMH,Super Mai Hydropower Limited,"Supermai Hydropower Pvt.Ltd. Kathmandu -5, Tangal",87,1,7.8,Super Mai HPP,researched,
-SMHL,Super Madi Hydropower Limited,Super Madi Hydropower Limited,149,1,44.0,Super Madi,auto,
-SMJC,Sagarmatha Jalabidhyut Company Limited,"Sagarmatha Jalbidhyut Company P.Ltd. Thapa Gaun, New Banesor-10, Kathmandu.",92,1,9.6,Super Mai A,researched,
-SNORL,Snow Rivers Limited,"Snow River Ltd Tusalmarga house number 148, Kathmandu 7",178,1,13.5,Super Kabeli Khola A HEP,researched,
-SOHL,Solu Hydropower Limited,"Solu Hydropower Ltd. Tribeni Complex, Second floor, Putalisadak",195,1,82.0,Lower Solu Hydropower Project,researched,
-SPC,Samling Power Company Limited,Samling Power company Pvt.Ltd,121,1,9.5,Mai Beni HPP,auto,
-SPDL,Synergy Power Development Ltd.,Synergy Power Development P Ltd Kathmandu,41,1,10.0,Sipring Khola HP,auto,
-SPHL,Sayapatri Hydropower Limited,Sayapatri Hydropower Pvt. Ltd. Gongabu-29 Kathmandu,66,1,2.5,Daram Khola-A,auto,
-SPL,Shuvam Power Limited,,,0,,Lower Piluwa 0.99MW,not-in-register,no RMS filings
-SSHL,Shiva Shree Hydropower Ltd,Shiva Sri Hydropower Pvt. Ltd,111,1,22.2,Upper Chaku A,auto,
-TAMOR,Sanima Middle Tamor Hydropower Limited,"Sanima Middle Tamor Hydropower Ltd Dhumbarahi, Kathmandu",168,1,73.0,Middle Tamor	,auto,
-TPC,Terhathum Power Company Limited,"Terhathum Power Company Limited GPO Box 24311, Bagbazar Kathmandu",94,1,7.5,Upper Khorunga HPP,researched,
-TPKHL,Taksar Pikhuwa Khola Hydropower Limited ,Taksar Pikhuwa Khola Hydropower Ltd. Tinkune,110,1,8.0,Taksar Pikhuwa,auto,
-TSHL,Three Star Hydropower Limited,Three Star Hydropower Company Limited,127,1,7.2,Sapsu Khola Small HP,auto,
-TVCL,Trishuli Jal Vidhyut Company Limited,,,0,,Upper Trishuli 3B 37MW,not-in-register,under construction
-UHEWA,Upper Hewakhola Hydropower Company Limited,Upper Hewakhola Hydropower Company Limited,133,1,8.5,Upper Hewa,auto,
-ULHC,Upper Lohore Khola Hydropower Company Limited,"Upper Lohore Khola Hydropower Company Ltd. Buddhanagar, newbaneswor, Kathmandu",186,1,4.0,Upper Lohore SHP,researched,
-UMHL,United Modi Hydropower,United Modi Hydropower Pvt. Ltd.,39,1,10.2,Lower Modi-1 HP,auto,
-UMRH,United IDI Mardi RB Hydropower Limited,United Idimardi and R.B. Hydropower Pvt Ltd Sanepa,97,1,7.0,Upper Mardi,researched,
-UNHPL,Union Hydropower Limited,"Union Hydropower Limited Dhobighat-3, Lalitpur",75,1,3.0,Midim Khola(Karapu) HPP,auto,
-UPCL,Universal Power Company Ltd,Universal Power Company Limited,126,1,11.0,Lower Khare,auto,
-UPPER,Upper Tamakoshi Hydropower Ltd,Upper Tamakoshi Hydropower Limited Gyaneshwor,115,1,456.0,Upper Tamakoshi HPP,auto,
-USHEC,Upper Solu Hydro Electric Company Limited,Upper Solu Hydroelectric Company Ltd,105,1,23.5,Solu,researched,
-USHL,Upper Syange Hydropower Limited,Upper Syange Hydropower Ltd.,124,1,2.4,Upper Syange Khola Small,auto,
-VLUCL,Vision Lumbini Urja Company Limited,"Vision Lumbini Urja Company Limited. Butwal 8, Rupandehi",176,1,25.0,Seti Nadi hpp,auto,
-YMHL,Yambaling Hydropower Limited,"Yambaling Hydropower Ltd. Lalitpur-10, Bagmati",169,1,7.3,Yambaling Khola,auto,
+Ticker,Company,RegisterCompany,PlantIds,Plants,MW,PlantNames,District,Source,Note
+AHL,Asian Hydropower Limited,Asian Hydropower Ltd New Baneshwor,119,1,6.2,Lower Jogmai Khola HPP,Ilam,lookup,matched on name
+AHPC,Arun Valley Hydropower Development,Arun Valley HP Dev.  Ltd,5;123,2,13.14,Piluwa Khola HP | Kabeli B-1 Cascade,Panchthar | Sankhuwasabha,lookup,matched on name
+AKJCL,Ankhu Khola Jalvidhyut Company Ltd.,Ankhu Khola Hydropower Co. Ltd.,44,1,8.4,Ankhukhola Small HP,Dhading,lookup,matched on name
+AKPL,Arun Kabeli Power Ltd.,Arun Kabeli Power Limited. Baneshwor,102,1,25.0,Kabeli B - 1,Panchthar,lookup,matched on name
+APHL,Appolo Hydropower Limited,"Apolo Hydropower Pvt. Ltd. Maharajgunj, Kathmandu",207,1,6.0,Buku Khola HPP,Okhaldunga,lookup,matched on name
+API,Api Power,Api Power Company Ltd.,61;101;155,3,56.5,Nau gad khola | Upper Naugad Gad | Upper Chameliya,Darchula,lookup,matched on name
+BARUN,Barun Hydropower,Barun Hydropower,36,1,4.5,Hewa Khola HP,Saptari,lookup,matched on name
+BEDC,Bhugol Energy Development Company Limited,"Bhugol Energy Development Company Pvt Ltd Baneshwor-10, Kathmandu",69,1,3.75,Dwari Khola SHP,Dailekh,lookup,matched on name
+BGWT,Bhagawati Hydropower Development Company Limited,Bhagawati Hydropower Development Company Ltd. Bijaypur,38,1,4.5,Bijaypur-1 Small HP,Kaski,lookup,matched on name
+BHCL,Bikash Hydropower Company Limited,Bikash Hydropower Co. Pvt. Ltd.,147,1,4.55,Upper Machha Khola Small,Gorkha,lookup,matched on name
+BHDC,Bindhyabasini Hydropower Development Company Limited,"Bindhabasini Hydropower Dev Co. Ltd P.O.Box.10242, Newbaneswor, Kathmandu",88;93,2,15.4,Rudi A | Rudi Khola-B,Lamjung,lookup,researched: Rudi A | Rudi Khola-B
+BHL,Balephi Hydropower Limited,Balephi Hydropower Ltd. Koteshwor 35,140,1,36.0,Upper Balephi A,,lookup,matched on name
+BHPL,Barahi Hydropower Public Limited,Barahi Hydropower Ltd Lakeside Pokhra-6,85,1,1.5,Theule Khola HPP,Baglung,lookup,matched on name
+BJHL,Bhujung Hydropower Limited,Bhujung Hydropower Ltd. Baneshwor-34,163,1,7.5,Upper Midim Khola SHP,Lamjung,lookup,matched on name
+BNHC,Buddha Bhumi Nepal Hydropower Company Limited,Buddha Bhumi Nepal Hydropower Company Limited,122,1,5.0,Lower Tadi Khola,Nuwakot,lookup,matched on name
+BPCL,Butwal Power,Butwal Power Company,8;33,2,21.4,Aandikhola HP | Jhimruk,Pyuthan,lookup,matched on name
+BUNGAL,Bungal Hydro Limited ,Bungal Hydro Limited,159,1,10.7,Upper Sanigad,Bajhanga,lookup,matched on name
+CHCL,Chilime Hydropower,Chilime Hydropower Company Ltd. Kathmandu,1,1,22.1,Chilime Plant,,lookup,matched on name
+CHL,Chhyangdi Hydropower Ltd.,Chhyandi Hydropower Co. Ltd,49;125,2,6.0,Chhandi Khola | Upper Chhandi Khola Small,Lamjung,lookup,researched: Chhandi Khola | Upper Chhandi Khola Small
+CKHL,Chirkhwa Hydropower Limited,,,0,4.7,Upper Chirkhwa,Bhojpur,operating,no RMS filings
+DHEL,Daramkhola Hydro Energy Limited,Daram Khola Hydro Energy Limited Galkot-11,201,1,9.6,Daram Khola HEP,Baglung,lookup,researched: Daram Khola HEP
+DHPL,Dibyashwori Hydropower Ltd.,"Divyaswori Hydropower Ltd. Purano Baneshwor-31, Kathmandu",71,1,4.0,Sabha Khola HPP,,lookup,researched: Sabha Khola HPP
+DOLTI,Dolti Power Company Limited,Dolti Power Company P. Ltd,103,1,4.8,Padam Khola SHP,Dailekh,lookup,matched on name
+DORDI,Dordi Khola Jal Bidyut Company Limited,Dordi Khola Jalvidyut Co. Limited,142,1,12.0,Dordi 1,Lamjung,lookup,matched on name
+EHPL,Eastern Hydropower Limited,Eastern Hydropower Ltd Kathmandu,91,1,5.0,Pikhuwa Khola,Bhojpur,lookup,matched on name
+GHL,Ghalemdi Hydro Limited,Ghalemdi Hydro Limited,104,1,5.0,Ghalemdi Khola,Myagdi,lookup,matched on name
+GLH,GreenLife Hydropower Limited,,,0,40.0,Khani Khola-1,Dolakha,construction,"25 MW phase 1, 40 MW on phase 2"
+GVL,Green Ventures Limited,Green Ventures Co. Ltd,116,1,52.4,Likhu-4,Okhaldunga,lookup,matched on name
+HDHPC,Himal Dolakha Hydropower Company Limited,Himal Dolkha Hydropower Company Limited Kathmadnu,37;84,2,12.5,Mai Khola Small HP | Mai Sana Cascade HPP,Ilam,lookup,researched: Mai Khola Small HP | Mai Sana Cascade HPP
+HHL,Himalayan Hydropower Limited,Himalayan Hydropower Pvt.Ltd,107,1,12.0,Namarjun Madi,Kaski,lookup,matched on name
+HIMSTAR,Him Star Urja Company Limited,Him Star Urja Company Ltd.,198,1,5.0,Buku-Kapati HPP,Okhaldunga,lookup,matched on name
+HPPL,Himalayan Power Partner Ltd.,Himalayan Power Partner Limited Maharajgunj,134,1,27.0,Dordi Khola,Lamjung,lookup,matched on name
+HURJA,Himalaya Urja Bikas Company Limited,Himalaya Urja Bikash Company Limited,131;132,2,19.0,Upper Khimti II | Uppallo Khimti,Ramechhap,lookup,matched on name
+IHL,Ingwa Hydropower Limited,"Ingwa Hydopower Ltd. Trade Tower, Thapathali, Kathmandu",165,1,9.7,Upper Ingwa Khola,Taplejung,lookup,researched: Upper Ingwa Khola
+JOSHI,Joshi Hydropower Development Company Ltd,Joshi Hydropower Co. P. Ltd,53,1,3.0,Upper Puwa-1,Ilam,lookup,researched: Upper Puwa-1
+KAHL,Kalanga Hydro Limited ,Kalanga Hydropower Limited,145,1,15.33,Kalanga,Bajhanga,lookup,matched on name
+KBSH,Kutheli Bukhari Small Hydropower Limited,,,0,1.0,Suspa Bukhari,Dolakha,operating,no RMS filings
+KHPL,Kalinchock Hydropower Limited ,,,0,5.0,Sangu (Sorun) Khola,Dolakha,construction,IPO Apr 2026; not the Kalinchowk Khola 3 MW scheme
+KKHC,Khanikhola Hydropower Co. Ltd.,Khani Khola Hydropower Company Ltd Lalitpur,63;64,2,6.36,Khani Khola | Tungun - Thosne Khola,,lookup,researched: Khani Khola | Tungun - Thosne Khola
+KPCL,Kalika Power Company,"Kalika Power Company Limited Samakhusi, Kathmandu, Nepal.",77,1,6.0,Daraundi A,,lookup,matched on name
+LEC,Liberty Energy Company Limited,Liberty Energy Company Limited,136,1,25.0,Upper Dordi A,Lamjung,lookup,matched on name
+MABEL,Mabilung Energy Limited,"Mabilung Energy Ltd Kathmandu-34,Sachetanmarg New Baneshower, house no. 162",197,1,4.95,Upper Piluwa 3 HPP,Rolpa,lookup,matched on name
+MAKAR,Makar Jitumaya Suri Hydropower Limited,Makar Jitumaya Suri Khola Hydropower Limited,129;161,2,14.0,Suri Khola | Upper Suri,Dolakha,lookup,matched on name
+MANDU,Mandu Hydropower Limited,"Mandu Hydropower Pvt. Ltd. Kamaladi 13, Kathmandu",89,1,32.0,Bagmati Nadi,Makawanpur,lookup,matched on name
+MBJC,Madhya Bhotekoshi Jalavidyut Company Limited,Madhya Bhotekoshi Jalbidyut Company Ltd. Maharajgunj,190,1,102.0,Madhya Bhotekoshi HPP,,lookup,matched on name
+MCHL,Menchhiyam Hydropower Limited,Menchhiyam Hydropower Pvt. Ltd.,148,1,4.72,Upper Piluwa Khola 2,Sankhuwasabha,lookup,matched on name
+MEHL,Manakamana Engineering Hydropower Limited,Manakamana Engineering HP,108,1,5.0,Ghatte Khola,Dolakha,lookup,matched on name
+MEL,Modi Energy Limited,Modi Energy Pvt . Ltd Naxal,120,1,20.0,Lower Modi Khola,Parbat,lookup,researched: Lower Modi Khola 20MW; three Modi companies in the register
+MEN,Mountain Energy Nepal Limited,"Mountain Energy Nepal Ltd. Sunrise Bizz Park, 3rd Floor",42;112,2,47.0,Tadikhola HP | Mistry Khola,Myagdi | Nuwakot,lookup,researched: Tadikhola 5MW + Mistry Khola 42MW; collides with MHNL on name
+MHCL,Molung Hydropower Company Limited,,,0,7.0,Molung Khola,Okhaldhunga,operating,no RMS filings
+MHL,Mandakini Hydropower Limited,"Mandakini Hydropower Ltd. Sinamangal-9, Kathmandu",74,1,4.0,Sardi Khola HPP,,lookup,matched on name
+MHNL,Mountain Hydro Nepal Limited,Mountain Hydro Power Nepal P Ltd. New Baneshwor,96,1,22.1,Lower Hewa,Panchthar,lookup,researched: Lower Hewa 22.1MW (Tallo Hewa); collides with MEN on name
+MKHC,Maya Khola Hydropower Company Limited,Maya Khola Hydropower Co. Ltd.,153,1,14.9,Maya Khola,Sankhuwasabha,lookup,matched on name
+MKHL,Mai Khola Hydropower Limited,"Mai Khola Hydropower Ltd. Kathmandu-10, Thapagaun;  9851018025",95,1,3.0,Super Mai Khola Cascade HPP,Ilam,lookup,researched: Super Mai Khola Cascade 3MW; four Mai companies in the register
+MKJC,Mailung Khola Jal Vidhyut Company Limited,Mailung Khola Hydropower Company Ltd,55,1,5.0,Mailung Khola,Rashuwa,lookup,matched on name
+MMKJL,Mathillo Mailun Khola Jalvidhyut Limited,"Upper Mailung Khola Hydropower Limited, Baluwatar, Kathmandu",167,1,14.3,Upper Mailun Khola,Rashuwa,lookup,researched: Upper Mailun Khola
+MSHL,Mid Solu Hydropower Limited,Mid Solu Hydropower Co. Ltd.  Baneshwor-10,141,1,9.5,Mid Solu Khola,Solukhumbu,lookup,matched on name
+NGPL,Ngadi Group Power Ltd.,Nyadi Group (P) Ltd. Lamjung,40,1,5.0,Siuri HP,Lamjung,lookup,researched: Siuri HP
+NHDL,Nepal Hydro Developers Ltd.,Nepal Hydro Developer Ltd.,47,1,3.52,Charnawati khola HP,Dolakha,lookup,researched: Charnawati khola HP
+NHPC,National Hydro Power,National Hydropower Company Limited Katmandu,10,1,7.5,Indrawati 3,Sindhupalchok,lookup,matched on name
+NYADI,Nyadi Hydropower Limited,Nyadi Hydropower Limited,130,1,30.0,Nyadi,Lamjung,lookup,matched on name
+PHCL,Peoples Hydropower Company Limited,Peoples Power Limited,143,1,4.96,Puwa 2,Ilam,lookup,matched on name
+PMHPL,Panchakanya Mai Hydropower,"Panchakanya Mai Hydropwer limited Harihar bhawan, Pulchowk, Lalitpur",62;70,2,18.1,Upper Mai | Upper Mai -C,Ilam,lookup,researched: Upper Mai | Upper Mai -C
+PPCL,Panchthar Power Company Ltd.,"Panchthar Power Company Pvt. Ltd. Hativan 15, Lalitpur",68,1,14.9,Hewa Khola A,,lookup,matched on name
+PPL,Peoples Power Limited,Peoples Power Limited,143,1,4.96,Puwa 2,Ilam,lookup,matched on name
+RADHI,Radhi Bidhyut Company,Radhi Bidyut Co. Ltd,52,1,4.4,Radhi Small,Lamjung,lookup,matched on name
+RAWA,Rawa Energy Development Limited,Rawa Energy Development Pvt Ltd,106,1,3.0,Rawa Khola,Khotang,lookup,matched on name
+RFPL,River Falls Power Limited,RIver Falls Power Limited,156,1,10.3,Down Piluwa,Sankhuwasabha,lookup,matched on name
+RHGCL,Rapti Hydro And General Construction Limited,Rapti Hydro and General Construction Limited,150,1,5.0,Rukum gad,Rukum,lookup,matched on name
+RHPL,Rasuwagadhi Hydropower Company Limited,Rasuwagadhi Hydropower Company Ltd. Maharajgunj,180,1,111.0,Rasuwagadhi HPP,Rashuwa,lookup,matched on name
+RIDI,Ridi Power Company Limited,Ridi Hydro Power Development Company Limited Ridi,6,1,2.4,Ridi Khola HP,Palpa,lookup,matched on name
+RLEL,Ridge Line Energy Limited,Ridge Line Energy Limited Kupandole,160,1,9.05,Super Chepe,Gorkha,lookup,matched on name
+RURU,Ru Ru Jalbidhyut Pariyojana Limited,Ruru Jalbidyut Pariyojana Pvt. Ltd,48,1,5.0,Upper Hugdi,Gulmi,lookup,researched: Upper Hugdi
+SAHAS,Sahas Urja Limited,Sahas Urja Limited,139,1,86.0,Solu Khola (Dudhkoshi),Solukhumbu,lookup,matched on name
+SANVI,Sanvi Energy Limited,"Sanvi Energy Pvt. Ltd. Pulchok, Lalitpur",76;188,2,12.8,Jogmai Khola | Jogmai Cascade HPP,Ilam,lookup,matched on name
+SGHC,Swet-Ganga Hydropower & Construction Limited,Swet Ganga Hydropower and Construction Limited,137,1,28.1,Lower Likhu,Ramechhap,lookup,matched on name
+SGHL,Sanigad Hydro Limited,Sanigad Hydro Limited,146,1,38.46,Upper Kalangad,Bajhanga,lookup,matched on name
+SHEL,Singati Hydro Energy Limited,Singati Hydro Energy Pvt. Ltd.,113,1,25.0,Singati,Dolakha,lookup,matched on name
+SHPC,Sanima Mai Hydropower,Sanima Mai Hydropower Limited,50;51,2,29.0,Sanima Mai | Mai Cascade,Ilam,lookup,matched on name
+SIKLES,Sikles Hydropower Limited,"Sikles Hydropower Pvt.Ltd P.O.Box. 170, Lekhnath Nagar Palika - 3, Kaski,",83,1,13.0,Madkyu Khola,Kaski,lookup,researched: Madkyu Khola
+SIPD,Shikhar Power Development Limited,"Shikhar Power Development Ltd. Tokha-10, Kathmandu",184,1,4.96,Bhim Khola Small HPP,Baglung,lookup,matched on name
+SJCL,Sanjen Jalavidhyut Company Limited,"Sanjen Jalvidyut Company Limited P.O.Box 25210, Gyaneswor",158;179,2,57.3,Upper Sanjen | Sanjen,Rashuwa,lookup,researched: Upper Sanjen | Sanjen
+SKHEL,Suryakunda Hydro Electric Limited,Surya Kund Hydro Electric Pvt. Ltd. Anam Nagar,193,1,11.0,Upper Tadi,Nuwakot,lookup,researched: Upper Tadi
+SKHL,Super Khudi Hydropower Limited,,,0,26.0,Upper Khudi,Lamjung,construction,"distinct from Khudi HP 4 MW, another company"
+SMH,Super Mai Hydropower Limited,"Supermai Hydropower Pvt.Ltd. Kathmandu -5, Tangal",87,1,7.8,Super Mai HPP,Ilam,lookup,researched: Super Mai HPP
+SMHL,Super Madi Hydropower Limited,Super Madi Hydropower Limited,149,1,44.0,Super Madi,Kaski,lookup,matched on name
+SMJC,Sagarmatha Jalabidhyut Company Limited,"Sagarmatha Jalbidhyut Company P.Ltd. Thapa Gaun, New Banesor-10, Kathmandu.",92,1,9.6,Super Mai A,Ilam,lookup,researched: Super Mai A
+SNORL,Snow Rivers Limited,"Snow River Ltd Tusalmarga house number 148, Kathmandu 7",178,1,13.5,Super Kabeli Khola A HEP,Taplejung,lookup,researched: Super Kabeli Khola A HEP
+SOHL,Solu Hydropower Limited,"Solu Hydropower Ltd. Tribeni Complex, Second floor, Putalisadak",195,1,82.0,Lower Solu Hydropower Project,Solukhumbu,lookup,researched: Lower Solu Hydropower Project
+SPC,Samling Power Company Limited,Samling Power company Pvt.Ltd,121,1,9.51,Mai Beni HPP,Ilam,lookup,matched on name
+SPDL,Synergy Power Development Ltd.,Synergy Power Development P Ltd Kathmandu,41,1,10.0,Sipring Khola HP,Dolakha,lookup,matched on name
+SPHL,Sayapatri Hydropower Limited,Sayapatri Hydropower Pvt. Ltd. Gongabu-29 Kathmandu,66,1,2.5,Daram Khola-A,,lookup,matched on name
+SPL,Shuvam Power Limited,,,0,0.99,Lower Piluwa Khola Small,Sankhuwasabha,operating,COD Jul 2011; ex-Baneswar Hydropower
+SSHL,Shiva Shree Hydropower Ltd,Shiva Sri Hydropower Pvt. Ltd,111,1,22.2,Upper Chaku A,Sindhupalchok,lookup,matched on name
+TAMOR,Sanima Middle Tamor Hydropower Limited,"Sanima Middle Tamor Hydropower Ltd Dhumbarahi, Kathmandu",168,1,73.0,Middle Tamor,Taplejung,lookup,matched on name
+TPC,Terhathum Power Company Limited,"Terhathum Power Company Limited GPO Box 24311, Bagbazar Kathmandu",94,1,7.5,Upper Khorunga HPP,Tehrathum,lookup,researched: Upper Khorunga HPP
+TPKHL,Taksar Pikhuwa Khola Hydropower Limited ,Taksar Pikhuwa Khola Hydropower Ltd. Tinkune,110,1,8.0,Taksar Pikhuwa,Bhojpur,lookup,matched on name
+TSHL,Three Star Hydropower Limited,Three Star Hydropower Company Limited,127,1,7.15,Sapsu Khola Small HP,Khotang,lookup,matched on name
+TVCL,Trishuli Jal Vidhyut Company Limited,,,0,37.0,Upper Trishuli 3B,Nuwakot/Rasuwa,construction,NEA / Nepal Doorsanchar joint venture
+UHEWA,Upper Hewakhola Hydropower Company Limited,Upper Hewakhola Hydropower Company Limited,133,1,8.5,Upper Hewa,Sankhuwasabha,lookup,matched on name
+ULHC,Upper Lohore Khola Hydropower Company Limited,"Upper Lohore Khola Hydropower Company Ltd. Buddhanagar, newbaneswor, Kathmandu",186,1,4.0,Upper Lohore SHP,Dailekh,lookup,researched: Upper Lohore SHP
+UMHL,United Modi Hydropower,United Modi Hydropower Pvt. Ltd.,39,1,10.2,Lower Modi-1 HP,Parbat,lookup,matched on name
+UMRH,United IDI Mardi RB Hydropower Limited,United Idimardi and R.B. Hydropower Pvt Ltd Sanepa,97,1,7.0,Upper Mardi,Kaski,lookup,researched: Upper Mardi
+UNHPL,Union Hydropower Limited,"Union Hydropower Limited Dhobighat-3, Lalitpur",75,1,3.0,Midim Khola(Karapu) HPP,Lamjung,lookup,matched on name
+UPCL,Universal Power Company Ltd,Universal Power Company Limited,126,1,11.0,Lower Khare,Dolakha,lookup,matched on name
+UPPER,Upper Tamakoshi Hydropower Ltd,Upper Tamakoshi Hydropower Limited Gyaneshwor,115,1,456.0,Upper Tamakoshi HPP,Dolakha,lookup,matched on name
+USHEC,Upper Solu Hydro Electric Company Limited,Upper Solu Hydroelectric Company Ltd,105,1,23.5,Solu,Sankhuwasabha,lookup,researched: Solu
+USHL,Upper Syange Hydropower Limited,Upper Syange Hydropower Ltd.,124,1,2.4,Upper Syange Khola Small,Lamjung,lookup,matched on name
+VLUCL,Vision Lumbini Urja Company Limited,"Vision Lumbini Urja Company Limited. Butwal 8, Rupandehi",176,1,25.0,Seti Nadi hpp,Kaski,lookup,matched on name
+YMHL,Yambaling Hydropower Limited,"Yambaling Hydropower Ltd. Lalitpur-10, Bagmati",169,1,7.27,Yambaling Khola,Sindhupalchok,lookup,matched on name

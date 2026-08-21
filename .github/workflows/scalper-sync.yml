@@ -62,6 +62,13 @@ jobs:
             comparative/comparative_hydro_power.csv
           sparse-checkout-cone-mode: false
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
       - name: Commit what changed
         run: |
           set -euo pipefail
@@ -122,6 +129,16 @@ jobs:
             echo 'The committed copies are untouched.' >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
+
+          # The map is derived from the series, the register and the overrides, so it
+          # is rebuilt here rather than committed by hand and left to rot. Its output
+          # goes to the summary because a newly listed ticker it cannot place is the
+          # one thing in this job that needs a person, and it must not pass silently.
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          python hydro.py companies 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          git add scalper_company_map.csv
 
           # Staged, then compared. `git diff` alone reports no change for a file that
           # is not tracked yet, so on the first run it would find nothing to do and
