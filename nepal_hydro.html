@@ -229,6 +229,34 @@ table.mtab tr:last-child td{border-bottom:none}
   max-width:min(48%,540px);max-height:44vh;overflow:auto;font-size:11.5px;gap:5px 14px;
   background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:10px 12px}
 .card.zoomed details.tv{flex:none}
+
+/* ---- map layer switches ------------------------------------------------ */
+.lyrbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin:0 0 14px;
+  font-size:12px;color:var(--ink-2);font-family:"IBM Plex Mono",monospace}
+.lyrbar label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
+.lyrbar input{accent-color:var(--accent);cursor:pointer;margin:0}
+.lyrsep{flex:1 1 0;min-width:0}
+.lyrbtn{font-family:inherit;font-size:11.5px;color:var(--accent);background:transparent;
+  border:1px solid var(--line);border-radius:4px;padding:3px 9px;cursor:pointer}
+.lyrbtn:hover{border-color:var(--accent)}
+.card.zoomed .lyrbar{flex:none;margin-bottom:8px}
+
+/* ---- embedded terrain map ---------------------------------------------- */
+#fig-terrain{margin-top:18px}
+#c-terrain{position:relative;aspect-ratio:16/9;min-height:300px;overflow:hidden;
+  border-radius:4px;background:var(--surface-2)}
+#c-terrain iframe{width:100%;height:100%;border:0;display:block}
+.card.zoomed #c-terrain{aspect-ratio:auto;border-radius:0}
+.terload{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:12px;padding:24px;text-align:center}
+.terload p{margin:0;max-width:52ch;font-size:12.5px;color:var(--ink-3);line-height:1.6}
+.terbtn{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--surface);
+  background:var(--accent);border:0;border-radius:4px;padding:9px 16px;cursor:pointer}
+.terbtn:hover{filter:brightness(1.08)}
+.terbtn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.terfail{font-size:13px;color:var(--ink-2);line-height:1.6;max-width:56ch}
+.terfail a{color:var(--accent)}
+
 .zoomhint{display:none}
 .card.zoomed .zoomhint{display:block;position:absolute;right:18px;bottom:16px;z-index:2;
   font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);
@@ -444,6 +472,18 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <button class="expbtn" id="map-exp" type="button" aria-expanded="false"
         aria-controls="c-map"><span class="x">&#10530;</span><span class="lbl">Expand</span></button>
     </div></figcaption>
+    <div class="lyrbar" id="map-layers">
+      <label><input type="checkbox" data-lyr="plants" checked> Plants</label>
+      <label><input type="checkbox" data-lyr="rivers" checked> Rivers</label>
+      <label><input type="checkbox" data-lyr="peaks" checked> Peaks</label>
+      <label><input type="checkbox" data-lyr="grid" checked> Built grid</label>
+      <label><input type="checkbox" data-lyr="plan" checked> Proposed corridors</label>
+      <label><input type="checkbox" data-lyr="subs" checked> Substations</label>
+      <label><input type="checkbox" data-lyr="pipe" checked> Pipeline projects</label>
+      <span class="lyrsep"></span>
+      <button type="button" class="lyrbtn" data-set="all">all</button>
+      <button type="button" class="lyrbtn" data-set="none">none</button>
+    </div>
     <div class="chart" id="c-map"></div>
     <div class="legend">
       <span><i style="background:var(--s1)"></i>Within first 15 years</span>
@@ -465,6 +505,23 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <span style="color:var(--ink-3)">Marker area &prop; installed capacity</span>
     </div>
     <div class="zoomhint">scroll or pinch to zoom &middot; drag to pan &middot; double-click to reset &middot; Esc to close</div>
+  </figure>
+
+  <figure class="card" id="fig-terrain">
+    <figcaption><div class="caphead">
+      <div><div class="ctitle">The same fleet on real elevation</div>
+      <div class="csub">MapLibre on OpenStreetMap raster and Mapzen/AWS terrain tiles, drag to orbit</div></div>
+      <button class="expbtn" id="ter-exp" type="button" aria-expanded="false"
+        aria-controls="c-terrain" hidden><span class="x">&#10530;</span><span class="lbl">Expand</span></button>
+    </div></figcaption>
+    <div class="chart" id="c-terrain">
+      <div class="terload" id="ter-load">
+        <button class="terbtn" id="ter-go" type="button">Load the terrain map</button>
+        <p>Held back until you ask for it: the view pulls basemap and elevation tiles from
+          OpenStreetMap and AWS, which are free services with usage policies, and there is no
+          reason to spend that on readers who never scroll here.</p>
+      </div>
+    </div>
   </figure>
 
   <div class="note" id="map-terrain"></div>
@@ -918,6 +975,36 @@ function chartAge(){
 }
 
 // ---- 10. fleet map -------------------------------------------------------
+// ---- map layer visibility ------------------------------------------------
+// Held outside chartMap because the map is redrawn on resize and on theme flip;
+// the switches have to survive both, so state lives here and is re-applied to
+// whichever group set the latest draw produced.
+var mapLayers = {outline:1, rivers:1, plan:1, grid:1, pipe:1, subs:1, peaks:1, plants:1};
+var mapG = null;
+function applyLayers(G){
+  mapG = G || mapG;
+  if(!mapG) return;
+  Object.keys(mapG).forEach(function(k){
+    mapG[k].style.display = mapLayers[k] === 0 ? 'none' : '';
+  });
+}
+function wireLayers(){
+  var bar = document.getElementById('map-layers'); if(!bar) return;
+  bar.addEventListener('change', function(e){
+    var k = e.target.getAttribute('data-lyr'); if(!k) return;
+    mapLayers[k] = e.target.checked ? 1 : 0;
+    applyLayers();
+  });
+  bar.addEventListener('click', function(e){
+    var set = e.target.getAttribute && e.target.getAttribute('data-set'); if(!set) return;
+    var on = set === 'all';
+    bar.querySelectorAll('input[data-lyr]').forEach(function(cb){
+      cb.checked = on; mapLayers[cb.getAttribute('data-lyr')] = on ? 1 : 0;
+    });
+    applyLayers();
+  });
+}
+
 function chartMap(){
   var M = D.map, W = 900, H = 505, pad = 12;
   var host = document.getElementById('c-map'); if(!host) return;
@@ -925,6 +1012,14 @@ function chartMap(){
   var svg = el('svg',{viewBox:'0 0 '+W+' '+H, width:'100%', role:'img',
     'aria-label':'Map of Nepal showing '+M.pts.length+' licensed hydropower plants'});
   host.appendChild(svg);
+
+  // One group per switchable layer, appended in draw order so z-order is
+  // unchanged: toggling is then a display flip rather than a redraw.
+  var G = {};
+  ['outline','rivers','plan','grid','pipe','subs','peaks','plants'].forEach(function(k){
+    G[k] = el('g',{'data-lyr':k}); svg.appendChild(G[k]);
+  });
+  applyLayers(G);
 
   var b = M.bbox, lon0=b[0], lat0=b[1], lon1=b[2], lat1=b[3];
   var k = Math.cos(28.4*Math.PI/180);
@@ -935,7 +1030,7 @@ function chartMap(){
 
   M.outline.forEach(function(ring){
     var dpath = ring.map(function(p,i){ return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); }).join('')+'Z';
-    svg.appendChild(el('path',{d:dpath, fill:css('--surface-2'), stroke:css('--line'),
+    G.outline.appendChild(el('path',{d:dpath, fill:css('--surface-2'), stroke:css('--line'),
       'stroke-width':1.2, 'stroke-linejoin':'round'}));
   });
 
@@ -944,7 +1039,7 @@ function chartMap(){
     var w = rv.km >= 200 ? 1.5 : (rv.km >= 100 ? 1.1 : (rv.km >= 50 ? 0.8 : 0.55));
     rv.segs.forEach(function(seg){
       var dd = seg.map(function(p,i){ return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); }).join('');
-      svg.appendChild(el('path',{d:dd, fill:'none', stroke:css('--river'), 'stroke-width':w,
+      G.rivers.appendChild(el('path',{d:dd, fill:'none', stroke:css('--river'), 'stroke-width':w,
         'stroke-linecap':'round', 'stroke-linejoin':'round', opacity:.85}));
     });
   });
@@ -953,7 +1048,7 @@ function chartMap(){
   var PLAN_C = {proposed_400:'#c765d9', proposed_220:'#6d8fd6', existing_400:'#9a4fc4'};
   (M.plan||[]).forEach(function(ln){
     var dd = ln.pts.map(function(p,i){ return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); }).join('');
-    svg.appendChild(el('path',{d:dd, fill:'none', stroke:(PLAN_C[ln.c]||'#b07cd8'),
+    G.plan.appendChild(el('path',{d:dd, fill:'none', stroke:(PLAN_C[ln.c]||'#b07cd8'),
       'stroke-width':(ln.c==='proposed_220'?0.8:1.25), 'stroke-linecap':'round', opacity:.8}));
   });
 
@@ -963,7 +1058,7 @@ function chartMap(){
     var w  = kv >= 400 ? 1.6 : (kv >= 220 ? 1.15 : (kv >= 132 ? 0.75 : 0.45));
     var op = kv >= 400 ? .9  : (kv >= 220 ? .78  : (kv >= 132 ? .58  : .35));
     var dd = ln.pts.map(function(p,i){ return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); }).join('');
-    svg.appendChild(el('path',{d:dd, fill:'none', stroke:css('--gridline'), 'stroke-width':w,
+    G.grid.appendChild(el('path',{d:dd, fill:'none', stroke:css('--gridline'), 'stroke-width':w,
       'stroke-linecap':'round', 'stroke-linejoin':'round', opacity:op}));
   });
   // pipeline projects as diamonds - never confusable with built plants (circles)
@@ -972,7 +1067,7 @@ function chartMap(){
     var x=X(pp.lo), y=Y(pp.la);
     var r0=Math.min(13, 2.2 + (pp.mw ? 0.5*Math.sqrt(pp.mw) : 0));
     var cc=TIER_C[pp.tier]||'#999';
-    svg.appendChild(el('path',{d:'M'+x.toFixed(1)+' '+(y-r0).toFixed(1)+
+    G.pipe.appendChild(el('path',{d:'M'+x.toFixed(1)+' '+(y-r0).toFixed(1)+
       'L'+(x+r0).toFixed(1)+' '+y.toFixed(1)+'L'+x.toFixed(1)+' '+(y+r0).toFixed(1)+
       'L'+(x-r0).toFixed(1)+' '+y.toFixed(1)+'Z',
       fill:cc, 'fill-opacity':.5, stroke:cc, 'stroke-width':.9}));
@@ -981,12 +1076,12 @@ function chartMap(){
   var SUB_C = {existing:'#d94a4a', under_construction:'#27b34a', future:'#3b7fe0'};
   (M.plan_subs||[]).forEach(function(sb){
     var x=X(sb.lo), y=Y(sb.la);
-    svg.appendChild(el('rect',{x:(x-2.6).toFixed(1), y:(y-2.6).toFixed(1), width:5.2, height:5.2,
+    G.subs.appendChild(el('rect',{x:(x-2.6).toFixed(1), y:(y-2.6).toFixed(1), width:5.2, height:5.2,
       fill:(SUB_C[sb.c]||'#888'), 'fill-opacity':.9, stroke:css('--surface'), 'stroke-width':.7}));
   });
   (M.subs||[]).forEach(function(sb){
     var x=X(sb.lo), y=Y(sb.la);
-    svg.appendChild(el('rect',{x:(x-2.2).toFixed(1), y:(y-2.2).toFixed(1), width:4.4, height:4.4,
+    G.subs.appendChild(el('rect',{x:(x-2.2).toFixed(1), y:(y-2.2).toFixed(1), width:4.4, height:4.4,
       fill:'none', stroke:css('--gridline'), 'stroke-width':1, opacity:.7}));
   });
 
@@ -995,7 +1090,7 @@ function chartMap(){
   (M.peaks||[]).forEach(function(pk){
     var x = X(pk.lo), y = Y(pk.la);
     var s = pk.e >= 8000 ? 6.5 : (pk.e >= 7500 ? 5 : 3.8);
-    svg.appendChild(el('path',{d:'M'+x+' '+(y-s)+'L'+(x+s*0.92)+' '+(y+s*0.72)+
+    G.peaks.appendChild(el('path',{d:'M'+x+' '+(y-s)+'L'+(x+s*0.92)+' '+(y+s*0.72)+
       'L'+(x-s*0.92)+' '+(y+s*0.72)+'Z', fill:css('--peak'),
       opacity: pk.e >= 8000 ? .95 : .6}));
     if(pk.e < 8000) return;                    // label the eight-thousanders only
@@ -1008,7 +1103,7 @@ function chartMap(){
     placed.push({x:lx, y:ly, w:lw});
     var tx = el('text',{x:lx, y:ly, 'text-anchor':'middle', fill:css('--peak-ink'),
       'font-size':9.5, 'font-weight':600, 'font-family':'IBM Plex Mono, monospace'});
-    tx.textContent = pk.n.replace(/^Mount /,''); svg.appendChild(tx);
+    tx.textContent = pk.n.replace(/^Mount /,''); G.peaks.appendChild(tx);
   });
 
   function R(mw){ return Math.min(16, 2 + 0.75*Math.sqrt(mw||0.5)); }
@@ -1026,7 +1121,7 @@ function chartMap(){
     else { c.setAttribute('fill','none'); c.setAttribute('stroke',col);
            c.setAttribute('stroke-width','1.3'); c.setAttribute('stroke-opacity','.6');
            c.setAttribute('stroke-dasharray','2.5 2'); }
-    svg.appendChild(c);
+    G.plants.appendChild(c);
     marks.push({x:cx, y:cy, r:r, p:p, el:c});
   });
 
@@ -1061,6 +1156,7 @@ function chartMap(){
     return q.matrixTransform(m.inverse());
   }
   hit.addEventListener('mousemove', function(e){
+    if(!mapLayers.plants){ clear(); hideTip(); return; }   // switched off: nothing to point at
     var q0 = local(e), mx = q0.x, my = q0.y;
     var best=null, bd=1e9;
     marks.forEach(function(m){
@@ -1080,6 +1176,7 @@ function chartMap(){
   });
   hit.addEventListener('mouseleave', function(){ clear(); hideTip(); });
   hit.addEventListener('click', function(e){
+    if(!mapLayers.plants) return;
     var q1 = local(e), mx = q1.x, my = q1.y;
     var best=null, bd=1e9;
     marks.forEach(function(mk){
@@ -1808,8 +1905,8 @@ function wireTable(){
 // The svg carries a viewBox, so this is a sizing problem and not a redraw:
 // markers, rivers and grid lines all scale with it. Hit-testing goes through
 // getScreenCTM, so clicks and hovers stay exact at any size.
-function wireMapExpand(){
-  var btn = document.getElementById('map-exp');
+function wireMapExpand(btnId){
+  var btn = document.getElementById(btnId);
   var fig = btn && btn.closest('figure');
   if(!btn || !fig) return;
   function set(on){
@@ -1824,6 +1921,36 @@ function wireMapExpand(){
   btn.addEventListener('click', function(){ set(!fig.classList.contains('zoomed')); });
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape' && fig.classList.contains('zoomed')) set(false);
+  });
+}
+
+// ---- the terrain map, mounted on request --------------------------------
+// terrain.html is a sibling file on the published site. In an Artifact it does
+// not exist and its tile hosts are blocked by CSP either way, so probe for it
+// and say so plainly rather than showing a blank frame and letting the reader
+// wonder whether the map is broken.
+var TERRAIN_SITE = 'https://bikakhilesh.github.io/nepal-hydro-royalty/terrain.html';
+function wireTerrain(){
+  var go = document.getElementById('ter-go'), host = document.getElementById('c-terrain'),
+      load = document.getElementById('ter-load'), exp = document.getElementById('ter-exp');
+  if(!go || !host || !load) return;
+  go.addEventListener('click', function(){
+    go.disabled = true; go.textContent = 'Loading…';
+    fetch('terrain.html', {method:'HEAD'}).then(function(r){
+      if(!r.ok) throw new Error(r.status);
+      var f = document.createElement('iframe');
+      f.src = 'terrain.html';
+      f.title = 'Nepal hydropower fleet on 3D terrain';
+      f.loading = 'lazy';
+      f.setAttribute('allowfullscreen','');
+      host.innerHTML = ''; host.appendChild(f);
+      if(exp) exp.hidden = false;
+    }).catch(function(){
+      load.innerHTML = '<p class="terfail">The terrain view is a separate page that lives ' +
+        'alongside this one on the published site, and it is not reachable from here. ' +
+        'It also needs external tile hosts, which this page is not allowed to contact. ' +
+        '<a href="' + TERRAIN_SITE + '" target="_blank" rel="noopener">Open it on the site</a>.</p>';
+    });
   });
 }
 
@@ -1842,7 +1969,7 @@ if(!D.recon){
 }
 
 stats(); transTable(); reconTable(); wireTable(); renderPlants(); drawAll(); buildTableViews();
-wireMapExpand();
+wireMapExpand('map-exp'); wireMapExpand('ter-exp'); wireTerrain(); wireLayers();
 
 // redraw on theme flip so colors resolve against the new tokens
 if(window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawAll);

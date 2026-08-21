@@ -7,3 +7,6 @@ venv/
 # The operator income statement used by the reconciliation section is private
 # input, not part of this repo. Point HYDRO_XLSX at it locally.
 *.xlsx
+
+# preview-only copy of the 3D map; the Pages workflow makes its own
+terrain.html

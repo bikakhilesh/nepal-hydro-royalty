@@ -10,7 +10,17 @@
   .panel{position:absolute;top:12px;left:12px;z-index:2;background:rgba(18,30,36,.92);
     color:#e8f1f4;border:1px solid #26383f;border-radius:6px;padding:14px 16px;max-width:320px;
     backdrop-filter:blur(6px)}
-  .panel h1{font-size:16px;margin:0 0 4px;font-weight:600;letter-spacing:-.01em}
+  .panel h1{font-size:16px;margin:0 0 4px;font-weight:600;letter-spacing:-.01em;padding-right:26px}
+  /* collapsed the panel is a chip: on a laptop it otherwise covers a third of
+     the view, and the terrain under it is the reason to be here */
+  #ptog{position:absolute;top:8px;right:8px;width:24px;height:24px;padding:0;line-height:1;
+    background:transparent;color:#94aab3;border:1px solid #26383f;border-radius:5px;
+    font:600 15px/1 ui-monospace,SFMono-Regular,monospace;cursor:pointer}
+  #ptog:hover{color:#e8f1f4;border-color:#3fa9cb}
+  .panel.min{padding:8px 10px;max-width:none}
+  .panel.min h1{font-size:12.5px;margin:0;padding-right:24px;color:#94aab3;font-weight:500}
+  .panel.min p, .panel.min .row, .panel.min .ctl{display:none}
+  .panel.min #ptog{top:5px;right:5px;width:20px;height:20px;font-size:13px}
   .panel p{margin:0 0 10px;font-size:12.5px;color:#94aab3;line-height:1.5}
   .row{display:flex;gap:8px;align-items:center;font-size:12px;color:#94aab3;margin-top:5px}
   .row i{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
@@ -32,7 +42,9 @@
     text-shadow:0 1px 3px #000;white-space:nowrap}
 </style>
 <div id="map"></div>
-<div class="panel">
+<div class="panel" id="panel">
+  <button id="ptog" type="button" aria-expanded="true" aria-controls="panel"
+    title="Collapse the panel">&minus;</button>
   <h1>Nepal hydropower fleet</h1>
   <p>178 located plants on real Himalayan elevation, over 195 rivers, 52 peaks,
      409 built transmission lines, and RPGCL&rsquo;s proposed corridors and 187 substations
@@ -49,6 +61,8 @@
   <div class="row"><i style="background:#3b7fe0;border-radius:2px"></i>&hellip; future</div>
   <div class="row"><i style="background:#6fa8dc"></i>Pipeline project (not yet operating)</div>
   <div class="ctl">
+    <label><input type="checkbox" id="pt" checked> Plants</label>
+    <label><input type="checkbox" id="sb" checked> Substations</label>
     <label><input type="checkbox" id="ex" checked> Exaggerate terrain</label>
     <label><input type="checkbox" id="hs" checked> Hillshade</label>
     <label><input type="checkbox" id="rv" checked> Rivers</label>
@@ -165,8 +179,7 @@ map.on('style.load', () => {
             'circle-stroke-color':['match',['get','tier'],
               'built','#2f9e44','licensed','#74c476','survey','#6fa8dc','applied','#c39bd3','#999'] } });
 
-  const PLAN_IDS = Object.keys(PLAN_STYLE).map(c => 'plan_'+c).filter(id => map.getLayer(id))
-                     .concat(['psubs']);
+  const PLAN_IDS = Object.keys(PLAN_STYLE).map(c => 'plan_'+c).filter(id => map.getLayer(id));
 
   // ---- transmission grid ------------------------------------------------
   // One static layer per voltage class rather than data-driven paint: under
@@ -191,7 +204,7 @@ map.on('style.load', () => {
       paint:{ 'line-color':k.color, 'line-opacity':k.op,
               'line-width':['interpolate',['linear'],['zoom'],5,k.w[0],9,k.w[1],13,k.w[2]] } });
   });
-  const GRID_IDS = KV_STYLE.map(k => 'grid' + k.kv).concat(['subs']);
+  const GRID_IDS = KV_STYLE.map(k => 'grid' + k.kv);
 
   map.addSource('subs', { type:'geojson', data:{ type:'FeatureCollection',
     features: SUBS.map(s => ({ type:'Feature',
@@ -291,6 +304,17 @@ map.on('style.load', () => {
     map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; pop.remove(); });
   }
 
+  // Substations and plants get their own switches. They used to ride along with
+  // the grid and corridor toggles, which made "substations only" impossible --
+  // you could not have the dots without the lines they hang off.
+  const SUB_IDS   = ['subs', 'psubs'].filter(id => map.getLayer(id));
+  const PLANT_IDS = ['plants-exact', 'plants-river', 'plants-approx'].filter(id => map.getLayer(id));
+  const setVis = (ids, on) =>
+    ids.forEach(id => map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'));
+
+  document.getElementById('sb').onchange = e => setVis(SUB_IDS, e.target.checked);
+  document.getElementById('pt').onchange = e => setVis(PLANT_IDS, e.target.checked);
+
   document.getElementById('pp').onchange = e =>
     map.setLayoutProperty('pplants','visibility', e.target.checked ? 'visible' : 'none');
   document.getElementById('pl').onchange = e => {
@@ -310,6 +334,21 @@ map.on('style.load', () => {
   document.getElementById('hs').onchange = e =>
     map.setLayoutProperty('hills', 'visibility', e.target.checked ? 'visible' : 'none');
 });
+
+// Panel collapse. Wired outside the style.load handler so it works even if the
+// tile hosts are slow or unreachable -- a panel you cannot dismiss over a map
+// that never arrives is the worst of both.
+(() => {
+  const panel = document.getElementById('panel'), tog = document.getElementById('ptog');
+  if (!panel || !tog) return;
+  tog.onclick = () => {
+    const min = panel.classList.toggle('min');
+    tog.textContent = min ? '≡' : '−';
+    tog.title = min ? 'Show the legend and layers' : 'Collapse the panel';
+    tog.setAttribute('aria-expanded', min ? 'false' : 'true');
+  };
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.classList.contains('min')) tog.click(); });
+})();
 
 map.on('error', e => console.warn('maplibre:', e && e.error && e.error.message));
 </script>
