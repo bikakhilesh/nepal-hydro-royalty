@@ -12,6 +12,14 @@ on:
       - nepal_fleet_3d.html
       - nepal_fleet_map.svg
       - .github/workflows/pages.yml
+
+  # A push made with GITHUB_TOKEN does not trigger other workflows -- GitHub
+  # blocks that to stop workflows looping. So the monthly refresh commits new
+  # data and the `push` trigger above stays silent. Hang off the run instead.
+  workflow_run:
+    workflows: [Refresh from RMS]
+    types: [completed]
+
   workflow_dispatch:
 
 permissions:
@@ -26,11 +34,12 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Assemble the site
         run: |
