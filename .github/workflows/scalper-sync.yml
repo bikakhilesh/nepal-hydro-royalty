@@ -1,6 +1,6 @@
 name: Sync scalper series
 
-# Copies one CSV out of the private stock-scalper repo and commits it here.
+# Copies two CSVs out of the private stock-scalper repo and commits them here.
 #
 # The point of committing rather than fetching at build time: the dashboard build
 # then reads an ordinary local file and needs no credential of its own, so the
@@ -33,8 +33,6 @@ jobs:
       # step `if` but `env` is, and this keeps the credential out of the job
       # environment entirely.
       HAS_SCALPER: ${{ secrets.SCALPER_TOKEN != '' }}
-      SRC: _scalper/combined/hydro_power_combined.csv
-      DST: scalper_hydro_power.csv
 
     steps:
       - uses: actions/checkout@v5
@@ -55,43 +53,71 @@ jobs:
           repository: bikakhilesh/stock-scalper
           token: ${{ secrets.SCALPER_TOKEN }}
           path: _scalper
-          sparse-checkout: combined/hydro_power_combined.csv
+          # Only these two paths, never the whole repo.
+          sparse-checkout: |
+            combined/hydro_power_combined.csv
+            comparative/comparative_hydro_power.csv
           sparse-checkout-cone-mode: false
 
-      - name: Commit it if it changed
+      - name: Commit what changed
         run: |
           set -euo pipefail
 
-          # One check for three failures: token unset, token expired, file moved or
-          # renamed upstream. In all three no file arrives, and none of them is a
-          # reason to go red -- the repo still holds the last good copy.
-          if [ ! -f "$SRC" ]; then
-            echo 'No series fetched: the token is unset or expired, or the path moved.' >> "$GITHUB_STEP_SUMMARY"
-            echo 'The committed copy is untouched.' >> "$GITHUB_STEP_SUMMARY"
+          # src path in the scalper repo -> name it takes here. Source-prefixed, as
+          # rms_* is, so provenance is legible from the filename alone.
+          sync_one () {
+            src="_scalper/$1"; dst="$2"
+
+            # One check for three failures: token unset, token expired, path renamed
+            # upstream. In none of them is going red the right answer -- the repo
+            # still holds the last good copy.
+            if [ ! -f "$src" ]; then
+              echo "- \`$dst\`: not fetched" >> "$GITHUB_STEP_SUMMARY"
+              return 0
+            fi
+            got=$((got + 1))
+
+            # Same principle as guard.py: a sync that arrives short has lost
+            # something, and overwriting good data with it is worse than doing
+            # nothing. Checked before the copy, so a refusal leaves the file intact.
+            new=$(wc -l < "$src")
+            if [ -f "$dst" ]; then
+              old=$(wc -l < "$dst")
+              if [ "$new" -lt "$old" ]; then
+                echo "- FAIL \`$dst\`: $new rows against $old committed, the series shrank" >> "$GITHUB_STEP_SUMMARY"
+                return 1
+              fi
+            fi
+
+            cp "$src" "$dst"
+            git add "$dst"
+            echo "- \`$dst\`: $new rows" >> "$GITHUB_STEP_SUMMARY"
+          }
+
+          # Each is attempted whatever the other does, so one bad file cannot hide
+          # the state of the other in the summary.
+          bad=0; got=0
+          sync_one combined/hydro_power_combined.csv       scalper_hydro_combined.csv   || bad=1
+          sync_one comparative/comparative_hydro_power.csv scalper_hydro_comparative.csv || bad=1
+          if [ "$bad" != 0 ]; then
+            echo "Not committing: see the failure above." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          # Nothing arrived at all, which is not the same as nothing having changed
+          # and must not be reported in the same words -- a run that compared nothing
+          # should never read as a clean bill of health.
+          if [ "$got" = 0 ]; then
+            echo 'Nothing fetched: the token is unset or expired, or both paths moved.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'The committed copies are untouched.' >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
-          # Same principle as guard.py: a sync that arrives short has lost something,
-          # and overwriting good data with it is worse than doing nothing. Growth is
-          # expected, shrinkage is not, so refuse rather than commit and go red so it
-          # gets looked at.
-          new=$(wc -l < "$SRC")
-          if [ -f "$DST" ]; then
-            old=$(wc -l < "$DST")
-            if [ "$new" -lt "$old" ]; then
-              echo "FAIL: $new rows against $old committed -- the series shrank." >> "$GITHUB_STEP_SUMMARY"
-              exit 1
-            fi
-          fi
-
-          cp "$SRC" "$DST"
-
-          # Stage first, then compare. `git diff` alone reports no change for a file
-          # that is not tracked yet, so on the very first run it would decide there
-          # was nothing to do and never commit anything.
-          git add "$DST"
-          if git diff --cached --quiet -- "$DST"; then
-            echo "Unchanged: $new rows, identical to the committed copy." >> "$GITHUB_STEP_SUMMARY"
+          # Staged, then compared. `git diff` alone reports no change for a file that
+          # is not tracked yet, so on the first run it would find nothing to do and
+          # never commit anything.
+          if git diff --cached --quiet; then
+            echo 'Unchanged: both series match the committed copies.' >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
@@ -99,4 +125,3 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m "data: sync scalper series $(date -u +%Y-%m-%d)"
           git push
-          echo "Committed $new rows." >> "$GITHUB_STEP_SUMMARY"
