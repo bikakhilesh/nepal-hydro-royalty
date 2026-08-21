@@ -100,18 +100,25 @@ jobs:
           python hydro.py --stats >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Commit if the data actually changed
+      - name: Commit if anything changed
         run: |
           git config user.name  'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          # Judge on the scraped inputs, not the build outputs. The rebuilt page
-          # carries the retrieval date, so it differs every single run; committing
-          # on that would push ~3 MB a day and call an unchanged register news.
-          if git diff --quiet -- '*.csv' 'np_*.json' 'geo_candidates.json'; then
-            echo 'Nothing changed: RMS has not filed anything new.' >> "$GITHUB_STEP_SUMMARY"
-            git checkout -- .
+          # Judge the built output, not a list of input paths. This used to compare
+          # the scraped CSVs, because the page carried a retrieval date taken from
+          # a file mtime and so differed on every run; committing on that would
+          # have pushed ~3 MB a day and called an unchanged register news.
+          #
+          # The date now comes from git rather than from mtime, so an unchanged
+          # register rebuilds byte for byte and stages nothing. That lets the test
+          # be the honest one -- did the page change -- which catches every reason
+          # it might have, including the ones the path list did not enumerate: a
+          # newly synced scalper series, an edited template, a company remapped.
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'Nothing changed: the rebuilt page is identical.' >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          git add -A
+          git diff --cached --stat >> "$GITHUB_STEP_SUMMARY"
           git commit -m "data: refresh from RMS $(date -u +%Y-%m-%d)"
           git push

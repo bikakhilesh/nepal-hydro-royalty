@@ -20,7 +20,7 @@ All HTTP is GET only. The plant register's edit form is read but never submitted
 its POST action and CSRF token are deliberately untouched. Nominatim is called at
 most once per second per its usage policy.
 """
-import io, json, math, os, random, re, sys, threading, time, unicodedata
+import io, json, math, os, random, re, subprocess, sys, threading, time, unicodedata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
@@ -41,7 +41,19 @@ NEP_MONTHS = ["Baisakh","Jestha","Asar","Shrawan","Bhadra","Aswin",
 GREG = ["Apr–May","May–Jun","Jun–Jul","Jul–Aug","Aug–Sep","Sep–Oct",
         "Oct–Nov","Nov–Dec","Dec–Jan","Jan–Feb","Feb–Mar","Mar–Apr"]
 FY = lambda x: 2000 + int(str(x).split('/')[0])      # "071/72" -> BS 2071
-LATEST_BS = 2082
+# Declared once, and it went stale the moment BS 2083 opened in April 2026: three
+# plants commissioned that year showed an age of -1 on the map and the whole year
+# fell out of the licensing chart, which filters on it. Derived from the data now;
+# the constant is only the floor for a build with no monthly rows at all.
+LATEST_BS_MIN = 2082
+
+
+def latest_bs(d=None):
+    """Newest Bikram Sambat year the data actually reaches."""
+    if d is None or "BsYear" not in getattr(d, "columns", ()):
+        return LATEST_BS_MIN
+    v = pd.to_numeric(d.BsYear, errors="coerce").max()
+    return max(LATEST_BS_MIN, int(v)) if np.isfinite(v) else LATEST_BS_MIN
 DRY_MONTHS = {9, 10, 11, 12}                          # Poush-Chaitra carry the dry tariff
 
 
@@ -99,6 +111,35 @@ def _get(url, params=None, tries=3, timeout=45):
         except Exception as e:
             last = e; time.sleep(1.5*(k+1) + random.random())
     raise last
+
+
+def _retrieved(fname="rms_monthly.csv"):
+    """When the register was last read, as a date string.
+
+    From the commit that last touched the scrape, not the file's mtime. git does
+    not preserve mtimes, so the mtime version reported the checkout date: every
+    clone and every CI run claimed the data had been retrieved that morning. It
+    also made the build non-deterministic, which is what stopped the commit step
+    being able to judge the rebuilt page instead of enumerating input paths.
+    """
+    try:
+        # A scrape that has just rewritten the file and not committed it yet was
+        # retrieved now, not whenever it was last committed. Without this the date
+        # lags a run behind, and the run after that rebuilds a page differing only
+        # in the date and commits it -- an unchanged register reported as news,
+        # every other day, forever.
+        dirty = subprocess.run(["git", "-C", HERE, "diff", "--quiet", "--", fname],
+                               capture_output=True, timeout=15).returncode
+        if dirty:
+            return time.strftime("%d %b %Y", time.gmtime())
+        out = subprocess.run(["git", "-C", HERE, "log", "-1", "--format=%cs", "--", fname],
+                             capture_output=True, text=True, timeout=15)
+        stamp = out.stdout.strip()
+        if stamp:
+            return time.strftime("%d %b %Y", time.strptime(stamp, "%Y-%m-%d"))
+    except Exception:
+        pass
+    return time.strftime("%d %b %Y", time.gmtime(os.path.getmtime(P(fname))))
 
 
 def _pool(fn, jobs, workers, label):
@@ -958,6 +999,15 @@ def load():
     m["PlantName"] = m.PlantName.str.replace(r"\s+", " ", regex=True).str.strip()
     m["CodBsYear"] = m.MitiofOperation.map(bs_year)
     m["CodAdYear"] = pd.to_datetime(m.DateofOperation, errors="coerce", format="mixed").dt.year
+    # format="mixed" needs pandas 2.0; on anything older it is read as a literal
+    # strptime pattern, every row coerces to NaT and the page loses every AD
+    # commissioning year without a word. requirements.txt pins 2.2, so this only
+    # fires on a mis-set environment -- but the commit step now judges the built
+    # page, which means a silent hole like that would be committed rather than
+    # noticed. A column that is 198/198 populated cannot parse to nothing.
+    if m.DateofOperation.notna().any() and not m.CodAdYear.notna().any():
+        raise SystemExit("DateofOperation parsed to nothing - pandas is older than 2.0; "
+                         "pip install -r requirements.txt")
     m["Cap_kW"]    = pd.to_numeric(m.PlantCapacity, errors="coerce")
     try: c = pd.read_csv(P("rms_plants_coords.csv"))
     except FileNotFoundError:
@@ -1044,6 +1094,23 @@ def build_payload():
               "over15_high_pct": r(100*hi15.tier.eq("HIGH").mean(), 1), "over15_n": int(len(hi15)),
               "companies": int(m.CompanyId.nunique()), "districts": int(m.DistrictId.nunique())}
 
+    # ── revenue per MW, the yardstick that survives comparing a 4 MW run-of-river
+    #    to a 456 MW storage scheme. Per year rather than lifetime, or a plant that
+    #    has run since 2066 beats a better one commissioned last year on age alone.
+    #    Only whole filing years count: a plant-year of four months is not a year.
+    ry = a[(a.months >= 11) & (a.cap > 0) & (a.rev > 0) & (a.gen > 0)].copy()
+    ry["rpm"] = ry.rev / (ry.cap/1000)
+    ry["implied"] = ry.rev / ry.gen
+    rpm  = ry.groupby("PlantId").rpm.median()
+    rpm_n = ry.groupby("PlantId").rpm.size()
+    # Revenue over generation has to land near the filed PPA rate. Where it comes
+    # out at a fraction of it the revenue line is short, not the tariff -- Khimti I
+    # files 8.53 NPR/kWh and reconstructs to 0.54, because its invoices are in USD
+    # in a shape the cleaner does not read. Flagged rather than dropped: the
+    # generation is still good, and a silent hole is worse than a marked one.
+    implied = ry.groupby("PlantId").implied.median()
+    thin = set(implied[implied < 2.5].index)
+
     # ── plant table (PPA rates split wet/dry - the tariff is seasonal)
     wet = mo[~mo.BsMonth.isin(DRY_MONTHS)].groupby("PlantId").Rate_NPR_kWh.median()
     dry = mo[mo.BsMonth.isin(DRY_MONTHS)].groupby("PlantId").Rate_NPR_kWh.median()
@@ -1070,6 +1137,8 @@ def build_payload():
                "yrs": int(x.yrs), "bal_m": r(last.Balance.get(x.PlantName, np.nan)/1e6, 1),
                "last_fy": last.FiscalYear.get(x.PlantName),
                "ppa": r(allr.get(pid), 2), "ppa_wet": r(wet.get(pid), 2), "ppa_dry": r(dry.get(pid), 2),
+               "rpm": r(rpm.get(pid, np.nan)/1e6, 1), "rpm_n": int(rpm_n.get(pid, 0)),
+               "implied": r(implied.get(pid, np.nan), 2), "thin": 1 if pid in thin else 0,
                "ccy": "USD" if usd_plants.get(pid) else "NPR",
                "ppa_usd": r(usd_rate.get(pid), 4), "fx": r(usd_fx.get(pid), 2)}
         if pid in meta.index:
@@ -1141,7 +1210,7 @@ def build_payload():
     exp_y = m.LicenseExpiryMiti.map(bs_year)
     lead  = (cod_y - lic_y).where(lambda v: v.between(-2, 25))
     yrs   = sorted(set(int(v) for v in pd.concat([lic_y, cod_y]).dropna()
-                       if 2040 <= v <= LATEST_BS))
+                       if 2040 <= v <= latest_bs(d)))
     lic_rows = []
     for y in yrs:
         ln = int((lic_y == y).sum()); cn = int((cod_y == y).sum())
@@ -1185,8 +1254,7 @@ def build_payload():
         "cod_known": int(m.CodBsYear.notna().sum()), "cod_total": int(len(m)),
         # when the register was last read, taken from the raw scrape file rather
         # than from today - a rebuild does not make the data any fresher
-        "retrieved": time.strftime("%d %b %Y",
-                                   time.gmtime(os.path.getmtime(P("rms_monthly.csv"))))}
+        "retrieved": _retrieved()}
     return payload
 
 
@@ -1208,7 +1276,7 @@ def _map_payload(d, m, c, plants):
     ids = {key(p["name"]): p["id"] for p in plants}
     pts, linked = [], 0
     for t in x.itertuples():
-        age = None if not np.isfinite(t.CodBsYear) else int(LATEST_BS - t.CodBsYear)
+        age = None if not np.isfinite(t.CodBsYear) else int(latest_bs(d) - t.CodBsYear)
         pid = ids.get(key(t.PlantName))
         if pid is not None: linked += 1
         pts.append({"id": pid, "n": t.PlantName,
@@ -1296,7 +1364,11 @@ def _recon_payload(d, m):
     QN = ["Q1","Q2","Q3","Q4"]
     QM = {"Q1":[4,5,6], "Q2":[7,8,9], "Q3":[10,11,12], "Q4":[1,2,3]}
     rows = []
-    for ad, bs in {"2023/24":2080, "2024/25":2081, "2025/26":2082}.items():
+    # Derived, not listed. The listed version was written for three years and then
+    # silently ignored the two the cache had already grown by, dropping seven
+    # quarters that reconcile -- three of them to within 0.005%.
+    for ad in sorted(cum):
+        bs = 2080 + (int(str(ad).split("/")[0]) - 2023)
         for i, q in enumerate(QN):
             if q not in cum.get(ad, {}): continue
             standalone = cum[ad][q] - (cum[ad].get(QN[i-1]) or 0 if i else 0)
