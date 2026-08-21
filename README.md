@@ -87,16 +87,23 @@ python hydro.py --stats   # summary only, write nothing
 `scrape` re-cleans automatically; `geo` re-resolves plant positions. Sub-steps
 `clean` and `coords` can be run on their own.
 
-The revenue reconciliation section appears only when the workbook at `HYDRO_XLSX`
-(a listed operator's quarterly income statement) is present, and is skipped
-silently otherwise. That workbook is private input and is not in this repo, so
-CI never has it and **the published site is the seven-section build**. Supply
-the workbook locally and section 06 appears, renumbering the rest.
+The revenue reconciliation in section 06 needs the operator's reported revenue,
+which comes from a workbook at `HYDRO_XLSX`. That workbook is private input and
+is not in this repo, so **only its output is cached**, in `recon_reported.json`:
+the published cumulative quarterlies, about twenty numbers. Anyone can rebuild
+the section from that, workbook or no workbook.
 
-The page must survive both shapes. It did not at first: `reconTable()` read
-`D.recon.median_abs_pct` unconditionally, so on a build with no workbook it
-threw before any chart was drawn and the site served a page of empty panels.
-A local build could never catch it, because the workbook is always there.
+Only the *reported* half is cached, deliberately. The RMS half is recomputed
+from live scraped data on every build, so a monthly refresh moves the comparison
+rather than freezing a snapshot of it — which matters, because a comparison that
+cannot move is not evidence of anything. With the workbook present the cache is
+rewritten, so it cannot drift from the source.
+
+The page still has to survive the cache being absent, and it did not at first:
+`reconTable()` read `D.recon.median_abs_pct` unconditionally, so a build without
+recon data threw before any chart was drawn and the site served a page of empty
+panels. Section 06 now drops out cleanly and the rest renumber. A local build
+could never have caught it, because the workbook is always there.
 
 ## Automation
 
@@ -259,4 +266,6 @@ dashboard.json    generated payload, handy for inspection
 rms_*.csv         scraped and cleaned data
 np_*.json         districts and national outline
 geo_candidates.json  merged OSM + Wikidata coordinate candidates
+recon_reported.json  the operator's published quarterlies, cached so section 06
+                     builds without the private workbook
 ```

@@ -1012,22 +1012,50 @@ def _map_payload(d, m, c, plants):
             "mw_total": r(m.Cap_kW.sum()/1000.0, 0)}
 
 
+def _reported_quarters():
+    """The operator's published cumulative energy revenue, {fy: {Qn: NPR}}.
+
+    Read from the workbook when it is there, and cached to recon_reported.json
+    so a build without it -- CI always, anyone who is not the author -- can still
+    draw the section. Only this half is cached: it is the half that cannot be
+    recomputed. The RMS half is rebuilt from live scraped data on every build,
+    so a monthly refresh moves the comparison instead of freezing it.
+    """
+    cache = P("recon_reported.json")
+    if os.path.exists(XLSX):
+        try:
+            import openpyxl
+            ws = openpyxl.load_workbook(XLSX, data_only=True)["is"]
+        except Exception:
+            ws = None
+        if ws is not None:
+            cum = {}
+            for i in range(2, ws.max_column+1):
+                y, q, v = ws.cell(1,i).value, ws.cell(2,i).value, ws.cell(3,i).value
+                if y and isinstance(v, (int, float)):
+                    cum.setdefault(str(y), {})[str(q)] = float(v)
+            if cum:
+                json.dump({"plant": "Likhu-4", "plant_id": 116, "mw": 52.4,
+                           "measure": "Income from Sale of Energy, cumulative year to date, NPR",
+                           "source": "Green Ventures Co. Ltd published quarterly income statements",
+                           "cum": cum},
+                          open(cache, "w", encoding="utf-8"), indent=1, sort_keys=True)
+                return cum
+    try:
+        return json.load(open(cache, encoding="utf-8"))["cum"]
+    except (FileNotFoundError, KeyError, ValueError):
+        return None
+
+
 def _recon_payload(d, m):
     """Tie RMS billing for Likhu-4 to its operator's reported energy revenue.
     Two adjustments make it line up: RMS files each block Asar-Jestha, one month
     ahead of the Shrawan-Asar accounting year, and the published quarterlies are
     cumulative year-to-date."""
-    if not os.path.exists(XLSX): return None
-    try:
-        import openpyxl
-        ws = openpyxl.load_workbook(XLSX, data_only=True)["is"]
-    except Exception: return None
+    cum = _reported_quarters()
+    if not cum: return None
     p = d[d.PlantId == 116].copy(); p["idx"] = p.BsYear*12 + p.BsMonth
     rev = p.groupby("idx").Revenue_NPR.sum()
-    cum = {}
-    for i in range(2, ws.max_column+1):
-        y, q, v = ws.cell(1,i).value, ws.cell(2,i).value, ws.cell(3,i).value
-        if y and isinstance(v, (int, float)): cum.setdefault(y, {})[q] = v
     QN = ["Q1","Q2","Q3","Q4"]
     QM = {"Q1":[4,5,6], "Q2":[7,8,9], "Q3":[10,11,12], "Q4":[1,2,3]}
     rows = []
