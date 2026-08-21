@@ -1,4 +1,5 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Nepal Hydropower Royalty Ledger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,6 +206,36 @@ table.mtab tr:last-child td{border-bottom:none}
   font-size:11px;color:var(--ink-3);margin-top:22px}
 .tlends b{color:var(--ink-2);font-weight:500}
 #c-map svg{cursor:pointer}
+
+/* ---- expandable map ---------------------------------------------------- */
+.caphead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.expbtn{flex:none;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--accent);
+  background:transparent;border:1px solid var(--line);border-radius:4px;padding:5px 10px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:6px;line-height:1}
+.expbtn:hover{border-color:var(--accent)}
+.expbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.expbtn .x{font-size:13px;line-height:1}
+
+/* z-index sits under #tip (50) so hover readouts stay legible when expanded */
+.card.zoomed{position:fixed;inset:0;z-index:40;margin:0;border-radius:0;padding:14px 18px 16px;
+  display:flex;flex-direction:column;background:var(--ground)}
+.card.zoomed figcaption{flex:none}
+.card.zoomed .csub{margin-bottom:8px}
+.card.zoomed .chart{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center}
+.card.zoomed .chart svg{width:100%;height:100%;max-height:100%}
+/* sixteen legend entries in the flow would eat more height than the expand
+   gains back, so float them over the map instead, as the terrain view does */
+.card.zoomed .legend{position:absolute;left:18px;bottom:16px;z-index:2;margin:0;
+  max-width:min(48%,540px);max-height:44vh;overflow:auto;font-size:11.5px;gap:5px 14px;
+  background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:10px 12px}
+.card.zoomed details.tv{flex:none}
+.zoomhint{display:none}
+.card.zoomed .zoomhint{display:block;position:absolute;right:18px;bottom:16px;z-index:2;
+  font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);
+  background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:7px 10px}
+@media (max-width:700px){ .card.zoomed .zoomhint{display:none} }
+body.noscroll{overflow:hidden}
+@media (max-width:700px){ .expbtn span.lbl{display:none} }
 details.tv{margin-top:14px;border-top:1px solid var(--line-soft);padding-top:12px}
 details.tv summary{font-size:12.5px;color:var(--accent);cursor:pointer;font-weight:500;
   font-family:"IBM Plex Mono",monospace;list-style:none;display:inline-flex;gap:6px;align-items:center}
@@ -407,8 +438,12 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     peaks behind them are the reason the fleet sits where it does.</p>
 
   <figure class="card">
-    <figcaption><div class="ctitle">Nepal&rsquo;s licensed hydropower fleet</div>
-    <div class="csub" id="map-sub"></div></figcaption>
+    <figcaption><div class="caphead">
+      <div><div class="ctitle">Nepal&rsquo;s licensed hydropower fleet</div>
+      <div class="csub" id="map-sub"></div></div>
+      <button class="expbtn" id="map-exp" type="button" aria-expanded="false"
+        aria-controls="c-map"><span class="x">&#10530;</span><span class="lbl">Expand</span></button>
+    </div></figcaption>
     <div class="chart" id="c-map"></div>
     <div class="legend">
       <span><i style="background:var(--s1)"></i>Within first 15 years</span>
@@ -429,6 +464,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <span><i style="background:#c39bd3;transform:rotate(45deg)"></i>Applied / reserved</span>
       <span style="color:var(--ink-3)">Marker area &prop; installed capacity</span>
     </div>
+    <div class="zoomhint">scroll or pinch to zoom &middot; drag to pan &middot; double-click to reset &middot; Esc to close</div>
   </figure>
 
   <div class="note" id="map-terrain"></div>
@@ -1014,9 +1050,18 @@ function chartMap(){
   function clear(){ if(active){ active.el.setAttribute('stroke-width', active.p.p?'1.4':'1.4');
       active.el.setAttribute('stroke', active.p.p?css('--surface'):(active.p.t2?css('--s2'):css('--s1')));
       active = null; } }
+  // Pointer event -> viewBox coords. getScreenCTM accounts for whatever box the
+  // browser gave the svg, letterboxing included, so hit-testing stays exact when
+  // the card is expanded to fill the viewport and the aspect no longer matches.
+  function local(e){
+    var m = svg.getScreenCTM();
+    if(!m){ var b = svg.getBoundingClientRect();
+      return {x:(e.clientX-b.left)/b.width*W, y:(e.clientY-b.top)/b.height*H}; }
+    var q = svg.createSVGPoint(); q.x = e.clientX; q.y = e.clientY;
+    return q.matrixTransform(m.inverse());
+  }
   hit.addEventListener('mousemove', function(e){
-    var pt = svg.getBoundingClientRect();
-    var mx = (e.clientX-pt.left)/pt.width*W, my = (e.clientY-pt.top)/pt.height*H;
+    var q0 = local(e), mx = q0.x, my = q0.y;
     var best=null, bd=1e9;
     marks.forEach(function(m){
       var d=Math.hypot(m.x-mx, m.y-my) - m.r;
@@ -1035,17 +1080,99 @@ function chartMap(){
   });
   hit.addEventListener('mouseleave', function(){ clear(); hideTip(); });
   hit.addEventListener('click', function(e){
-    var pt = svg.getBoundingClientRect();
-    var mx = (e.clientX-pt.left)/pt.width*W, my = (e.clientY-pt.top)/pt.height*H;
+    var q1 = local(e), mx = q1.x, my = q1.y;
     var best=null, bd=1e9;
     marks.forEach(function(mk){
       var dd = Math.hypot(mk.x-mx, mk.y-my) - mk.r;
       if(dd<bd){ bd=dd; best=mk; }
     });
-    if(!best || bd>14 || best.p.id==null) return;
+    if(!best || bd>14 || best.p.id==null || dragged) return;
     hideTip();
     selectProject(best.p.id, true);
   });
+
+  // ---- pan and zoom, live only while the card is expanded -----------------
+  // Driven by moving the viewBox rather than transforming a group: getScreenCTM
+  // then reports the new mapping for free, so local() above keeps hit-testing
+  // exact at any zoom with no extra bookkeeping. Every listener hangs off the
+  // svg, which is discarded on redraw, so repeated draws cannot leak handlers.
+  var vb = {x:0, y:0, w:W, h:H}, drag = null, dragged = false;
+  function expanded(){ return !!svg.closest('.zoomed'); }
+  function applyVB(){
+    vb.x = Math.max(0, Math.min(W-vb.w, vb.x));
+    vb.y = Math.max(0, Math.min(H-vb.h, vb.y));
+    svg.setAttribute('viewBox', vb.x.toFixed(2)+' '+vb.y.toFixed(2)+' '+
+                                 vb.w.toFixed(2)+' '+vb.h.toFixed(2));
+    svg.style.cursor = vb.w < W ? (drag ? 'grabbing' : 'grab') : '';
+  }
+  svg.addEventListener('wheel', function(e){
+    if(!expanded()) return;              // never hijack page scroll in the flow
+    e.preventDefault();
+    var q = local(e), f = e.deltaY < 0 ? 0.82 : 1/0.82;
+    var nw = Math.min(W, Math.max(W/14, vb.w*f)), s = nw/vb.w;
+    vb.x = q.x - (q.x-vb.x)*s; vb.y = q.y - (q.y-vb.y)*s;
+    vb.w = nw; vb.h = H*(nw/W);
+    applyVB();
+  }, {passive:false});
+  svg.addEventListener('mousedown', function(e){
+    // clear before the guard: a pan, then Close, then a click on a marker in the
+    // page-flow map would otherwise still be suppressed by the stale flag
+    dragged = false;
+    if(!expanded() || vb.w >= W) return;
+    var m = svg.getScreenCTM();
+    drag = {sx:e.clientX, sy:e.clientY, x:vb.x, y:vb.y, k:m ? 1/m.a : 1};
+    e.preventDefault();
+  });
+  svg.addEventListener('mousemove', function(e){
+    if(!drag) return;
+    if(Math.abs(e.clientX-drag.sx) + Math.abs(e.clientY-drag.sy) > 3){ dragged = true; hideTip(); }
+    vb.x = drag.x - (e.clientX-drag.sx)*drag.k;
+    vb.y = drag.y - (e.clientY-drag.sy)*drag.k;
+    applyVB();
+  });
+  function endDrag(){ if(drag){ drag = null; applyVB(); } }
+  svg.addEventListener('mouseup', endDrag);
+  svg.addEventListener('mouseleave', function(){ endDrag(); dragged = false; });
+  svg.addEventListener('dblclick', function(){
+    if(!expanded()) return;
+    vb = {x:0, y:0, w:W, h:H}; applyVB();
+  });
+
+  // touch: one finger pans, two pinch. Without this the expanded map is inert on
+  // a phone, where there is no wheel and no drag - the case that needs it most,
+  // since the whole fleet on a 375px screen is a smear of overlapping dots.
+  var tp = null;
+  function spread(t){ return Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY); }
+  svg.addEventListener('touchstart', function(e){
+    if(!expanded()) return;
+    if(e.touches.length === 1){
+      if(vb.w >= W) return;            // not zoomed in: let the finger scroll
+      var m = svg.getScreenCTM();
+      tp = {mode:'pan', sx:e.touches[0].clientX, sy:e.touches[0].clientY,
+            x:vb.x, y:vb.y, k:m ? 1/m.a : 1};
+    } else if(e.touches.length === 2){
+      tp = {mode:'pinch', d:spread(e.touches), w:vb.w, x:vb.x, y:vb.y};
+      tp.q = local({clientX:(e.touches[0].clientX+e.touches[1].clientX)/2,
+                    clientY:(e.touches[0].clientY+e.touches[1].clientY)/2});
+    }
+    if(tp){ hideTip(); e.preventDefault(); }
+  }, {passive:false});
+  svg.addEventListener('touchmove', function(e){
+    if(!tp) return;
+    e.preventDefault();
+    if(tp.mode === 'pan' && e.touches.length === 1){
+      vb.x = tp.x - (e.touches[0].clientX-tp.sx)*tp.k;
+      vb.y = tp.y - (e.touches[0].clientY-tp.sy)*tp.k;
+    } else if(tp.mode === 'pinch' && e.touches.length === 2){
+      var d = spread(e.touches); if(!d) return;
+      var nw = Math.min(W, Math.max(W/14, tp.w*(tp.d/d))), s = nw/tp.w;
+      vb.x = tp.q.x - (tp.q.x-tp.x)*s; vb.y = tp.q.y - (tp.q.y-tp.y)*s;
+      vb.w = nw; vb.h = H*(nw/W);
+    }
+    applyVB();
+  }, {passive:false});
+  svg.addEventListener('touchend',    function(){ tp = null; });
+  svg.addEventListener('touchcancel', function(){ tp = null; });
 
   document.getElementById('map-sub').textContent =
     M.pts.length+' of '+M.n_total+' plants placed \u00b7 '+fmt(M.mw_located)+' MW of '+fmt(M.mw_total)+' MW';
@@ -1677,6 +1804,29 @@ function wireTable(){
   document.getElementById('pcard').addEventListener('click', monthClick);
 }
 
+// ---- expand the map to fill the viewport --------------------------------
+// The svg carries a viewBox, so this is a sizing problem and not a redraw:
+// markers, rivers and grid lines all scale with it. Hit-testing goes through
+// getScreenCTM, so clicks and hovers stay exact at any size.
+function wireMapExpand(){
+  var btn = document.getElementById('map-exp');
+  var fig = btn && btn.closest('figure');
+  if(!btn || !fig) return;
+  function set(on){
+    fig.classList.toggle('zoomed', on);
+    document.body.classList.toggle('noscroll', on);
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    btn.querySelector('.lbl').textContent = on ? 'Close' : 'Expand';
+    btn.querySelector('.x').innerHTML = on ? '&#10005;' : '&#10530;';
+    hideTip();
+    if(!on) fig.scrollIntoView({block:'center'});
+  }
+  btn.addEventListener('click', function(){ set(!fig.classList.contains('zoomed')); });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && fig.classList.contains('zoomed')) set(false);
+  });
+}
+
 function drawAll(){
   chartEnergy(); chartCap(); chartSeason(); chartRate(); chartGen(); chartRoy(); chartRecon(); chartAge(); chartMap(); chartLic(); chartLead();
 }
@@ -1692,6 +1842,7 @@ if(!D.recon){
 }
 
 stats(); transTable(); reconTable(); wireTable(); renderPlants(); drawAll(); buildTableViews();
+wireMapExpand();
 
 // redraw on theme flip so colors resolve against the new tokens
 if(window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawAll);
