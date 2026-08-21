@@ -7,19 +7,25 @@ Committing those overwrites good data with a subset and the loss is silent.
 So: the row count may grow (new filings) and may wobble down a little
 (a correction, a withdrawn row), but a real collapse stops the run.
 
+Deliberately checks the CLEANED files, not the raw ones. The raw summary
+carries a placeholder row for every plant-year the register has no filing
+for, and how those are recorded is an implementation detail that has already
+changed once -- 2,293 of 3,762 raw rows are empty. Counting them compares
+formats rather than data. The cleaned files are what the build reads and
+what a real outage would actually shrink.
+
 Fails the job on shrinkage past the tolerance; prints and passes otherwise.
 """
 import subprocess
 import sys
 
 TOLERANCE = 0.95          # a new file below 95% of the old one is a failure
-FILES = ["rms_monthly.csv", "rms_summary.csv"]
+FILES = ["rms_monthly_clean.csv", "rms_summary_clean.csv", "rms_plants_meta.csv"]
 
 
 def rows_in_head(path):
     """Row count of the committed version, or None if it isn't in HEAD yet."""
-    p = subprocess.run(["git", "show", f"HEAD:{path}"],
-                       capture_output=True)
+    p = subprocess.run(["git", "show", f"HEAD:{path}"], capture_output=True)
     if p.returncode != 0:
         return None
     return p.stdout.count(b"\n")

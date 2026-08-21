@@ -111,6 +111,13 @@ So `.github/scripts/guard.py` compares each file against the committed version
 and fails the run if it came back below 95% of it. Growth is fine, a small
 wobble is fine, a collapse stops everything before the commit step.
 
+It checks the **cleaned** files, not the raw ones, and the first CI run is why:
+it flagged `rms_summary.csv` at 39% and was wrong to. The raw summary carries a
+placeholder row for every plant-year with no filing, the original scraper wrote
+those and the current one drops them, so the guard was comparing formats rather
+than data. The cleaned files are what the build reads and what an outage would
+genuinely shrink.
+
 **`.github/workflows/pages.yml`** — publishes to GitHub Pages on every push
 that touches a built file. The terrain map is the reason this exists: it needs
 external tile hosts, which the Artifact CSP blocks outright, so Pages is the
@@ -220,6 +227,12 @@ official record — read it against the source before relying on a number.
 - **Total generation is rebuilt from its components when blank.**
   `Total = Metered + Additional + Internal + Transmission loss` reconciles exactly
   on 96.5% of rows where both exist; using it recovers 74 months.
+- **`fails=` in the scrape log is mostly not failures.** 2,293 of the 3,762
+  plant-year requests return no table, because the register simply holds no
+  filing for that plant in that year — a plant commissioned in 076/77 has
+  nothing for 066/67. The counter cannot tell those apart from a real HTTP
+  error, so a healthy full scrape reports ~61% "failures" and still produces
+  the complete 1,469 plant-years. Judge a run by the cleaned row counts.
 - **One known source error.** Upper Bhotekoshi 2083/02 files a USD invoice of
   22.94m against a ~2.9m trend; its own royalty implies ~2.95m. It is left as
   filed rather than silently corrected — it inflates that plant's latest year.
