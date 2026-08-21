@@ -1,0 +1,48 @@
+name: Deploy dashboard
+
+# Publishes the built dashboard to GitHub Pages. Worth noting that the terrain
+# map only works here: it needs external tile hosts, which the Artifact CSP
+# blocks outright, so Pages is the one place all three views render.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - nepal_hydro.html
+      - nepal_fleet_3d.html
+      - nepal_fleet_map.svg
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble the site
+        run: |
+          mkdir -p site
+          cp nepal_hydro.html    site/index.html
+          cp nepal_fleet_3d.html site/terrain.html
+          cp nepal_fleet_map.svg site/fleet-map.svg
+          cp dashboard.json      site/dashboard.json
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - uses: actions/deploy-pages@v4
+        id: deploy

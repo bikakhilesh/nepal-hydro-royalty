@@ -1,0 +1,315 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Nepal Hydropower Fleet — 3D Terrain</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+  html,body{margin:0;height:100%;background:#0b1317;
+    font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif}
+  #map{position:absolute;inset:0}
+  .panel{position:absolute;top:12px;left:12px;z-index:2;background:rgba(18,30,36,.92);
+    color:#e8f1f4;border:1px solid #26383f;border-radius:6px;padding:14px 16px;max-width:320px;
+    backdrop-filter:blur(6px)}
+  .panel h1{font-size:16px;margin:0 0 4px;font-weight:600;letter-spacing:-.01em}
+  .panel p{margin:0 0 10px;font-size:12.5px;color:#94aab3;line-height:1.5}
+  .row{display:flex;gap:8px;align-items:center;font-size:12px;color:#94aab3;margin-top:5px}
+  .row i{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
+  .ctl{margin-top:12px;padding-top:10px;border-top:1px solid #26383f;font-size:12px;color:#94aab3}
+  .ctl label{display:flex;align-items:center;gap:7px;margin-top:6px;cursor:pointer}
+  .maplibregl-popup-content{background:#121e24;color:#e8f1f4;border:1px solid #26383f;
+    border-radius:5px;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:12.5px;padding:11px 13px}
+  .maplibregl-popup-tip{border-top-color:#121e24!important;border-bottom-color:#121e24!important}
+  .pk{font-family:ui-monospace,SFMono-Regular,monospace;color:#94aab3;font-size:11.5px}
+  .peak{display:flex;flex-direction:column;align-items:center;pointer-events:none;
+    transform:translateY(-4px)}
+  .peak .tri{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;
+    border-bottom:11px solid rgba(232,241,244,.92);
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.75))}
+  .peak.big .tri{border-left-width:8px;border-right-width:8px;border-bottom-width:15px}
+  .peak .nm{margin-top:2px;font-family:ui-monospace,SFMono-Regular,monospace;font-size:10.5px;
+    font-weight:600;color:#f2f6f7;text-shadow:0 1px 3px #000,0 0 6px #000;white-space:nowrap}
+  .peak .el{font-family:ui-monospace,SFMono-Regular,monospace;font-size:9px;color:#b9c9cf;
+    text-shadow:0 1px 3px #000;white-space:nowrap}
+</style>
+<div id="map"></div>
+<div class="panel">
+  <h1>Nepal hydropower fleet</h1>
+  <p>__N__ located plants on real Himalayan elevation, over __NR__ rivers, __NP__ peaks,
+     __NL__ built transmission lines, and RPGCL&rsquo;s proposed corridors and __NPS__ substations
+     to 2040, plus __NPP__ pipeline projects.
+     Drag to pan, right-drag to tilt and orbit.</p>
+  <div class="row"><i style="background:#3987e5"></i>Within first 15 years</div>
+  <div class="row"><i style="background:#d95926"></i>Past 15 years</div>
+  <div class="row"><i style="background:#3987e5;opacity:.45;border:1px solid #3987e5"></i>On its named river</div>
+  <div class="row"><i style="border:1.5px solid #7b939d"></i>District centroid only</div>
+  <div class="row"><i style="background:#b07cd8;border-radius:1px;height:3px"></i>Built grid 66&ndash;400&nbsp;kV</div>
+  <div class="row"><i style="background:#c765d9;border-radius:1px;height:3px"></i>Proposed 400&nbsp;kV (RPGCL 2040)</div>
+  <div class="row"><i style="background:#d94a4a;border-radius:2px"></i>Substation: existing</div>
+  <div class="row"><i style="background:#27b34a;border-radius:2px"></i>&hellip; under construction</div>
+  <div class="row"><i style="background:#3b7fe0;border-radius:2px"></i>&hellip; future</div>
+  <div class="row"><i style="background:#6fa8dc"></i>Pipeline project (not yet operating)</div>
+  <div class="ctl">
+    <label><input type="checkbox" id="ex" checked> Exaggerate terrain</label>
+    <label><input type="checkbox" id="hs" checked> Hillshade</label>
+    <label><input type="checkbox" id="rv" checked> Rivers</label>
+    <label><input type="checkbox" id="pkv" checked> Peaks</label>
+    <label><input type="checkbox" id="gr" checked> Built grid</label>
+    <label><input type="checkbox" id="pl" checked> Proposed corridors (2040)</label>
+    <label><input type="checkbox" id="pp" checked> Pipeline projects</label>
+  </div>
+</div>
+<script>
+const PLANTS = __PLANTS__;
+const RIVERS = __RIVERS__;
+const PEAKS  = __PEAKS__;
+const LINES  = __LINES__;
+const SUBS   = __SUBS__;
+const PLAN   = __PLAN__;
+const PSUBS  = __PSUBS__;
+const PPLANTS= __PPLANTS__;
+
+const map = new maplibregl.Map({
+  container: 'map',
+  hash: true,
+  center: [84.0, 28.3], zoom: 6.6, pitch: 60, bearing: -12, maxPitch: 80,
+  style: {
+    version: 8,
+    sources: {
+      osm: { type: 'raster', tileSize: 256, maxzoom: 18,
+             tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+             attribution: '&copy; OpenStreetMap contributors' },
+      // Mapzen/AWS Terrain Tiles: open elevation data, no API key required
+      dem: { type: 'raster-dem', tileSize: 256, encoding: 'terrarium', maxzoom: 13,
+             tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+             attribution: 'Elevation: Mapzen / AWS Terrain Tiles' }
+    },
+    layers: [
+      { id: 'bg', type: 'background', paint: { 'background-color': '#0b1317' } },
+      { id: 'osm', type: 'raster', source: 'osm',
+        paint: { 'raster-opacity': 0.82, 'raster-saturation': -0.25, 'raster-contrast': 0.06 } },
+      { id: 'hills', type: 'hillshade', source: 'dem',
+        paint: { 'hillshade-exaggeration': 0.55,
+                 'hillshade-shadow-color': '#0a1a24',
+                 'hillshade-highlight-color': '#eef4f6' } }
+    ],
+    terrain: { source: 'dem', exaggeration: 1.6 },
+    sky: { 'sky-color': '#0e2233', 'horizon-color': '#3b5566',
+           'fog-color': '#101c22', 'fog-ground-blend': 0.6, 'sky-horizon-blend': 0.6 }
+  }
+});
+
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }));
+map.addControl(new maplibregl.FullscreenControl());
+
+const RADIUS = ['interpolate', ['linear'], ['sqrt', ['max', ['get', 'mw'], 0.5]], 0.7, 3, 21, 17];
+const HUE = ['case', ['==', ['get', 't2'], 1], '#d95926', '#3987e5'];
+
+// With `terrain` declared in the initial style, MapLibre may never fire `load`
+// (it waits on the DEM source), so hook `style.load` instead - that is when the
+// style is parsed and sources/layers can safely be added.
+map.on('style.load', () => {
+  // ---- rivers: the drainages the fleet is built on ----------------------
+  map.addSource('rivers', { type:'geojson', data:{ type:'FeatureCollection',
+    features: RIVERS.map(rv => ({ type:'Feature',
+      geometry:{ type:'MultiLineString', coordinates: rv.segs },
+      properties:{ n: rv.n, km: rv.km } })) } });
+  map.addLayer({ id:'rivers', type:'line', source:'rivers',
+    layout:{ 'line-cap':'round', 'line-join':'round' },
+    paint:{ 'line-color':'#5fa8d8',
+            'line-opacity':0.75,
+            'line-width':['interpolate',['linear'],['zoom'],
+              5, ['case',['>=',['get','km'],200],1.2,['case',['>=',['get','km'],100],0.8,0.5]],
+              9, ['case',['>=',['get','km'],200],3.2,['case',['>=',['get','km'],100],2.2,1.4]],
+              13,['case',['>=',['get','km'],200],7,  ['case',['>=',['get','km'],100],5,  3]]] } });
+
+  // ---- RPGCL planned corridors to 2040, under the built network ---------
+  const PLAN_STYLE = { proposed_400:['#c765d9',[0.8,1.8,3.4]],
+                       proposed_220:['#6d8fd6',[0.5,1.1,2.2]],
+                       existing_400:['#9a4fc4',[0.9,2.0,3.8]] };
+  Object.keys(PLAN_STYLE).forEach(function(cid){
+    const feats = PLAN.filter(l => l.c === cid).map(l => ({ type:'Feature',
+      geometry:{ type:'LineString', coordinates:l.pts }, properties:{ c:cid } }));
+    if (!feats.length) return;
+    const [colr, w] = PLAN_STYLE[cid];
+    map.addSource('plan_'+cid, { type:'geojson',
+      data:{ type:'FeatureCollection', features:feats } });
+    map.addLayer({ id:'plan_'+cid, type:'line', source:'plan_'+cid,
+      layout:{ 'line-cap':'round' },
+      paint:{ 'line-color':colr, 'line-opacity':0.85,
+              'line-width':['interpolate',['linear'],['zoom'],5,w[0],9,w[1],13,w[2]] } });
+  });
+  // RPGCL substations: square markers coloured by build status
+  map.addSource('psubs', { type:'geojson', data:{ type:'FeatureCollection',
+    features: PSUBS.map(s => ({ type:'Feature',
+      geometry:{ type:'Point', coordinates:[s.lo, s.la] }, properties:s })) } });
+  map.addLayer({ id:'psubs', type:'circle', source:'psubs',
+    paint:{ 'circle-radius':['interpolate',['linear'],['zoom'],6,2.4,10,5,13,8],
+            'circle-color':['match',['get','c'],
+              'existing','#d94a4a','under_construction','#27b34a','future','#3b7fe0','#888'],
+            'circle-opacity':0.9,
+            'circle-stroke-width':1.1, 'circle-stroke-color':'#0b1317' } });
+
+  // pipeline projects: hollow diamonds sized by capacity where the sheet gives one
+  map.addSource('pplants', { type:'geojson', data:{ type:'FeatureCollection',
+    features: PPLANTS.map(p => ({ type:'Feature',
+      geometry:{ type:'Point', coordinates:[p.lo, p.la] }, properties:p })) } });
+  map.addLayer({ id:'pplants', type:'circle', source:'pplants',
+    paint:{ 'circle-radius':['interpolate',['linear'],['zoom'],
+              6, ['+',2,['*',0.06,['sqrt',['max',['coalesce',['get','mw'],1],1]]]],
+              10,['+',4,['*',0.35,['sqrt',['max',['coalesce',['get','mw'],1],1]]]]],
+            'circle-color':['match',['get','tier'],
+              'built','#2f9e44','licensed','#74c476','survey','#6fa8dc','applied','#c39bd3','#999'],
+            'circle-opacity':0.35,
+            'circle-stroke-width':1.2,
+            'circle-stroke-color':['match',['get','tier'],
+              'built','#2f9e44','licensed','#74c476','survey','#6fa8dc','applied','#c39bd3','#999'] } });
+
+  const PLAN_IDS = Object.keys(PLAN_STYLE).map(c => 'plan_'+c).filter(id => map.getLayer(id))
+                     .concat(['psubs']);
+
+  // ---- transmission grid ------------------------------------------------
+  // One static layer per voltage class rather than data-driven paint: under
+  // terrain every vector feature is re-projected each frame, and per-feature
+  // expressions on 409 lines were enough to lock the renderer up.
+  const KV_STYLE = [
+    { kv: 400, min: 400, color: '#d49bf0', w: [0.9, 2.0, 4.2], op: 0.95 },
+    { kv: 220, min: 220, color: '#bb87e0', w: [0.7, 1.5, 3.2], op: 0.85 },
+    { kv: 132, min: 132, color: '#a273c9', w: [0.5, 1.0, 2.2], op: 0.70 },
+    { kv: 66,  min: 0,   color: '#8e63b5', w: [0.4, 0.7, 1.4], op: 0.45 }
+  ];
+  KV_STYLE.forEach((k, i) => {
+    const next = i === 0 ? 1e9 : KV_STYLE[i - 1].min;
+    const feats = LINES.filter(l => l.kv >= k.min && l.kv < next)
+      .map(l => ({ type:'Feature', geometry:{ type:'LineString', coordinates:l.pts },
+                   properties:{ kv:l.kv, n:l.n } }));
+    const id = 'grid' + k.kv;
+    map.addSource(id, { type:'geojson',
+      data:{ type:'FeatureCollection', features: feats } });
+    map.addLayer({ id, type:'line', source:id,
+      layout:{ 'line-cap':'round', 'line-join':'round' },
+      paint:{ 'line-color':k.color, 'line-opacity':k.op,
+              'line-width':['interpolate',['linear'],['zoom'],5,k.w[0],9,k.w[1],13,k.w[2]] } });
+  });
+  const GRID_IDS = KV_STYLE.map(k => 'grid' + k.kv).concat(['subs']);
+
+  map.addSource('subs', { type:'geojson', data:{ type:'FeatureCollection',
+    features: SUBS.map(s => ({ type:'Feature',
+      geometry:{ type:'Point', coordinates:[s.lo, s.la] }, properties:s })) } });
+  map.addLayer({ id:'subs', type:'circle', source:'subs',
+    paint:{ 'circle-radius':['interpolate',['linear'],['zoom'],6,2,10,4.5,13,7],
+            'circle-color':'#0b1317', 'circle-stroke-color':'#c08fe4',
+            'circle-stroke-width':1.4, 'circle-opacity':0.85 } });
+
+  // ---- peaks as DOM markers: MapLibre lifts them onto the terrain, and this
+  //      avoids depending on a glyph server for the labels
+  const peakMarkers = PEAKS.map(pk => {
+    const big = pk.e >= 8000;
+    const el = document.createElement('div');
+    el.className = 'peak' + (big ? ' big' : '');
+    el.innerHTML = '<div class="tri"></div>' + (big
+      ? '<div class="nm">' + pk.n.replace(/^Mount /,'') + '</div>' +
+        '<div class="el">' + pk.e.toLocaleString() + ' m</div>'
+      : '');
+    if (!big) el.querySelector('.tri').style.opacity = 0.55;
+    return new maplibregl.Marker({ element: el, anchor: 'bottom' })
+      .setLngLat([pk.lo, pk.la]).addTo(map);
+  });
+
+  map.addSource('plants', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: PLANTS.map(p => ({
+      type: 'Feature', geometry: { type: 'Point', coordinates: [p.lo, p.la] }, properties: p })) }
+  });
+
+  // hollow ring where the position is only district-accurate, solid where surveyed
+  map.addLayer({ id: 'plants-approx', type: 'circle', source: 'plants',
+    filter: ['==', ['get', 'p'], 0],
+    paint: { 'circle-radius': RADIUS, 'circle-color': 'rgba(0,0,0,0)',
+             'circle-stroke-width': 1.6, 'circle-stroke-color': HUE,
+             'circle-stroke-opacity': 0.85 } });
+  map.addLayer({ id: 'plants-river', type: 'circle', source: 'plants',
+    filter: ['==', ['get', 'p'], 1],
+    paint: { 'circle-radius': RADIUS, 'circle-color': HUE, 'circle-opacity': 0.4,
+             'circle-stroke-width': 1.4, 'circle-stroke-color': HUE,
+             'circle-stroke-opacity': 0.95 } });
+  map.addLayer({ id: 'plants-exact', type: 'circle', source: 'plants',
+    filter: ['==', ['get', 'p'], 2],
+    paint: { 'circle-radius': RADIUS, 'circle-color': HUE, 'circle-opacity': 0.88,
+             'circle-stroke-width': 1.4, 'circle-stroke-color': '#0b1317' } });
+
+  const spop = new maplibregl.Popup({ closeButton:false, offset:10 });
+  map.on('mousemove','subs', e => {
+    map.getCanvas().style.cursor='pointer';
+    const s = e.features[0].properties;
+    spop.setLngLat(e.lngLat).setHTML('<b>'+s.n+'</b><br><span class="pk">Substation'+
+      (s.kv ? ' &middot; '+s.kv+' kV' : '')+'</span>').addTo(map);
+  });
+  map.on('mouseleave','subs', () => { map.getCanvas().style.cursor=''; spop.remove(); });
+  const PSUB_LABEL = { existing:'Existing substation',
+                       under_construction:'Substation under construction',
+                       future:'Future substation' };
+  map.on('mousemove','psubs', e => {
+    map.getCanvas().style.cursor='pointer';
+    const s = e.features[0].properties;
+    spop.setLngLat(e.lngLat).setHTML(
+      '<b>'+(s.n || PSUB_LABEL[s.c] || 'Substation')+'</b><br><span class="pk">'+
+      (PSUB_LABEL[s.c]||'')+' &middot; RPGCL 2040 map</span>').addTo(map);
+  });
+  map.on('mouseleave','psubs', () => { map.getCanvas().style.cursor=''; spop.remove(); });
+  map.on('mousemove','pplants', e => {
+    map.getCanvas().style.cursor='pointer';
+    const p = e.features[0].properties;
+    spop.setLngLat(e.lngLat).setHTML(
+      '<b>'+(p.n || 'Unnamed project')+'</b><br>'+
+      (p.mw ? p.mw+' MW planned<br>' : '')+
+      '<span class="pk">'+String(p.c||'').replace(/_/g,' ')+
+      ' &middot; RPGCL 2040 map &middot; not yet operating</span>').addTo(map);
+  });
+  map.on('mouseleave','pplants', () => { map.getCanvas().style.cursor=''; spop.remove(); });
+
+  const pop = new maplibregl.Popup({ closeButton: false, offset: 12 });
+  for (const id of ['plants-exact', 'plants-river', 'plants-approx']) {
+    map.on('mousemove', id, e => {
+      map.getCanvas().style.cursor = 'pointer';
+      const p = e.features[0].properties;
+      pop.setLngLat(e.lngLat).setHTML(
+        '<b>' + p.n + '</b><br>' +
+        (p.co ? '<span class="pk">' + p.co + '</span><br>' : '') +
+        (p.mw != null ? p.mw + ' MW' : 'capacity n/a') +
+        (p.gwh != null ? ' &middot; ' + Number(p.gwh).toLocaleString() + ' GWh lifetime' : '') +
+        (p.cod ? '<br><span class="pk">COD ' + p.cod +
+                 (p.age != null ? ' &middot; ' + p.age + (p.age === 1 ? ' yr' : ' yrs') : '') +
+                 '</span>' : '') +
+        '<br><span class="pk">' +
+          (p.src || 'position unknown') +
+          (p.p === 2 ? '' : (p.p === 1 ? ' &mdash; on-river, approximate'
+                                       : ' &mdash; approximate')) +
+        '</span>'
+      ).addTo(map);
+    });
+    map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; pop.remove(); });
+  }
+
+  document.getElementById('pp').onchange = e =>
+    map.setLayoutProperty('pplants','visibility', e.target.checked ? 'visible' : 'none');
+  document.getElementById('pl').onchange = e => {
+    const v = e.target.checked ? 'visible' : 'none';
+    PLAN_IDS.forEach(id => map.setLayoutProperty(id, 'visibility', v));
+  };
+  document.getElementById('gr').onchange = e => {
+    const v = e.target.checked ? 'visible' : 'none';
+    GRID_IDS.forEach(id => map.setLayoutProperty(id, 'visibility', v));
+  };
+  document.getElementById('rv').onchange = e =>
+    map.setLayoutProperty('rivers','visibility', e.target.checked ? 'visible' : 'none');
+  document.getElementById('pkv').onchange = e =>
+    peakMarkers.forEach(m => m.getElement().style.display = e.target.checked ? '' : 'none');
+  document.getElementById('ex').onchange = e =>
+    map.setTerrain({ source: 'dem', exaggeration: e.target.checked ? 1.6 : 1.0 });
+  document.getElementById('hs').onchange = e =>
+    map.setLayoutProperty('hills', 'visibility', e.target.checked ? 'visible' : 'none');
+});
+
+map.on('error', e => console.warn('maplibre:', e && e.error && e.error.message));
+</script>

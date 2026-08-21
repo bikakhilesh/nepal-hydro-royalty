@@ -1,0 +1,1682 @@
+<meta charset="utf-8">
+<title>Nepal Hydropower Royalty Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script type="application/json" id="payload">__PAYLOAD__</script>
+<style>
+:root{
+  color-scheme: light;
+  --ground:#eceff1; --surface:#ffffff; --surface-2:#f4f7f8; --line:#d3dde1; --line-soft:#e4ebee;
+  --ink:#0c1a20; --ink-2:#4d666f; --ink-3:#5f7883;
+  --accent:#0b6a89; --accent-soft:#e2eef3;
+  --ok:#0b7a4b; --crit:#b3261e;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --s1-fill:rgba(42,120,214,.16); --s2-fill:rgba(235,104,52,.16);
+  --grid:#e6edf0; --warn:#b45309; --warn-bg:#fdf4e7;
+  --river:#8fb8d0; --peak:#a89f92; --peak-ink:#6d6459; --gridline:#8b5fb0;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --ground:#0b1317; --surface:#121e24; --surface-2:#17252c; --line:#26383f; --line-soft:#1d2d34;
+    --ink:#e8f1f4; --ink-2:#94aab3; --ink-3:#7b939d;
+    --accent:#3fa9cb; --accent-soft:#16323e;
+    --ok:#4ec99a; --crit:#f2857f;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --s1-fill:rgba(57,135,229,.20); --s2-fill:rgba(217,89,38,.20);
+    --grid:#1e2f36; --warn:#e0a355; --warn-bg:#241c10;
+    --river:#37596e; --peak:#5a5348; --peak-ink:#8c8477; --gridline:#a273c9;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --ground:#0b1317; --surface:#121e24; --surface-2:#17252c; --line:#26383f; --line-soft:#1d2d34;
+  --ink:#e8f1f4; --ink-2:#94aab3; --ink-3:#7b939d;
+  --accent:#3fa9cb; --accent-soft:#16323e;
+  --ok:#4ec99a; --crit:#f2857f;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --s1-fill:rgba(57,135,229,.20); --s2-fill:rgba(217,89,38,.20);
+  --grid:#1e2f36; --warn:#e0a355; --warn-bg:#241c10;
+  --river:#37596e; --peak:#5a5348; --peak-ink:#8c8477; --gridline:#a273c9;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:Archivo,"IBM Plex Sans",system-ui,sans-serif;text-wrap:balance;margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+header{background:var(--surface);border-bottom:1px solid var(--line);padding:44px 0 34px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:14px}
+h1{font-size:clamp(30px,4.6vw,48px);font-weight:700;letter-spacing:-.025em;line-height:1.06}
+.lede{color:var(--ink-2);max-width:66ch;margin-top:16px;font-size:16.5px}
+.prov{margin-top:22px;padding-top:18px;border-top:1px solid var(--line-soft);
+  display:flex;flex-wrap:wrap;gap:8px 28px;font-size:12.5px;color:var(--ink-3)}
+.prov b{color:var(--ink-2);font-weight:500}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
+  gap:1px;background:var(--line);border-bottom:1px solid var(--line)}
+.stat{background:var(--surface);padding:20px 22px}
+.stat .k{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+.stat .v{font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:27px;font-weight:600;
+  letter-spacing:-.02em;margin-top:6px;font-variant-numeric:proportional-nums;line-height:1.1}
+.stat .u{font-size:12.5px;color:var(--ink-3);margin-top:3px}
+
+section{padding:56px 0;border-bottom:1px solid var(--line-soft)}
+.shead{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
+.snum{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--accent);font-weight:600;
+  border:1px solid var(--accent);border-radius:3px;padding:2px 7px;flex:none}
+h2{font-size:clamp(21px,2.6vw,27px);font-weight:600;letter-spacing:-.018em}
+.sdek{color:var(--ink-2);max-width:72ch;margin:10px 0 28px;font-size:15.5px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:24px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid2>*{min-width:0}
+@media(max-width:860px){.grid2{grid-template-columns:1fr}}
+.ctitle{font-family:Archivo,sans-serif;font-size:14.5px;font-weight:600;letter-spacing:-.005em}
+.csub{font-size:12.5px;color:var(--ink-3);margin-top:3px;margin-bottom:16px}
+figure{margin:0}
+.chart{width:100%;overflow-x:auto}
+svg{display:block;max-width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:7px 18px;margin-top:14px;font-size:12.5px;color:var(--ink-2)}
+.legend i{width:11px;height:11px;border-radius:2.5px;display:inline-block;margin-right:6px;vertical-align:-1px}
+.note{background:var(--surface-2);border-left:2px solid var(--accent);padding:14px 16px;
+  font-size:13.5px;color:var(--ink-2);border-radius:0 4px 4px 0;margin-top:18px}
+.note b{color:var(--ink);font-weight:600}
+.warn{background:var(--warn-bg);border-left-color:var(--warn)}
+.warn b{color:var(--warn)}
+
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:5px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:9px 13px;text-align:left;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+th{background:var(--surface-2);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:600;position:sticky;top:0;cursor:pointer;user-select:none}
+th.n,td.n{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+th:hover{color:var(--accent)}
+th[aria-sort]{color:var(--accent)}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:none}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:center}
+input[type=search]{font:inherit;font-size:13.5px;padding:8px 12px;border:1px solid var(--line);
+  border-radius:4px;background:var(--surface);color:var(--ink);min-width:230px}
+input[type=search]:focus-visible,th:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.count{font-size:12.5px;color:var(--ink-3)}
+tr.prow{cursor:pointer}
+tr.prow:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+tr.prow[aria-expanded="true"]{background:var(--surface-2)}
+tr.prow[aria-expanded="true"] td{border-bottom-color:transparent}
+.chev{display:inline-block;width:12px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace;
+  font-size:10px;transition:transform .12s}
+tr.prow[aria-expanded="true"] .chev{transform:rotate(90deg);color:var(--accent)}
+tr.drow>td{padding:0;background:var(--surface-2);border-bottom:1px solid var(--line)}
+.ywrap{padding:6px 14px 16px 26px;overflow-x:auto}
+.ycap{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:600;margin:8px 0 8px}
+table.ytab{width:100%;font-size:12.5px;background:var(--surface);border:1px solid var(--line);
+  border-radius:4px;overflow:hidden}
+table.ytab th{position:static;background:var(--surface-2);font-size:10px;cursor:default;
+  padding:7px 10px;white-space:nowrap}
+table.ytab td{padding:6px 10px;white-space:nowrap}
+table.ytab tr:last-child td{border-bottom:none}
+table.ytab tr.ytot td{font-weight:600;background:var(--surface-2);border-top:1px solid var(--line)}
+.tierpill{display:inline-block;min-width:20px;text-align:center;padding:0 6px;border-radius:9px;
+  font-size:10px;font-weight:600;font-family:"IBM Plex Mono",monospace}
+.tier1{background:var(--s1-fill);color:var(--s1)}
+.tier2{background:var(--s2-fill);color:var(--s2)}
+.partial{color:var(--ink-3);font-style:italic}
+button.mx{font:inherit;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+  width:17px;height:17px;line-height:1;padding:0;margin-right:7px;cursor:pointer;
+  border:1px solid var(--line);border-radius:3px;background:var(--surface);
+  color:var(--accent);vertical-align:middle}
+button.mx:hover{border-color:var(--accent);background:var(--accent-soft)}
+button.mx:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+tr.mrow>td{padding:0;background:var(--surface-2)}
+.mwrap{padding:4px 12px 12px 34px;overflow-x:auto}
+table.mtab{width:100%;font-size:12px;background:var(--surface);
+  border:1px solid var(--line);border-radius:4px;overflow:hidden}
+table.mtab th{position:static;background:var(--surface-2);font-size:9.5px;cursor:default;
+  padding:6px 9px;white-space:nowrap}
+table.mtab td{padding:5px 9px;white-space:nowrap}
+table.mtab tr:last-child td{border-bottom:none}
+.dry{color:var(--s2)} .wet{color:var(--s1)}
+.usd{font-family:"IBM Plex Mono",monospace;color:var(--s3)}
+.ccy{display:inline-block;padding:0 5px;border-radius:3px;font-size:9.5px;font-weight:600;
+  font-family:"IBM Plex Mono",monospace;background:var(--s1-fill);color:var(--s3);
+  border:1px solid var(--s3);margin-left:5px;vertical-align:1px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs button{font:inherit;font-size:13px;font-family:"IBM Plex Mono",monospace;
+  background:transparent;border:0;border-bottom:2px solid transparent;color:var(--ink-3);
+  padding:9px 16px;cursor:pointer;margin-bottom:-1px;letter-spacing:.02em}
+.tabs button:hover{color:var(--ink-2)}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:3px 3px 0 0}
+.tabs .tcount{color:var(--ink-3);font-weight:400;margin-left:6px;font-size:11.5px}
+[role="tabpanel"][hidden]{display:none}
+.projgrid{display:grid;grid-template-columns:270px 1fr;gap:18px;align-items:start}
+/* grid items default to min-width:auto, so a wide inner table stretches the
+   column past the viewport instead of scrolling inside its own container */
+.projgrid>*{min-width:0}
+@media(max-width:900px){.projgrid{grid-template-columns:1fr}}
+.plist{border:1px solid var(--line);border-radius:5px;background:var(--surface);
+  max-height:620px;overflow-y:auto}
+.plist button{display:block;width:100%;text-align:left;font:inherit;font-size:13px;
+  background:transparent;border:0;border-bottom:1px solid var(--line-soft);padding:9px 12px;
+  cursor:pointer;color:var(--ink)}
+.plist button:hover{background:var(--surface-2)}
+.plist button[aria-current="true"]{background:var(--accent-soft);
+  box-shadow:inset 2px 0 0 var(--accent);font-weight:600}
+.plist button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.plist .pm{display:block;font-size:11px;color:var(--ink-3);
+  font-family:"IBM Plex Mono",monospace;margin-top:2px}
+.pcard{border:1px solid var(--line);border-radius:5px;background:var(--surface);padding:22px}
+.pname{font-family:Archivo,sans-serif;font-size:21px;font-weight:600;letter-spacing:-.015em}
+.pco{color:var(--ink-2);font-size:14px;margin-top:3px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));
+  gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;
+  margin:18px 0;overflow:hidden}
+.fact{background:var(--surface);padding:11px 13px}
+.fact .fk{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.fact .fv{font-size:15px;margin-top:3px;font-family:"IBM Plex Mono",monospace;
+  font-variant-numeric:tabular-nums}
+.fact .fs{font-size:11px;color:var(--ink-3);margin-top:1px}
+.pempty{color:var(--ink-3);padding:40px 0;text-align:center;font-size:14px}
+.fact.span{grid-column:1/-1}
+.tl{padding-top:4px}
+.tlbar{position:relative;height:8px;border-radius:4px;background:var(--line-soft);
+  margin:16px 0 8px;border:1px solid var(--line)}
+.tlfill{position:absolute;left:0;top:0;bottom:0;border-radius:4px 0 0 4px;
+  background:var(--accent);opacity:.35}
+.tltick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--s3);border-radius:1px}
+.tldot{position:absolute;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
+  border-radius:50%;background:var(--surface);border:2.5px solid var(--accent);
+  box-shadow:0 1px 3px rgba(0,0,0,.22)}
+.tlnow{position:absolute;bottom:16px;white-space:nowrap;
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:var(--accent)}
+.tlcod{position:absolute;top:16px;white-space:nowrap;
+  font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--s3)}
+.tl.expired .tlfill{background:var(--crit)}
+.tl.expired .tldot{border-color:var(--crit)}
+.tl.expired .tlnow{color:var(--crit)}
+.tlends{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;
+  font-size:11px;color:var(--ink-3);margin-top:22px}
+.tlends b{color:var(--ink-2);font-weight:500}
+#c-map svg{cursor:pointer}
+details.tv{margin-top:14px;border-top:1px solid var(--line-soft);padding-top:12px}
+details.tv summary{font-size:12.5px;color:var(--accent);cursor:pointer;font-weight:500;
+  font-family:"IBM Plex Mono",monospace;list-style:none;display:inline-flex;gap:6px;align-items:center}
+details.tv summary::-webkit-details-marker{display:none}
+details.tv summary::before{content:"+";font-weight:600}
+details.tv[open] summary::before{content:"2"}
+details.tv summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+details.tv .tw{margin-top:12px;max-height:260px;overflow-y:auto}
+details.tv th{cursor:default}
+.stat-good{color:var(--ok)} .stat-crit{color:var(--crit)}
+
+#tip{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;z-index:50;
+  background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:9px 12px;
+  font-size:12.5px;box-shadow:0 6px 20px rgba(0,0,0,.16);max-width:250px}
+#tip .tt{font-weight:600;margin-bottom:3px;font-family:Archivo,sans-serif}
+#tip .tr{color:var(--ink-2);font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:12px}
+.hit{fill:transparent;cursor:crosshair}
+footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Department of Electricity Development &middot; Royalty Management System</div>
+    <h1>Nepal Hydropower Royalty Ledger</h1>
+    <p class="lede">Every monthly energy bill and royalty assessment DoED publishes for Nepal's
+      connected hydropower fleet &mdash; 193 plants, 17 fiscal years &mdash; scraped, reconciled and read for
+      what it reveals about how the country actually charges for its rivers.</p>
+    <div class="prov">
+      <span>Source <b>rmsdoed.gov.np</b></span>
+      <span>Fiscal years <b id="p-span"></b></span>
+      <span>Monthly rows <b id="p-rows"></b></span>
+      <span>Requests <b>3,960 &middot; 0 failures</b></span>
+      <span>Plants profiled <b>198</b></span>
+      <span>Located <b>178</b></span>
+      <span>Retrieved <b>19 Aug 2026</b></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap"><div class="stats" id="stats"></div></div>
+
+<div class="wrap">
+
+<section>
+  <div class="shead"><span class="snum">01</span><h2>The royalty regime is visible in the billing data</h2></div>
+  <p class="sdek">Nepal charges hydropower royalty on two tiers. For roughly the first 15 years of
+    commercial operation a plant pays a low energy royalty plus a nominal capacity fee; past that
+    threshold both step up sharply. You do not have to read the statute to find this &mdash; the assessed
+    amounts fall into two hard spikes with almost nothing between them.</p>
+
+  <div class="grid2">
+    <figure class="card">
+      <figcaption><div class="ctitle">Energy royalty as % of energy sales</div>
+      <div class="csub">Each plant-year, computed as royalty &divide; billed energy revenue</div></figcaption>
+      <div class="chart" id="c-energy"></div>
+      <div class="legend">
+        <span><i style="background:var(--s1)"></i>Tier 1 &mdash; within ~15 yrs</span>
+        <span><i style="background:var(--s2)"></i>Tier 2 &mdash; past ~15 yrs</span>
+      </div>
+    </figure>
+    <figure class="card">
+      <figcaption><div class="ctitle">Capacity royalty per kW of installed capacity</div>
+      <div class="csub">Each plant-year, NPR per kW per year</div></figcaption>
+      <div class="chart" id="c-cap"></div>
+      <div class="legend">
+        <span><i style="background:var(--s1)"></i>NPR 100/kW</span>
+        <span><i style="background:var(--s2)"></i>NPR 1,000/kW</span>
+      </div>
+    </figure>
+  </div>
+
+  <div class="note"><b>Two spikes, no middle.</b> <span id="n-tiers"></span> The energy rate sits at
+    exactly 2.00% or exactly 10.00%; the capacity fee at exactly NPR 100/kW or NPR 1,000/kW &mdash; a clean
+    10&times; step in both. Values off the spikes are almost entirely partial first or final years of operation.</div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">02</span><h2>The fifteen-year threshold, verified against the register</h2></div>
+  <p class="sdek">DoED publishes a commercial operation date for every licensed plant. Joining those
+    dates to the assessments turns the pattern above into a testable claim &mdash; and it holds with a
+    sharpness rarely seen in administrative data. Below age 15 essentially no plant pays the high
+    capacity rate; from age 15 essentially all of them do.</p>
+
+  <div class="grid2">
+    <figure class="card">
+      <figcaption><div class="ctitle">Share on the high capacity rate, by plant age</div>
+      <div class="csub">Every assessed plant-year, grouped by years since commercial operation</div></figcaption>
+      <div class="chart" id="c-age"></div>
+      <div class="legend">
+        <span><i style="background:var(--s1)"></i>Under 15 years</span>
+        <span><i style="background:var(--s2)"></i>15 years and over</span>
+      </div>
+    </figure>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:24px 24px 14px"><div class="ctitle">Plants caught mid-transition</div>
+      <div class="csub" style="margin-bottom:0">Age at switch, against the recorded COD</div></div>
+      <div class="tw" style="border:0;border-radius:0;max-height:392px;overflow-y:auto">
+        <table id="t-trans"><thead><tr>
+          <th>Plant</th><th>Switched</th><th>Recorded COD</th><th class="n">Age</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+  <div class="note"><b>A clean step at 15.</b> <span id="n-regime"></span> Of the sixteen plants that
+    switch inside the window, twelve do so in exactly their fifteenth year and two more in their sixteenth.</div>
+  <div class="note warn"><b>The exceptions identify themselves.</b> Aandikhola switches at 25 years,
+    not 15 &mdash; and its tariff class is <i>Local R.E Distribution</i>, not the standard seasonal PPA.
+    The rule holds for the regime it governs; plants outside that regime sit outside the rule.</div>
+</section>
+<section>
+  <div class="shead"><span class="snum">03</span><h2>Output and price move in opposite directions</h2></div>
+  <p class="sdek">Nepal's fleet is overwhelmingly run-of-river, so generation tracks the monsoon: it
+    peaks in Aswin and falls through the winter to barely a fifth of nameplate by Falgun. The power
+    purchase tariff is built to counteract exactly that, paying a steep dry-season premium in the four
+    months when the rivers are lowest.</p>
+
+  <div class="grid2">
+    <figure class="card">
+      <figcaption><div class="ctitle">Capacity factor by Nepali month</div>
+      <div class="csub">Median across all plant-months; band shows the interquartile range</div></figcaption>
+      <div class="chart" id="c-season"></div>
+    </figure>
+    <figure class="card">
+      <figcaption><div class="ctitle">Power purchase tariff by Nepali month</div>
+      <div class="csub">Median rate paid to generators, NPR per kWh</div></figcaption>
+      <div class="chart" id="c-rate"></div>
+      <div class="legend">
+        <span><i style="background:var(--s1)"></i>Wet-season rate</span>
+        <span><i style="background:var(--s2)"></i>Dry-season rate</span>
+      </div>
+    </figure>
+  </div>
+  <div class="note"><b>A 70% dry-season premium.</b> The tariff holds near NPR 4.94/kWh from Baisakh
+    through Mangsir, then jumps to exactly NPR 8.40/kWh for Poush, Magh, Falgun and Chaitra &mdash; the four
+    months when median capacity factor sits between 0.22 and 0.33.</div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">04</span><h2>A fleet that quadrupled in a decade</h2></div>
+  <p class="sdek">Recorded generation runs from about 3.1 TWh across 29 plants in 066/67 to 14.5 TWh
+    across 188 plants in 082/83. Royalty assessed and royalty received track each other closely &mdash; the
+    collection side of this system is, on the whole, current.</p>
+
+  <div class="grid2">
+    <figure class="card">
+      <figcaption><div class="ctitle">Recorded generation by fiscal year</div>
+      <div class="csub">GWh, summed across all reporting plants</div></figcaption>
+      <div class="chart" id="c-gen"></div>
+      <div class="legend"><span><i style="background:var(--s1)"></i>Full monthly coverage</span>
+      <span><i style="background:var(--s1);opacity:.42"></i>Sparse coverage &mdash; see note</span></div>
+    </figure>
+    <figure class="card">
+      <figcaption><div class="ctitle">Royalty assessed vs. received</div>
+      <div class="csub">NPR billion per fiscal year</div></figcaption>
+      <div class="chart" id="c-roy"></div>
+      <div class="legend">
+        <span><i style="background:var(--s1)"></i>Assessed (energy + capacity)</span>
+        <span><i style="background:var(--s2)"></i>Received</span>
+      </div>
+    </figure>
+  </div>
+  <h3 style="font-family:Archivo,sans-serif;font-size:17px;font-weight:600;
+      letter-spacing:-.01em;margin:34px 0 8px">The pipeline behind that growth</h3>
+  <p class="sdek" style="margin-bottom:22px">Every plant carries a licence date as well as a
+    commissioning date, so the register also records the development pipeline: when the state
+    granted permission, when each project actually delivered, and the years in between.</p>
+
+  <div class="grid2">
+    <figure class="card">
+      <figcaption><div class="ctitle">Licences granted vs. plants commissioned</div>
+      <div class="csub">Count per Bikram Sambat year</div></figcaption>
+      <div class="chart" id="c-lic"></div>
+      <div class="legend">
+        <span><i style="background:var(--s1)"></i>Licences granted</span>
+        <span><i style="background:var(--s2)"></i>Plants reaching operation</span>
+      </div>
+    </figure>
+    <figure class="card">
+      <figcaption><div class="ctitle">Years from licence to commercial operation</div>
+      <div class="csub">Median per licence cohort, where at least three plants licensed that year</div></figcaption>
+      <div class="chart" id="c-lead"></div>
+    </figure>
+  </div>
+  <div class="note"><b>A lag you can see.</b> <span id="n-lic"></span></div>
+
+  <div class="note warn"><b>Read 073/74&ndash;075/76 with care.</b> Recorded generation dips there while
+    installed capacity keeps rising. That is a reporting gap, not a collapse in output: only 34 of 62
+    plants filed monthly detail in 073/74. Those bars are drawn faded, and the royalty series &mdash; which
+    comes from a different, more complete part of the page &mdash; shows no such dip.</div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">05</span><h2>Where the fleet actually sits</h2></div>
+  <p class="sdek">The register carries a district for most plants but no usable coordinates &mdash;
+    every populated latitude field holds the same value, an unedited form default pointing at
+    Illinois. Locations here come from OpenStreetMap and Wikidata where a plant can be matched by
+    name, and from its district otherwise. The distinction is drawn on the map, because it matters:
+    a filled dot is a surveyed position, a hollow one is only district-accurate. The rivers and
+    peaks behind them are the reason the fleet sits where it does.</p>
+
+  <figure class="card">
+    <figcaption><div class="ctitle">Nepal&rsquo;s licensed hydropower fleet</div>
+    <div class="csub" id="map-sub"></div></figcaption>
+    <div class="chart" id="c-map"></div>
+    <div class="legend">
+      <span><i style="background:var(--s1)"></i>Within first 15 years</span>
+      <span><i style="background:var(--s2)"></i>Past 15 years</span>
+      <span><i style="background:var(--s1);opacity:.4;border:1px solid var(--s1)"></i>On its named river</span>
+      <span><i style="border:1.5px dashed var(--ink-3);background:transparent"></i>District only</span>
+      <span><i style="background:var(--river)"></i>Rivers over 25&nbsp;km</span>
+      <span><i style="background:var(--peak);clip-path:polygon(50% 0,100% 100%,0 100%)"></i>Peaks over 6,800&nbsp;m</span>
+      <span><i style="background:var(--gridline);height:3px;border-radius:1px"></i>Built grid 66&ndash;400&nbsp;kV</span>
+      <span><i style="background:#c765d9;height:3px;border-radius:1px"></i>Proposed 400&nbsp;kV (RPGCL 2040)</span>
+      <span><i style="background:#6d8fd6;height:3px;border-radius:1px"></i>Proposed 220&nbsp;kV</span>
+      <span><i style="background:#d94a4a;border-radius:1px"></i>Substation, existing</span>
+      <span><i style="background:#27b34a;border-radius:1px"></i>Substation, under construction</span>
+      <span><i style="background:#3b7fe0;border-radius:1px"></i>Substation, future</span>
+      <span><i style="background:#2f9e44;transform:rotate(45deg)"></i>Project under construction</span>
+      <span><i style="background:#74c476;transform:rotate(45deg)"></i>Construction licence</span>
+      <span><i style="background:#6fa8dc;transform:rotate(45deg)"></i>Survey licence</span>
+      <span><i style="background:#c39bd3;transform:rotate(45deg)"></i>Applied / reserved</span>
+      <span style="color:var(--ink-3)">Marker area &prop; installed capacity</span>
+    </div>
+  </figure>
+
+  <div class="note" id="map-terrain"></div>
+
+  <div class="note warn"><b>Dashed dots are not plant locations.</b> They sit at their district&rsquo;s
+    centroid, spread apart just enough to stay countable, so the cluster shows how many plants a
+    district holds &mdash; not where any one of them is. Half-filled dots are on the correct watercourse but at an arbitrary point along it. <span id="map-note"></span></div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">06</span><h2>The register reproduces a listed company&rsquo;s revenue</h2></div>
+  <p class="sdek">The royalty base is the plant&rsquo;s energy invoice, and that invoice is the operating
+    company&rsquo;s top line. Mapping RMS billing months onto the Shrawan&ndash;Asar accounting year for
+    Likhu-4 (52.4&nbsp;MW, Green Ventures Co. Ltd, commissioned 2078/07/21) reproduces its reported <i>Income from Sale of Energy</i> quarter by quarter
+    &mdash; six of eleven quarters land within 0.01%, on figures of NPR 270&ndash;570&nbsp;million.</p>
+
+  <div class="grid2">
+    <figure class="card">
+      <figcaption><div class="ctitle">RMS billing vs. reported energy revenue</div>
+      <div class="csub">Standalone quarters, NPR million</div></figcaption>
+      <div class="chart" id="c-recon"></div>
+      <div class="legend">
+        <span><i style="background:var(--s1)"></i>RMS billing (scraped)</span>
+        <span><i style="background:var(--s2)"></i>Reported in accounts</span>
+      </div>
+    </figure>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:24px 24px 14px"><div class="ctitle">Quarter-by-quarter difference</div>
+      <div class="csub" style="margin-bottom:0">Median absolute gap <b id="r-med"></b></div></div>
+      <div class="tw" style="border:0;border-radius:0;max-height:392px;overflow-y:auto">
+        <table id="t-recon"><thead><tr>
+          <th>Quarter</th><th class="n">RMS</th><th class="n">Reported</th><th class="n">Diff</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+  <div class="note"><b>Two adjustments make it line up.</b> RMS files each fiscal block Asar&ndash;Jestha,
+    one month ahead of the Shrawan&ndash;Asar accounting year, so the window has to be shifted; and the
+    published quarterly figures are cumulative year-to-date, so they have to be differenced.</div>
+  <div class="note warn"><b>Where it breaks is informative.</b> The &minus;20.7% quarter is Baisakh 2081,
+    carrying the RMS remark <i lang="ne">&ldquo;&#2348;&#2367;&#2354; &#2352;&#2325;&#2350; &#2348;&#2352;&#2366;&#2348;&#2352; short supply penalty &#2325;&#2366;&#2351;&#2350; &#2327;&#2352;&#2375;&#2325;&#2379; &#2404;&rdquo;</i>
+    &mdash; a short-supply penalty equal to the whole bill. RMS books settlement net of the penalty
+    (zero); the accounts recognise revenue gross on accrual. The gap is a difference in basis, not in data.</div>
+</section>
+
+<section>
+  <div class="shead"><span class="snum">07</span><h2>Plant explorer</h2></div>
+  <p class="sdek">Every plant in the register, with lifetime recorded generation, median capacity
+    factor and the balance standing on its most recent assessed year. <b>Select any plant to open its
+    year-by-year revenue and royalty, then <b>+</b> on any year for its monthly
+    detail</b>, or switch to <b>By fiscal year</b> for every plant-year as
+    a flat, sortable table. Search filters whichever view is open.</p>
+  <div class="tabs" role="tablist" aria-label="Explorer views">
+    <button role="tab" id="tab-plants" aria-controls="panel-plants" aria-selected="true">
+      By plant<span class="tcount" id="tc-plants"></span></button>
+    <button role="tab" id="tab-years" aria-controls="panel-years" aria-selected="false" tabindex="-1">
+      By fiscal year<span class="tcount" id="tc-years"></span></button>
+    <button role="tab" id="tab-project" aria-controls="panel-project" aria-selected="false" tabindex="-1">
+      Project<span class="tcount" id="tc-project"></span></button>
+  </div>
+  <div class="ctl">
+    <input type="search" id="q" placeholder="Search plant, company or district…" aria-label="Search">
+    <span class="count" id="cnt"></span>
+  </div>
+  <div id="panel-plants" role="tabpanel" aria-labelledby="tab-plants">
+  <div class="tw" style="max-height:560px;overflow-y:auto">
+    <table id="t-plants"><thead><tr>
+      <th data-k="name" tabindex="0">Plant</th>
+      <th data-k="company" tabindex="0">Company</th>
+      <th data-k="district" tabindex="0">District</th>
+      <th data-k="cod" tabindex="0">COD (BS)</th>
+      <th data-k="mw" class="n" tabindex="0">MW</th>
+      <th data-k="ppa" class="n" tabindex="0">PPA NPR/kWh</th>
+      <th data-k="gwh" class="n" tabindex="0">Lifetime GWh</th>
+      <th data-k="cf" class="n" tabindex="0">Median CF</th>
+      <th data-k="rev_bn" class="n" tabindex="0">Revenue NPR bn</th>
+      <th data-k="roy_bn" class="n" tabindex="0">Royalty NPR bn</th>
+      <th data-k="yrs" class="n" tabindex="0">Years</th>
+      <th data-k="bal_m" class="n" tabindex="0">Balance NPR m</th>
+      <th data-k="last_fy" tabindex="0">Last FY</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+  </div>
+
+  <div id="panel-years" role="tabpanel" aria-labelledby="tab-years" hidden>
+    <div class="tw" style="max-height:560px;overflow-y:auto">
+      <table id="t-years"><thead><tr>
+        <th data-y="name" tabindex="0">Plant</th>
+        <th data-y="company" tabindex="0">Company</th>
+        <th data-y="fy" tabindex="0">Fiscal yr</th>
+        <th data-y="gwh" class="n" tabindex="0">GWh</th>
+        <th data-y="rev" class="n" tabindex="0">Revenue</th>
+        <th data-y="eroy" class="n" tabindex="0">Energy roy.</th>
+        <th data-y="croy" class="n" tabindex="0">Capacity roy.</th>
+        <th data-y="due" class="n" tabindex="0">Total due</th>
+        <th data-y="recv" class="n" tabindex="0">Received</th>
+        <th data-y="bal" class="n" tabindex="0">Closing bal.</th>
+        <th data-y="pct" class="n" tabindex="0">Eff. rate</th>
+        <th data-y="tier" class="n" tabindex="0">Tier</th>
+        <th data-y="age" class="n" tabindex="0">Age</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="note" style="margin-top:14px" id="years-note"><b>One row per plant per fiscal year.</b> All money in
+      NPR million. Closing balance carries forward, so it must not be summed down the column. A year
+      marked <i>annual</i> in the per-plant view was filed as a single row rather than twelve.</div>
+  </div>
+
+  <div id="panel-project" role="tabpanel" aria-labelledby="tab-project" hidden>
+    <div class="projgrid">
+      <div class="plist" id="plist" role="listbox" aria-label="Choose a project"></div>
+      <div id="pcard"></div>
+    </div>
+  </div>
+</section>
+
+<section style="border-bottom:0">
+  <div class="shead"><span class="snum">08</span><h2>Method and caveats</h2></div>
+  <div class="grid2">
+    <div class="card">
+      <div class="ctitle" style="margin-bottom:12px">How this was collected</div>
+      <p style="margin:0 0 12px;font-size:14px;color:var(--ink-2)">The DoED energy-detail page is
+      server-rendered: a plain GET carrying <code class="mono">FiscalId</code> and
+      <code class="mono">PlantId</code> returns the full table. No login, no JavaScript, no token.
+      All 198 &times; 19 combinations were fetched &mdash; 3,762 requests, zero failures &mdash; and the HTML
+      tables parsed directly. A second read-only pass over the plant register
+      (<code class="mono">/Core/Home/PlantCreate/{id}</code>, 198 GETs) supplies the commercial
+      operation date, licence, owning company and district behind every plant.</p>
+      <p style="margin:0;font-size:14px;color:var(--ink-2)">Royalty reconciles as
+      <code class="mono">Previous Due + Energy + Capacity &minus; Received = Balance</code> to the paisa,
+      which is the main check that the parse is faithful.</p>
+    </div>
+    <div class="card">
+      <div class="ctitle" style="margin-bottom:12px">Five things worth knowing</div>
+      <ol style="margin:0;padding-left:18px;font-size:14px;color:var(--ink-2)">
+        <li style="margin-bottom:9px"><b>Two table schemas.</b> The site serves either
+        <i>Billed Amount to NEA</i> or <i>Invoice to NEA (NRS)</i> depending on the plant; a third
+        variant reports in USD. These are coalesced into one revenue column.</li>
+        <li style="margin-bottom:9px"><b>Annual filings.</b> Some NEA-owned plants file a whole year
+        as one row rather than twelve, producing impossible monthly capacity factors of 7&ndash;10&times;.
+        Those 103 rows are excluded from seasonality but kept in annual totals.</li>
+        <li style="margin-bottom:9px"><b>Footer bleed.</b> The page's summary block sits inside the
+        same HTML table as the data; 5,876 such rows were removed by requiring a
+        <code class="mono">yyyy/m</code> stamp.</li>
+        <li style="margin-bottom:9px"><b>Two fields are unedited defaults.</b> Every populated
+        latitude/longitude in the register reads 39.7817,&minus;89.6501 (Springfield, Illinois), and
+        &ldquo;Province 1&rdquo; is carried by 97 plants including many demonstrably in Bagmati or
+        Gandaki. Both are ignored; districts, which cross-check correctly, are used instead.</li>
+        <li><b>Balance is a stock, not a flow.</b> It carries forward, so balances must not be summed
+        across years. The explorer shows each plant's most recent year only.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>Built from public data published by the Department of Electricity Development, Government of
+  Nepal. Figures are as recorded in the RMS register and may differ from audited accounts.
+  Capacity factor assumes a 730-hour month. Bikram Sambat fiscal years throughout.</div>
+</footer>
+</div>
+<div id="tip" role="status" aria-live="polite"></div>
+<script>
+(function(){
+"use strict";
+var D = JSON.parse(document.getElementById('payload').textContent);
+var NS = 'http://www.w3.org/2000/svg';
+var tip = document.getElementById('tip');
+
+function el(n, a){ var e = document.createElementNS(NS, n); for(var k in a) e.setAttribute(k, a[k]); return e; }
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function fmt(n, d){ if(n===null||n===undefined||isNaN(n)) return '\u2014';
+  return Number(n).toLocaleString('en-US',{minimumFractionDigits:d||0,maximumFractionDigits:d||0}); }
+
+function showTip(e, title, rows){
+  tip.innerHTML = '<div class="tt">'+title+'</div>'+rows.map(function(r){return '<div class="tr">'+r+'</div>';}).join('');
+  tip.style.opacity = 1;
+  var r = tip.getBoundingClientRect(), x = e.clientX+14, y = e.clientY-10;
+  if(x + r.width > innerWidth-10) x = e.clientX - r.width - 14;
+  if(y + r.height > innerHeight-10) y = innerHeight - r.height - 10;
+  tip.style.left = Math.max(8,x)+'px'; tip.style.top = Math.max(8,y)+'px';
+}
+function hideTip(){ tip.style.opacity = 0; }
+document.addEventListener('scroll', hideTip, true);
+
+// ---- generic frame -------------------------------------------------------
+function frame(mount, opts){
+  var W = opts.w||520, H = opts.h||300, m = opts.m||{t:14,r:14,b:44,l:46};
+  var host = document.getElementById(mount); if(!host) return null; host.innerHTML='';
+  var svg = el('svg',{viewBox:'0 0 '+W+' '+H,width:'100%',role:'img','aria-label':opts.label||''});
+  host.appendChild(svg);
+  return {svg:svg, W:W, H:H, m:m, iw:W-m.l-m.r, ih:H-m.t-m.b};
+}
+function yAxis(f, max, ticks, fmtf){
+  ticks = ticks||4;
+  for(var i=0;i<=ticks;i++){
+    var v = max*i/ticks, y = f.m.t + f.ih - (v/max)*f.ih;
+    f.svg.appendChild(el('line',{x1:f.m.l,x2:f.m.l+f.iw,y1:y,y2:y,stroke:css('--grid'),'stroke-width':1}));
+    var t = el('text',{x:f.m.l-8,y:y+4,'text-anchor':'end',fill:css('--ink-3'),'font-size':10.5,
+      'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = fmtf ? fmtf(v) : fmt(v); f.svg.appendChild(t);
+  }
+}
+function xLabel(f, x, txt, rotate){
+  var t = el('text',{x:x, y:f.m.t+f.ih+(rotate?12:18), 'text-anchor':rotate?'end':'middle',
+    fill:css('--ink-3'), 'font-size':10.5, 'font-family':'IBM Plex Mono, monospace'});
+  if(rotate) t.setAttribute('transform','rotate(-45 '+x+' '+(f.m.t+f.ih+12)+')');
+  t.textContent = txt; f.svg.appendChild(t);
+}
+function bar(f, x, y, w, h, fill, op){
+  var r = Math.min(3, w/2.5);
+  if(h < r) { h = Math.max(h, 1.2); r = 0; }
+  var p = el('path',{d:'M'+x+' '+(y+h)+'V'+(y+r)+'a'+r+' '+r+' 0 0 1 '+r+' -'+r+'h'+(w-2*r)+
+    'a'+r+' '+r+' 0 0 1 '+r+' '+r+'V'+(y+h)+'Z', fill:fill});
+  if(op) p.setAttribute('opacity', op);
+  f.svg.appendChild(p); return p;
+}
+
+// ---- 1. energy-royalty histogram ----------------------------------------
+function chartEnergy(){
+  var d = D.royalty.energy_hist, f = frame('c-energy',{m:{t:26,r:14,b:44,l:46},label:'Histogram of effective energy royalty rate'});
+  if(!f) return;
+  var max = Math.max.apply(null, d.map(function(r){return r.n;}));
+  yAxis(f, max, 4);
+  var bw = f.iw/d.length;
+  d.forEach(function(r,i){
+    var h = (r.n/max)*f.ih, x = f.m.l + i*bw, y = f.m.t + f.ih - h;
+    var c = r.x > 6 ? css('--s2') : css('--s1');
+    if(r.n>0) bar(f, x+1, y, bw-2, h, c);
+    var hit = el('rect',{x:x,y:f.m.t,width:bw,height:f.ih,class:'hit'});
+    hit.addEventListener('mousemove',function(e){ showTip(e, r.x.toFixed(2)+'% royalty rate',
+      [fmt(r.n)+' plant-years', r.x>6?'Tier 2 (past ~15 yrs)':'Tier 1 (within ~15 yrs)']); });
+    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
+  });
+  [1,2,3,4,5,6,7,8,9,10,11].forEach(function(v){
+    xLabel(f, f.m.l + ((v-0.5)/11.5)*f.iw, v+'%');
+  });
+  // direct labels on the two spikes
+  d.forEach(function(r,i){
+    if(r.n < max*0.12) return;
+    var h=(r.n/max)*f.ih, x=f.m.l+i*bw+bw/2, y=f.m.t+f.ih-h-7;
+    var t = el('text',{x:x,y:y,'text-anchor':'middle',fill:css('--ink'),'font-size':11.5,
+      'font-weight':600,'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = fmt(r.n); f.svg.appendChild(t);
+  });
+}
+
+// ---- 2. capacity-royalty histogram --------------------------------------
+function chartCap(){
+  var d = D.royalty.cap_hist, f = frame('c-cap',{m:{t:26,r:14,b:44,l:46},label:'Histogram of capacity royalty per kW'});
+  if(!f) return;
+  var max = Math.max.apply(null, d.map(function(r){return r.n;}));
+  yAxis(f, max, 4);
+  var bw = f.iw/d.length;
+  d.forEach(function(r,i){
+    var h=(r.n/max)*f.ih, x=f.m.l+i*bw, y=f.m.t+f.ih-h;
+    var c = r.x > 700 ? css('--s2') : css('--s1');
+    if(r.n>0) bar(f, x+1, y, bw-2, h, c);
+    var hit = el('rect',{x:x,y:f.m.t,width:bw,height:f.ih,class:'hit'});
+    hit.addEventListener('mousemove',function(e){ showTip(e,'NPR '+fmt(r.x)+'/kW',
+      [fmt(r.n)+' plant-years', r.x>700?'Tier 2 (past ~15 yrs)':'Tier 1 (within ~15 yrs)']); });
+    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
+  });
+  [0,250,500,750,1000].forEach(function(v){ xLabel(f, f.m.l + (v/1050)*f.iw, fmt(v)); });
+  d.forEach(function(r,i){
+    if(r.n < max*0.12) return;
+    var h=(r.n/max)*f.ih, x=f.m.l+i*bw+bw/2, y=f.m.t+f.ih-h-7;
+    var t=el('text',{x:x,y:y,'text-anchor':'middle',fill:css('--ink'),'font-size':11.5,
+      'font-weight':600,'font-family':'IBM Plex Mono, monospace'});
+    t.textContent=fmt(r.n); f.svg.appendChild(t);
+  });
+}
+
+// ---- 4. seasonality: CF with IQR band ------------------------------------
+function chartSeason(){
+  var d = D.season, f = frame('c-season',{m:{t:16,r:14,b:46,l:42},label:'Median capacity factor by Nepali month'});
+  if(!f) return;
+  var max = 1.0;
+  yAxis(f, max, 5, function(v){ return v.toFixed(1); });
+  var step = f.iw/(d.length-1);
+  var X = function(i){ return f.m.l + i*step; };
+  var Y = function(v){ return f.m.t + f.ih - (v/max)*f.ih; };
+
+  // monsoon band (Asar-Aswin, months 3-6) - encodes the actual wet season
+  var bx1 = X(2)-step/2, bx2 = X(5)+step/2;
+  f.svg.appendChild(el('rect',{x:bx1,y:f.m.t,width:bx2-bx1,height:f.ih,fill:css('--s1'),opacity:.055}));
+  var bl = el('text',{x:(bx1+bx2)/2,y:f.m.t+13,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10,'letter-spacing':'.09em','font-family':'IBM Plex Mono, monospace'});
+  bl.textContent='MONSOON'; f.svg.appendChild(bl);
+
+  // IQR band
+  var up = d.map(function(r,i){ return (i?'L':'M')+X(i)+' '+Y(r.cf_p75); }).join('');
+  var dn = d.slice().reverse().map(function(r,i){ return 'L'+X(d.length-1-i)+' '+Y(r.cf_p25); }).join('');
+  f.svg.appendChild(el('path',{d:up+dn+'Z',fill:css('--s1'),opacity:.15}));
+
+  // median line
+  var ln = d.map(function(r,i){ return (i?'L':'M')+X(i)+' '+Y(r.cf); }).join('');
+  f.svg.appendChild(el('path',{d:ln,fill:'none',stroke:css('--s1'),'stroke-width':2,
+    'stroke-linejoin':'round','stroke-linecap':'round'}));
+
+  d.forEach(function(r,i){
+    f.svg.appendChild(el('circle',{cx:X(i),cy:Y(r.cf),r:4,fill:css('--s1'),
+      stroke:css('--surface'),'stroke-width':2}));
+    xLabel(f, X(i), r.name.slice(0,3));
+    var hit = el('rect',{x:X(i)-step/2,y:f.m.t,width:step,height:f.ih,class:'hit'});
+    hit.addEventListener('mousemove',function(e){ showTip(e, r.name+' ('+r.greg+')',
+      ['Median CF  '+r.cf.toFixed(3), 'IQR  '+r.cf_p25.toFixed(2)+'\u2013'+r.cf_p75.toFixed(2),
+       'Output  '+fmt(r.gwh)+' GWh ('+r.share+'%)', 'Tariff  NPR '+r.rate.toFixed(2)+'/kWh']); });
+    hit.addEventListener('mouseleave',hideTip); f.svg.appendChild(hit);
+  });
+  // label the extremes only
+  [d.indexOf(d.reduce(function(a,b){return a.cf>b.cf?a:b;})),
+   d.indexOf(d.reduce(function(a,b){return a.cf<b.cf?a:b;}))].forEach(function(i){
+    var t=el('text',{x:X(i),y:Y(d[i].cf)-11,'text-anchor':i>8?'end':'middle',fill:css('--ink'),
+      'font-size':11.5,'font-weight':600,'font-family':'IBM Plex Mono, monospace'});
+    t.textContent=d[i].cf.toFixed(2); f.svg.appendChild(t);
+  });
+}
+
+// ---- 5. tariff by month --------------------------------------------------
+function chartRate(){
+  var d = D.season, f = frame('c-rate',{m:{t:16,r:14,b:46,l:42},label:'Power purchase tariff by Nepali month'});
+  if(!f) return;
+  var max = 9;
+  yAxis(f, max, 3, function(v){ return v.toFixed(0); });
+  var bw = f.iw/d.length;
+  d.forEach(function(r,i){
+    var h=(r.rate/max)*f.ih, x=f.m.l+i*bw+2, y=f.m.t+f.ih-h;
+    var dry = r.rate > 7;
+    bar(f, x, y, bw-4, h, dry?css('--s2'):css('--s1'));
+    xLabel(f, f.m.l+i*bw+bw/2, r.name.slice(0,3));
+    var hit=el('rect',{x:f.m.l+i*bw,y:f.m.t,width:bw,height:f.ih,class:'hit'});
+    hit.addEventListener('mousemove',function(e){ showTip(e, r.name+' ('+r.greg+')',
+      ['Tariff  NPR '+r.rate.toFixed(2)+'/kWh', dry?'Dry-season rate':'Wet-season rate',
+       'Median CF  '+r.cf.toFixed(3)]); });
+    hit.addEventListener('mouseleave',hideTip); f.svg.appendChild(hit);
+  });
+  // direct-label the two rate levels
+  var t1=el('text',{x:f.m.l+bw*1.5,y:f.m.t+f.ih-(4.94/max)*f.ih-8,'text-anchor':'middle',
+    fill:css('--ink'),'font-size':11.5,'font-weight':600,'font-family':'IBM Plex Mono, monospace'});
+  t1.textContent='4.94'; f.svg.appendChild(t1);
+  var t2=el('text',{x:f.m.l+bw*10.5,y:f.m.t+f.ih-(8.40/max)*f.ih-8,'text-anchor':'middle',
+    fill:css('--ink'),'font-size':11.5,'font-weight':600,'font-family':'IBM Plex Mono, monospace'});
+  t2.textContent='8.40'; f.svg.appendChild(t2);
+}
+
+// ---- 6. generation by fiscal year ---------------------------------------
+function chartGen(){
+  var d = D.fy, f = frame('c-gen',{m:{t:14,r:14,b:52,l:46},label:'Recorded generation by fiscal year'});
+  if(!f) return;
+  var max = Math.max.apply(null, d.map(function(r){return r.gwh;}));
+  yAxis(f, max, 4, function(v){ return fmt(v/1000,0)+'k'; });
+  var bw = f.iw/d.length;
+  d.forEach(function(r,i){
+    var cov = r.sum_plants ? r.plants/r.sum_plants : 1;
+    var sparse = cov < 0.85;
+    var h=(r.gwh/max)*f.ih, x=f.m.l+i*bw+2, y=f.m.t+f.ih-h;
+    bar(f, x, y, bw-4, h, css('--s1'), sparse?0.42:1);
+    var hit=el('rect',{x:f.m.l+i*bw,y:f.m.t,width:bw,height:f.ih,class:'hit'});
+    hit.addEventListener('mousemove',function(e){ showTip(e,'FY '+r.fy,
+      [fmt(r.gwh)+' GWh recorded', r.plants+' plants reporting', fmt(r.mw)+' MW installed',
+       'Monthly coverage '+Math.round(cov*100)+'%'].concat(sparse?['\u26a0 sparse reporting']:[])); });
+    hit.addEventListener('mouseleave',hideTip); f.svg.appendChild(hit);
+    if(i%2===0) xLabel(f, f.m.l+i*bw+bw/2, r.fy, true);
+  });
+}
+
+// ---- 7. royalty assessed vs received ------------------------------------
+function chartRoy(){
+  var d = D.fy.filter(function(r){ return r.due_bn != null; });
+  var f = frame('c-roy',{m:{t:14,r:14,b:52,l:38},label:'Royalty assessed versus received by fiscal year'});
+  if(!f) return;
+  var max = Math.max.apply(null, d.map(function(r){ return Math.max(r.due_bn, r.recv_bn); }));
+  yAxis(f, max, 4, function(v){ return v.toFixed(1); });
+  var gw = f.iw/d.length, bw = (gw-6)/2;
+  d.forEach(function(r,i){
+    var x0 = f.m.l+i*gw+2;
+    var hD=(r.due_bn/max)*f.ih, hR=(r.recv_bn/max)*f.ih;
+    bar(f, x0, f.m.t+f.ih-hD, bw-1, hD, css('--s1'));          // 2px gap via bw-1 + offset
+    bar(f, x0+bw+2, f.m.t+f.ih-hR, bw-1, hR, css('--s2'));
+    var hit=el('rect',{x:f.m.l+i*gw,y:f.m.t,width:gw,height:f.ih,class:'hit'});
+    hit.addEventListener('mousemove',function(e){ showTip(e,'FY '+r.fy,
+      ['Assessed  NPR '+r.due_bn.toFixed(2)+'bn','Received  NPR '+r.recv_bn.toFixed(2)+'bn',
+       'Closing balance  NPR '+r.bal_bn.toFixed(2)+'bn']); });
+    hit.addEventListener('mouseleave',hideTip); f.svg.appendChild(hit);
+    if(i%2===0) xLabel(f, f.m.l+i*gw+gw/2, r.fy, true);
+  });
+}
+
+// ---- 8. revenue reconciliation ------------------------------------------
+function chartRecon(){
+  var d = D.recon.rows;
+  var f = frame('c-recon',{m:{t:14,r:14,b:56,l:44},label:'RMS billing versus reported energy revenue by quarter'});
+  if(!f) return;
+  var max = Math.max.apply(null, d.map(function(r){ return Math.max(r.rms,r.rep); }))/1e6;
+  yAxis(f, max, 4, function(v){ return fmt(v); });
+  var gw = f.iw/d.length, bw = (gw-6)/2;
+  d.forEach(function(r,i){
+    var x0 = f.m.l+i*gw+2;
+    var hA=(r.rms/1e6/max)*f.ih, hB=(r.rep/1e6/max)*f.ih;
+    bar(f, x0, f.m.t+f.ih-hA, bw-1, hA, css('--s1'));
+    bar(f, x0+bw+2, f.m.t+f.ih-hB, bw-1, hB, css('--s2'));
+    var hit = el('rect',{x:f.m.l+i*gw,y:f.m.t,width:gw,height:f.ih,class:'hit'});
+    hit.addEventListener('mousemove',function(e){ showTip(e, r.label,
+      ['RMS       '+fmt(r.rms/1e6,1)+'m','Reported  '+fmt(r.rep/1e6,1)+'m',
+       'Diff      '+fmt(r.diff/1e6,2)+'m ('+r.pct.toFixed(2)+'%)']); });
+    hit.addEventListener('mouseleave',hideTip); f.svg.appendChild(hit);
+    xLabel(f, f.m.l+i*gw+gw/2, r.label.replace(' ','\u2009'), true);
+  });
+}
+function reconTable(){
+  var R = D.recon;
+  document.getElementById('r-med').textContent = R.median_abs_pct+'%';
+  document.querySelector('#t-recon tbody').innerHTML = R.rows.map(function(r){
+    var a = Math.abs(r.pct);
+    var cls = a < 0.05 ? 'stat-good' : (a > 2 ? 'stat-crit' : '');
+    var mark = a < 0.05 ? '\u2713 ' : (a > 2 ? '\u26a0 ' : '');
+    return '<tr><td class="mono">'+r.label+'</td><td class="n">'+fmt(r.rms/1e6,1)+
+      '</td><td class="n">'+fmt(r.rep/1e6,1)+'</td><td class="n '+cls+'">'+mark+
+      r.pct.toFixed(2)+'%</td></tr>';
+  }).join('');
+}
+
+// ---- 9. regime test: share on the high tier by plant age ----------------
+function chartAge(){
+  var d = D.regime.age_tier.filter(function(r){ return r.n >= 2; });
+  var f = frame('c-age',{m:{t:20,r:14,b:46,l:44},label:'Share of plant-years on the high capacity royalty rate, by plant age'});
+  if(!f) return;
+  yAxis(f, 100, 4, function(v){ return v.toFixed(0)+'%'; });
+  var bw = f.iw/d.length;
+  var xi = -1;
+  d.forEach(function(r,i){ if(r.age === 15) xi = i; });
+  if(xi > 0){
+    var tx = f.m.l + xi*bw;
+    f.svg.appendChild(el('line',{x1:tx,x2:tx,y1:f.m.t-6,y2:f.m.t+f.ih,stroke:css('--ink-3'),'stroke-width':1}));
+    var lb = el('text',{x:tx+4,y:f.m.t-9,fill:css('--ink-2'),'font-size':10.5,'font-weight':600,
+      'font-family':'IBM Plex Mono, monospace'});
+    lb.textContent = 'age 15'; f.svg.appendChild(lb);
+  }
+  d.forEach(function(r,i){
+    var hgt=(r.pct/100)*f.ih, x=f.m.l+i*bw+1, y=f.m.t+f.ih-hgt;
+    if(r.pct>0) bar(f, x, y, bw-2, hgt, r.age>=15?css('--s2'):css('--s1'));
+    var hit=el('rect',{x:f.m.l+i*bw,y:f.m.t,width:bw,height:f.ih,class:'hit'});
+    hit.addEventListener('mousemove',function(e){ showTip(e,'Age '+r.age+' years',
+      [r.pct+'% on the high rate', r.high+' of '+r.n+' plant-years',
+       r.age>=15?'past the threshold':'within the first 15 years']); });
+    hit.addEventListener('mouseleave',hideTip); f.svg.appendChild(hit);
+    if(r.age%5===0) xLabel(f, f.m.l+i*bw+bw/2, r.age);
+  });
+}
+
+// ---- 10. fleet map -------------------------------------------------------
+function chartMap(){
+  var M = D.map, W = 900, H = 505, pad = 12;
+  var host = document.getElementById('c-map'); if(!host) return;
+  host.innerHTML = '';
+  var svg = el('svg',{viewBox:'0 0 '+W+' '+H, width:'100%', role:'img',
+    'aria-label':'Map of Nepal showing '+M.pts.length+' licensed hydropower plants'});
+  host.appendChild(svg);
+
+  var b = M.bbox, lon0=b[0], lat0=b[1], lon1=b[2], lat1=b[3];
+  var k = Math.cos(28.4*Math.PI/180);
+  var sc = Math.min((W-2*pad)/((lon1-lon0)*k), (H-2*pad)/(lat1-lat0));
+  var ox = (W - (lon1-lon0)*k*sc)/2, oy = (H - (lat1-lat0)*sc)/2;
+  function X(lon){ return ox + (lon-lon0)*k*sc; }
+  function Y(lat){ return oy + (lat1-lat)*sc; }
+
+  M.outline.forEach(function(ring){
+    var dpath = ring.map(function(p,i){ return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); }).join('')+'Z';
+    svg.appendChild(el('path',{d:dpath, fill:css('--surface-2'), stroke:css('--line'),
+      'stroke-width':1.2, 'stroke-linejoin':'round'}));
+  });
+
+  // ---- rivers: the drainages the fleet is built on -----------------------
+  (M.rivers||[]).forEach(function(rv){
+    var w = rv.km >= 200 ? 1.5 : (rv.km >= 100 ? 1.1 : (rv.km >= 50 ? 0.8 : 0.55));
+    rv.segs.forEach(function(seg){
+      var dd = seg.map(function(p,i){ return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); }).join('');
+      svg.appendChild(el('path',{d:dd, fill:'none', stroke:css('--river'), 'stroke-width':w,
+        'stroke-linecap':'round', 'stroke-linejoin':'round', opacity:.85}));
+    });
+  });
+
+  // ---- RPGCL planned 2040 corridors, beneath the built network -----------
+  var PLAN_C = {proposed_400:'#c765d9', proposed_220:'#6d8fd6', existing_400:'#9a4fc4'};
+  (M.plan||[]).forEach(function(ln){
+    var dd = ln.pts.map(function(p,i){ return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); }).join('');
+    svg.appendChild(el('path',{d:dd, fill:'none', stroke:(PLAN_C[ln.c]||'#b07cd8'),
+      'stroke-width':(ln.c==='proposed_220'?0.8:1.25), 'stroke-linecap':'round', opacity:.8}));
+  });
+
+  // ---- transmission grid: violet, clear of the blue rivers and the markers
+  (M.lines||[]).forEach(function(ln){
+    var kv = ln.kv;
+    var w  = kv >= 400 ? 1.6 : (kv >= 220 ? 1.15 : (kv >= 132 ? 0.75 : 0.45));
+    var op = kv >= 400 ? .9  : (kv >= 220 ? .78  : (kv >= 132 ? .58  : .35));
+    var dd = ln.pts.map(function(p,i){ return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); }).join('');
+    svg.appendChild(el('path',{d:dd, fill:'none', stroke:css('--gridline'), 'stroke-width':w,
+      'stroke-linecap':'round', 'stroke-linejoin':'round', opacity:op}));
+  });
+  // pipeline projects as diamonds - never confusable with built plants (circles)
+  var TIER_C = {built:'#2f9e44', licensed:'#74c476', survey:'#6fa8dc', applied:'#c39bd3'};
+  (M.plan_plants||[]).forEach(function(pp){
+    var x=X(pp.lo), y=Y(pp.la);
+    var r0=Math.min(13, 2.2 + (pp.mw ? 0.5*Math.sqrt(pp.mw) : 0));
+    var cc=TIER_C[pp.tier]||'#999';
+    svg.appendChild(el('path',{d:'M'+x.toFixed(1)+' '+(y-r0).toFixed(1)+
+      'L'+(x+r0).toFixed(1)+' '+y.toFixed(1)+'L'+x.toFixed(1)+' '+(y+r0).toFixed(1)+
+      'L'+(x-r0).toFixed(1)+' '+y.toFixed(1)+'Z',
+      fill:cc, 'fill-opacity':.5, stroke:cc, 'stroke-width':.9}));
+  });
+
+  var SUB_C = {existing:'#d94a4a', under_construction:'#27b34a', future:'#3b7fe0'};
+  (M.plan_subs||[]).forEach(function(sb){
+    var x=X(sb.lo), y=Y(sb.la);
+    svg.appendChild(el('rect',{x:(x-2.6).toFixed(1), y:(y-2.6).toFixed(1), width:5.2, height:5.2,
+      fill:(SUB_C[sb.c]||'#888'), 'fill-opacity':.9, stroke:css('--surface'), 'stroke-width':.7}));
+  });
+  (M.subs||[]).forEach(function(sb){
+    var x=X(sb.lo), y=Y(sb.la);
+    svg.appendChild(el('rect',{x:(x-2.2).toFixed(1), y:(y-2.2).toFixed(1), width:4.4, height:4.4,
+      fill:'none', stroke:css('--gridline'), 'stroke-width':1, opacity:.7}));
+  });
+
+  // ---- peaks: a triangle glyph reads as relief without a raster ----------
+  var placed = [];
+  (M.peaks||[]).forEach(function(pk){
+    var x = X(pk.lo), y = Y(pk.la);
+    var s = pk.e >= 8000 ? 6.5 : (pk.e >= 7500 ? 5 : 3.8);
+    svg.appendChild(el('path',{d:'M'+x+' '+(y-s)+'L'+(x+s*0.92)+' '+(y+s*0.72)+
+      'L'+(x-s*0.92)+' '+(y+s*0.72)+'Z', fill:css('--peak'),
+      opacity: pk.e >= 8000 ? .95 : .6}));
+    if(pk.e < 8000) return;                    // label the eight-thousanders only
+    var lw = pk.n.length*5.4 + 6, lx = x, ly = y - s - 5;
+    var clash = placed.some(function(q){
+      return Math.abs(q.x-lx) < (q.w+lw)/2 && Math.abs(q.y-ly) < 11; });
+    if(clash) ly = y + s + 12;
+    if(placed.some(function(q){
+      return Math.abs(q.x-lx) < (q.w+lw)/2 && Math.abs(q.y-ly) < 11; })) return;
+    placed.push({x:lx, y:ly, w:lw});
+    var tx = el('text',{x:lx, y:ly, 'text-anchor':'middle', fill:css('--peak-ink'),
+      'font-size':9.5, 'font-weight':600, 'font-family':'IBM Plex Mono, monospace'});
+    tx.textContent = pk.n.replace(/^Mount /,''); svg.appendChild(tx);
+  });
+
+  function R(mw){ return Math.min(16, 2 + 0.75*Math.sqrt(mw||0.5)); }
+  var order = M.pts.slice().sort(function(a,b){ return (b.mw||0)-(a.mw||0); });
+  var marks = [];
+  order.forEach(function(p){
+    var cx=X(p.lo), cy=Y(p.la), r=R(p.mw), col = p.t2 ? css('--s2') : css('--s1');
+    var c = el('circle',{cx:cx.toFixed(1), cy:cy.toFixed(1), r:r.toFixed(1)});
+    // three levels of positional confidence: surveyed, on the named river, district only
+    if(p.p === 2){ c.setAttribute('fill',col); c.setAttribute('fill-opacity','.85');
+                   c.setAttribute('stroke',css('--surface')); c.setAttribute('stroke-width','1.4'); }
+    else if(p.p === 1){ c.setAttribute('fill',col); c.setAttribute('fill-opacity','.38');
+                   c.setAttribute('stroke',col); c.setAttribute('stroke-width','1.3');
+                   c.setAttribute('stroke-opacity','.9'); }
+    else { c.setAttribute('fill','none'); c.setAttribute('stroke',col);
+           c.setAttribute('stroke-width','1.3'); c.setAttribute('stroke-opacity','.6');
+           c.setAttribute('stroke-dasharray','2.5 2'); }
+    svg.appendChild(c);
+    marks.push({x:cx, y:cy, r:r, p:p, el:c});
+  });
+
+  // size key
+  // size key sits in the empty south-west, clear of the fleet and the border
+  var kx = 58, ky = H-26;
+  [400,100,10].forEach(function(mw){
+    var r=R(mw);
+    svg.appendChild(el('circle',{cx:kx, cy:ky-r, r:r, fill:'none', stroke:css('--ink-3'),
+      'stroke-width':1, 'stroke-opacity':.6}));
+    svg.appendChild(el('line',{x1:kx+r, x2:kx+30, y1:ky-2*r, y2:ky-2*r,
+      stroke:css('--ink-3'), 'stroke-width':.8, 'stroke-opacity':.45}));
+    var t=el('text',{x:kx+34, y:ky-2*r+3.5, fill:css('--ink-3'), 'font-size':10,
+      'font-family':'IBM Plex Mono, monospace'}); t.textContent=mw+' MW'; svg.appendChild(t);
+  });
+
+  // nearest-point hover: dense overlapping marks need one hit layer, not 178
+  var hit = el('rect',{x:0,y:0,width:W,height:H,class:'hit'});
+  svg.appendChild(hit);
+  var active = null;
+  function clear(){ if(active){ active.el.setAttribute('stroke-width', active.p.p?'1.4':'1.4');
+      active.el.setAttribute('stroke', active.p.p?css('--surface'):(active.p.t2?css('--s2'):css('--s1')));
+      active = null; } }
+  hit.addEventListener('mousemove', function(e){
+    var pt = svg.getBoundingClientRect();
+    var mx = (e.clientX-pt.left)/pt.width*W, my = (e.clientY-pt.top)/pt.height*H;
+    var best=null, bd=1e9;
+    marks.forEach(function(m){
+      var d=Math.hypot(m.x-mx, m.y-my) - m.r;
+      if(d<bd){ bd=d; best=m; }
+    });
+    if(!best || bd>14){ clear(); hideTip(); return; }
+    if(active!==best){ clear(); active=best;
+      best.el.setAttribute('stroke', css('--ink')); best.el.setAttribute('stroke-width','2'); }
+    var p=best.p;
+    var rows=[(p.mw!=null?p.mw+' MW':'capacity n/a')+(p.gwh!=null?'  \u00b7  '+fmt(p.gwh)+' GWh lifetime':'')];
+    if(p.co) rows.push(p.co);
+    if(p.cod) rows.push('COD '+p.cod+(p.age!=null?'  ('+p.age+(p.age===1?' yr)':' yrs)'):''));
+    rows.push('Position: '+(p.src||'unknown')+
+      (p.p === 2 ? '' : (p.p === 1 ? ' \u2014 on-river, approximate' : ' \u2014 approximate')));
+    showTip(e, p.n, rows);
+  });
+  hit.addEventListener('mouseleave', function(){ clear(); hideTip(); });
+  hit.addEventListener('click', function(e){
+    var pt = svg.getBoundingClientRect();
+    var mx = (e.clientX-pt.left)/pt.width*W, my = (e.clientY-pt.top)/pt.height*H;
+    var best=null, bd=1e9;
+    marks.forEach(function(mk){
+      var dd = Math.hypot(mk.x-mx, mk.y-my) - mk.r;
+      if(dd<bd){ bd=dd; best=mk; }
+    });
+    if(!best || bd>14 || best.p.id==null) return;
+    hideTip();
+    selectProject(best.p.id, true);
+  });
+
+  document.getElementById('map-sub').textContent =
+    M.pts.length+' of '+M.n_total+' plants placed \u00b7 '+fmt(M.mw_located)+' MW of '+fmt(M.mw_total)+' MW';
+  document.getElementById('map-note').textContent =
+    M.n_exact+' plants matched a surveyed position in OpenStreetMap or Wikidata; '+
+    (M.n_river||0)+' sit on the river the register names for them, at the point nearest their '+
+    'district centre; '+M.n_district+' are placed by district centroid alone; '+M.n_none+' carry neither a match nor a district and are left off the map. '+
+    'Select any marker to open that project\u2019s full record below.';
+  var rv = (M.rivers||[]).length, pk = (M.peaks||[]).length;
+  var terr = document.getElementById('map-terrain');
+  if(terr && rv) terr.textContent =
+    'The basemap carries '+rv+' named rivers of 25\u00a0km or more and '+pk+
+    ' summits above 6,800\u00a0m, both from OpenStreetMap \u2014 the drainages and the '+
+    'relief that put the fleet where it is. Violet is the transmission network the fleet has '+
+    'to reach: '+((M.lines||[]).length)+' lines from 66 to 400 kV and '+((M.subs||[]).length)+
+    ' substations — geometry from OpenStreetMap, since the RPGCL network map is a rendered '+
+    'PDF carrying no coordinates \u2014 though its planned corridors are recoverable: the sheet '+
+    'prints its projection and a coordinate graticule, so it georeferences to within 15\u00a0m. '+
+    'The magenta and pale-blue dashes are RPGCL\u2019s proposed 400 and 220\u00a0kV routes to 2040, '+
+    'lifted from that map. Its 132\u00a0kV classes are all one red at one width, separable only by '+
+    'dash pattern the PDF does not preserve, so they are left out rather than guessed. '+
+    'Its '+((M.plan_subs||[]).length)+' substations come across too, coloured red / green / blue '+
+    'for existing, under construction and future. The green and blue diamonds are the '+
+    ((M.plan_plants||[]).length)+' pipeline projects the sheet carries \u2014 licensed, surveyed or '+
+    'applied-for, and so absent from a royalty register that only sees plants which generate. '+
+    'Operating plants are NOT taken from the sheet: RMS is three years newer and locates them better.';
+}
+
+// ---- 11. licensing pipeline ---------------------------------------------
+function chartLic(){
+  var d = D.licence.byYear.filter(function(r){ return r.y >= 2050; });
+  var f = frame('c-lic',{m:{t:18,r:14,b:46,l:38},
+    label:'Licences granted and plants commissioned per Bikram Sambat year'});
+  if(!f) return;
+  var max = Math.max.apply(null, d.map(function(r){ return Math.max(r.lic, r.cod); }));
+  yAxis(f, max, 4);
+  var step = f.iw/(d.length-1);
+  var X = function(i){ return f.m.l + i*step; };
+  var Y = function(v){ return f.m.t + f.ih - (v/max)*f.ih; };
+  [['lic', css('--s1')], ['cod', css('--s2')]].forEach(function(pair){
+    var k = pair[0], colr = pair[1];
+    var dd = d.map(function(r,i){ return (i?'L':'M')+X(i)+' '+Y(r[k]); }).join('');
+    f.svg.appendChild(el('path',{d:dd, fill:'none', stroke:colr, 'stroke-width':2,
+      'stroke-linejoin':'round', 'stroke-linecap':'round'}));
+  });
+  d.forEach(function(r,i){
+    if(r.y % 5 === 0) xLabel(f, X(i), r.y);
+    var hit = el('rect',{x:X(i)-step/2, y:f.m.t, width:step, height:f.ih, class:'hit'});
+    hit.addEventListener('mousemove',function(e){ showTip(e,'BS '+r.y,
+      [r.lic+' licence'+(r.lic===1?'':'s')+' granted',
+       r.cod+' plant'+(r.cod===1?'':'s')+' reached operation']); });
+    hit.addEventListener('mouseleave',hideTip); f.svg.appendChild(hit);
+  });
+  // mark the licensing peak - the single most characteristic point in the series
+  var pk = -1;
+  d.forEach(function(r,i){ if(r.y === D.licence.peak_year) pk = i; });
+  if(pk >= 0){
+    f.svg.appendChild(el('circle',{cx:X(pk), cy:Y(d[pk].lic), r:4, fill:css('--s1'),
+      stroke:css('--surface'), 'stroke-width':2}));
+    var lb = el('text',{x:X(pk), y:Y(d[pk].lic)-11, 'text-anchor':'middle', fill:css('--ink'),
+      'font-size':11.5, 'font-weight':600, 'font-family':'IBM Plex Mono, monospace'});
+    lb.textContent = d[pk].lic; f.svg.appendChild(lb);
+  }
+}
+function chartLead(){
+  var d = D.licence.byYear.filter(function(r){ return r.lead != null; });
+  var f = frame('c-lead',{m:{t:18,r:14,b:46,l:38},
+    label:'Median years from licence to commercial operation, by licence year'});
+  if(!f) return;
+  var max = Math.max.apply(null, d.map(function(r){ return r.lead; })) + 1;
+  yAxis(f, max, 4, function(v){ return v.toFixed(0); });
+  var step = f.iw/(d.length-1);
+  var X = function(i){ return f.m.l + i*step; };
+  var Y = function(v){ return f.m.t + f.ih - (v/max)*f.ih; };
+  // the fleet-wide median, as a reference line
+  var med = D.licence.median_lead;
+  f.svg.appendChild(el('line',{x1:f.m.l, x2:f.m.l+f.iw, y1:Y(med), y2:Y(med),
+    stroke:css('--ink-3'), 'stroke-width':1, 'stroke-opacity':.55}));
+  var ml = el('text',{x:f.m.l+f.iw, y:Y(med)-6, 'text-anchor':'end', fill:css('--ink-3'),
+    'font-size':10, 'font-family':'IBM Plex Mono, monospace'});
+  ml.textContent = 'fleet median '+med.toFixed(1)+' yrs'; f.svg.appendChild(ml);
+
+  var line = d.map(function(r,i){ return (i?'L':'M')+X(i)+' '+Y(r.lead); }).join('');
+  var area = line+'L'+X(d.length-1)+' '+(f.m.t+f.ih)+'L'+f.m.l+' '+(f.m.t+f.ih)+'Z';
+  f.svg.appendChild(el('path',{d:area, fill:css('--s1'), opacity:.13}));
+  f.svg.appendChild(el('path',{d:line, fill:'none', stroke:css('--s1'), 'stroke-width':2,
+    'stroke-linejoin':'round', 'stroke-linecap':'round'}));
+  d.forEach(function(r,i){
+    f.svg.appendChild(el('circle',{cx:X(i), cy:Y(r.lead), r:3.5, fill:css('--s1'),
+      stroke:css('--surface'), 'stroke-width':1.6}));
+    if(i % 3 === 0) xLabel(f, X(i), r.y);
+    var hit = el('rect',{x:X(i)-step/2, y:f.m.t, width:step, height:f.ih, class:'hit'});
+    hit.addEventListener('mousemove',function(e){ showTip(e,'Licensed BS '+r.y,
+      ['Median '+r.lead.toFixed(1)+' years to operation', 'across '+r.n+' plants']); });
+    hit.addEventListener('mouseleave',hideTip); f.svg.appendChild(hit);
+  });
+}
+
+// ---- table-view twins (a tooltip must never be the only way to read a value) ----
+function addTableView(mountId, caption, cols, rows){
+  var host = document.getElementById(mountId); if(!host) return;
+  var fig = host.closest('figure') || host.parentNode;
+  var old = fig.querySelector('details.tv'); if(old) old.remove();
+  var d = document.createElement('details'); d.className = 'tv';
+  d.innerHTML = '<summary>'+caption+'</summary><div class="tw"><table><thead><tr>'+
+    cols.map(function(c){ return '<th'+(c.n?' class="n"':'')+'>'+c.t+'</th>'; }).join('')+
+    '</tr></thead><tbody>'+
+    rows.map(function(r){ return '<tr>'+r.map(function(v,i){
+      return '<td'+(cols[i].n?' class="n"':'')+'>'+v+'</td>'; }).join('')+'</tr>'; }).join('')+
+    '</tbody></table></div>';
+  fig.appendChild(d);
+}
+function buildTableViews(){
+  var R = D.royalty;
+  addTableView('c-energy','Show data table',
+    [{t:'Rate band'},{t:'Plant-years',n:1},{t:'Tier'}],
+    R.energy_hist.filter(function(r){return r.n>0;}).map(function(r){
+      return [(r.x-0.25).toFixed(2)+'\u2013'+(r.x+0.25).toFixed(2)+'%', fmt(r.n), r.x>6?'Tier 2':'Tier 1']; }));
+  addTableView('c-cap','Show data table',
+    [{t:'NPR per kW'},{t:'Plant-years',n:1},{t:'Tier'}],
+    R.cap_hist.filter(function(r){return r.n>0;}).map(function(r){
+      return [fmt(r.x-25)+'\u2013'+fmt(r.x+25), fmt(r.n), r.x>700?'Tier 2':'Tier 1']; }));
+  addTableView('c-lic','Show data table',
+    [{t:'BS year'},{t:'Licences',n:1},{t:'Commissioned',n:1},{t:'Median lead (yrs)',n:1}],
+    D.licence.byYear.filter(function(r){return r.y>=2050;}).map(function(r){
+      return [r.y, fmt(r.lic), fmt(r.cod), r.lead==null?'\u2014':r.lead.toFixed(1)]; }));
+  addTableView('c-map','Show the plant list',
+    [{t:'Plant'},{t:'MW',n:1},{t:'District'},{t:'Position'}],
+    D.map.pts.slice().sort(function(a,b){return (b.mw||0)-(a.mw||0);}).map(function(p){
+      return [p.n, p.mw==null?'\u2014':p.mw, p.di||'\u2014', p.p?('exact ('+p.src+')'):'district centroid']; }));
+  addTableView('c-age','Show data table',
+    [{t:'Plant age'},{t:'On high rate',n:1},{t:'Plant-years',n:1},{t:'Share',n:1}],
+    D.regime.age_tier.filter(function(r){return r.n>=2;}).map(function(r){
+      return [r.age+' yrs', fmt(r.high), fmt(r.n), r.pct+'%']; }));
+  addTableView('c-season','Show data table',
+    [{t:'Month'},{t:'Gregorian'},{t:'Median CF',n:1},{t:'IQR',n:1},{t:'GWh',n:1},{t:'Share',n:1}],
+    D.season.map(function(r){ return [r.name, r.greg, r.cf.toFixed(3),
+      r.cf_p25.toFixed(2)+'\u2013'+r.cf_p75.toFixed(2), fmt(r.gwh), r.share+'%']; }));
+  addTableView('c-rate','Show data table',
+    [{t:'Month'},{t:'Tariff NPR/kWh',n:1},{t:'Season'}],
+    D.season.map(function(r){ return [r.name, r.rate.toFixed(2), r.rate>7?'Dry':'Wet']; }));
+  addTableView('c-gen','Show data table',
+    [{t:'Fiscal year'},{t:'GWh',n:1},{t:'Plants',n:1},{t:'MW',n:1},{t:'Coverage',n:1}],
+    D.fy.map(function(r){ var cov = r.sum_plants ? Math.round(100*r.plants/r.sum_plants) : 100;
+      return [r.fy, fmt(r.gwh), fmt(r.plants), fmt(r.mw), cov+'%']; }));
+  addTableView('c-roy','Show data table',
+    [{t:'Fiscal year'},{t:'Assessed bn',n:1},{t:'Received bn',n:1},{t:'Balance bn',n:1}],
+    D.fy.filter(function(r){return r.due_bn!=null;}).map(function(r){
+      return [r.fy, r.due_bn.toFixed(2), r.recv_bn.toFixed(2), r.bal_bn.toFixed(2)]; }));
+}
+
+// ---- stat tiles ----------------------------------------------------------
+function stats(){
+  var s = D.stats;
+  var tiles = [
+    ['Plants in register', fmt(s.plants), s.n_fy+' fiscal years'],
+    ['Installed capacity', fmt(s.mw), 'MW nameplate'],
+    ['Recorded generation', fmt(s.twh,1), 'TWh, cumulative'],
+    ['Royalty assessed', fmt(s.royalty_bn,1), 'NPR billion'],
+    ['Royalty received', fmt(s.received_bn,1), 'NPR billion'],
+    ['Capacity factor', '0.77 / 0.22', 'peak Aswin / low Falgun']
+  ];
+  document.getElementById('stats').innerHTML = tiles.map(function(t){
+    return '<div class="stat"><div class="k">'+t[0]+'</div><div class="v">'+t[1]+
+           '</div><div class="u">'+t[2]+'</div></div>';
+  }).join('');
+  document.getElementById('p-span').textContent = s.fy_span;
+  document.getElementById('p-rows').textContent = fmt(s.rows);
+  var r = D.royalty;
+  var LC = D.licence;
+  document.getElementById('n-lic').textContent =
+    'A licence takes a median '+LC.median_lead+' years to reach commercial operation ('+
+    LC.p25_lead+'\u2013'+LC.p75_lead+' for the middle half of '+LC.n_lead+' plants), and runs for a '+
+    'median '+LC.term_median+' years once granted. Licensing peaked at '+LC.peak_count+
+    ' grants in BS '+LC.peak_year+'; commissioning peaked roughly five years later, which is the '+
+    'same lag showing up on the other side of the pipeline.';
+  document.getElementById('n-tiers').textContent =
+    fmt(r.n_2pct)+' plant-years sit on the 2% energy rate against '+fmt(r.n_10pct)+' on 10%; '+
+    fmt(r.n_cap_low)+' pay NPR 100/kW against '+fmt(r.n_cap_high)+' at NPR 1,000/kW.';
+}
+
+// ---- transition table ----------------------------------------------------
+function transTable(){
+  var tb = document.querySelector('#t-trans tbody');
+  tb.innerHTML = D.regime.transitions.map(function(t){
+    var odd = t.age !== 15 && t.age !== 16;
+    return '<tr><td>'+t.plant+'</td><td class="mono">'+t.at+'</td>'+
+      '<td class="mono">'+t.cod+' <span style="color:var(--ink-3)">'+(t.cod_ad||'')+'</span></td>'+
+      '<td class="n'+(odd?' stat-crit':'')+'">'+t.age+'</td></tr>';
+  }).join('');
+  var RG = D.regime;
+  document.getElementById('n-regime').textContent =
+    'Below 15 years, '+RG.under15_high_pct+'% of '+fmt(RG.under15_n)+' plant-years carry the high rate; '+
+    'at 15 and above, '+RG.over15_high_pct+'% of '+fmt(RG.over15_n)+' do.';
+}
+
+// ---- plant explorer ------------------------------------------------------
+var sortKey = 'gwh', sortDir = -1;
+var openRows = {};                       // plant id -> expanded, survives sort and search
+
+function tierPill(t){
+  if(t !== 1 && t !== 2) return '<span style="color:var(--ink-3)">\u2014</span>';
+  return '<span class="tierpill tier'+t+'">'+t+'</span>';
+}
+function ppaCell(p){
+  // a USD-denominated PPA is contracted in USD; showing only a reconstructed NPR
+  // figure would misstate the tariff, so report the filed USD rate
+  if(p.ccy==='USD' && p.ppa_usd!=null)
+    return '<span class="usd">$'+p.ppa_usd.toFixed(4)+'</span>';
+  if(p.ppa===null||p.ppa===undefined) return '<span style="color:var(--ink-3)">\u2014</span>';
+  if(p.ppa_wet!=null && p.ppa_dry!=null && Math.abs(p.ppa_dry-p.ppa_wet)>0.05)
+    return '<span class="wet">'+p.ppa_wet.toFixed(2)+'</span>'+
+           '<span style="color:var(--ink-3)"> / </span>'+
+           '<span class="dry">'+p.ppa_dry.toFixed(2)+'</span>';
+  return p.ppa.toFixed(2);
+}
+var openMonths = {};                     // "pid|fy" -> expanded
+function monthsTable(pid, fy){
+  var rows = (D.months[String(pid)]||{})[fy];
+  if(!rows || !rows.length)
+    return '<div class="mwrap"><span class="partial">No monthly detail filed for '+fy+'.</span></div>';
+  var anyUsd = rows.some(function(m){ return m[7]!=null || m[8]!=null; });
+  var body = rows.map(function(m){
+    var dry = m[5]!=null && m[5] > 7;
+    return '<tr>'+
+      '<td class="mono">'+(D.nepMonths[m[1]-1]||m[1])+
+        ' <span style="color:var(--ink-3)">'+(2000+m[0])+'/'+String(m[1]).padStart(2,'0')+'</span></td>'+
+      '<td class="n">'+num(m[2],2)+'</td>'+
+      '<td class="n">'+num(m[3],2)+'</td>'+
+      '<td class="n">'+num(m[4],3)+'</td>'+
+      '<td class="n '+(m[5]==null?'':(dry?'dry':'wet'))+'">'+num(m[5],2)+'</td>'+
+      (anyUsd ? '<td class="n usd">'+(m[8]==null?'\u2014':'$'+m[8].toFixed(4))+'</td>'+
+                '<td class="n usd">'+(m[7]==null?'\u2014':'$'+fmt(m[7],3)+'m')+'</td>'+
+                '<td class="n">'+(m[9]==null?'\u2014':fmt(m[9],2))+'</td>' : '')+
+      '<td class="n">'+(m[6]==null?'\u2014':m[6].toFixed(3))+'</td>'+
+      '<td>'+(m[5]==null?'':(dry?'dry season':'wet season'))+'</td></tr>';
+  }).join('');
+  function sum(i, nd){ return fmt(rows.reduce(function(a,m){return a+(m[i]||0);},0), nd); }
+  return '<div class="mwrap">'+
+    (anyUsd ? '<div class="ycap" style="letter-spacing:0;text-transform:none;font-weight:400">'+
+      'This plant bills in US dollars. Revenue in NPR is reconstructed as '+
+      'USD \u00d7 the month\u2019s exchange rate, so treat it as accurate to about a '+
+      'percent; the USD columns are as filed.</div>' : '')+
+    '<table class="mtab"><thead><tr>'+
+    '<th>Month</th><th class="n">GWh</th><th class="n">Revenue NPR</th><th class="n">Royalty</th>'+
+    '<th class="n">PPA NPR</th>'+
+    (anyUsd ? '<th class="n">PPA USD</th><th class="n">Invoice USD</th><th class="n">FX</th>' : '')+
+    '<th class="n">CF</th><th>Season</th>'+
+    '</tr></thead><tbody>'+body+
+    '<tr class="ytot"><td class="mono">'+rows.length+' months</td>'+
+    '<td class="n">'+sum(2,2)+'</td><td class="n">'+sum(3,2)+'</td>'+
+    '<td class="n">'+sum(4,3)+'</td><td class="n"></td>'+
+    (anyUsd ? '<td class="n"></td><td class="n usd">$'+sum(7,3)+'m</td><td class="n"></td>' : '')+
+    '<td class="n"></td><td></td></tr>'+
+    '</tbody></table></div>';
+}
+function num(v, nd){ return v===null||v===undefined ? '<span style="color:var(--ink-3)">\u2014</span>' : fmt(v, nd); }
+
+function yearsTable(pid, plant){
+  var rows = D.years[String(pid)];
+  if(!rows || !rows.length) return '<div class="ywrap"><div class="ycap">No annual detail filed</div></div>';
+  var body = rows.map(function(r){
+    var mkey = pid+'|'+r[0], mopen = !!openMonths[mkey];
+    // an NEA plant may file a whole year as one row; that is not "1 month of data"
+    var annual  = r[12] === 1;
+    var partial = !annual && r[11] > 0 && r[11] < 12;
+    var bal = r[7];
+    var balCls = bal===null ? '' : (bal > 0.05 ? 'stat-crit' : (bal < -0.05 ? 'stat-good' : ''));
+    return '<tr class="yrow">'+
+      '<td class="mono"><button type="button" class="mx" data-pid="'+pid+'" data-fy="'+r[0]+
+        '" aria-expanded="'+mopen+'" aria-label="'+(mopen?'Hide':'Show')+' monthly detail for '+r[0]+
+        '">'+(mopen?'\u2212':'+')+'</button>'+r[0]+
+        (annual ? ' <span class="partial" title="filed as a single annual row">(annual)</span>'
+                : (partial ? ' <span class="partial" title="'+r[11]+' months filed">('+r[11]+'mo)</span>' : ''))+'</td>'+
+      '<td class="n">'+num(r[1],1)+'</td>'+
+      '<td class="n">'+num(r[2],1)+'</td>'+
+      '<td class="n">'+num(r[3],2)+'</td>'+
+      '<td class="n">'+num(r[4],2)+'</td>'+
+      '<td class="n">'+num(r[5],2)+'</td>'+
+      '<td class="n">'+num(r[6],2)+'</td>'+
+      '<td class="n '+balCls+'">'+num(bal,2)+'</td>'+
+      '<td class="n">'+(r[8]===null?'\u2014':r[8].toFixed(2)+'%')+'</td>'+
+      '<td class="n">'+tierPill(r[9])+'</td>'+
+      '<td class="n">'+(r[10]===null?'\u2014':r[10])+'</td>'+
+    '</tr>'+
+    (mopen ? '<tr class="mrow"><td colspan="11">'+monthsTable(pid, r[0])+'</td></tr>' : '');
+  }).join('');
+  function sum(i, nd){
+    var t = rows.reduce(function(a,r){ return a + (r[i]||0); }, 0);
+    return fmt(t, nd);
+  }
+  var last = rows[rows.length-1];
+  var tot = '<tr class="ytot">'+
+    '<td class="mono">'+rows.length+' yrs</td>'+
+    '<td class="n">'+sum(1,1)+'</td><td class="n">'+sum(2,1)+'</td>'+
+    '<td class="n">'+sum(3,2)+'</td><td class="n">'+sum(4,2)+'</td>'+
+    '<td class="n">'+sum(5,2)+'</td><td class="n">'+sum(6,2)+'</td>'+
+    '<td class="n">'+(last[7]===null?'\u2014':fmt(last[7],2))+'</td>'+
+    '<td class="n"></td><td class="n"></td><td class="n"></td></tr>';
+  return '<div class="ywrap">'+
+    '<div class="ycap">'+plant.name+' \u00b7 revenue and royalty by fiscal year \u00b7 NPR million</div>'+
+    '<table class="ytab"><thead><tr>'+
+      '<th>Fiscal yr</th><th class="n">GWh</th><th class="n">Revenue</th>'+
+      '<th class="n">Energy roy.</th><th class="n">Capacity roy.</th><th class="n">Total due</th>'+
+      '<th class="n">Received</th><th class="n">Closing bal.</th><th class="n">Eff. rate</th>'+
+      '<th class="n">Tier</th><th class="n">Age</th>'+
+    '</tr></thead><tbody>'+body+tot+'</tbody></table>'+
+    '<div class="ycap" style="margin-top:10px;letter-spacing:0;text-transform:none;font-weight:400">'+
+      'Closing balance is a carry-forward stock, so the total row shows the latest year, not a sum.'+
+    '</div></div>';
+}
+
+function renderPlants(){
+  var q = document.getElementById('q').value.toLowerCase().trim();
+  var rows = D.plants.filter(function(p){
+    if(!q) return true;
+    return (p.name||'').toLowerCase().indexOf(q) >= 0
+        || (p.company||'').toLowerCase().indexOf(q) >= 0
+        || (p.district||'').toLowerCase().indexOf(q) >= 0;
+  });
+  rows.sort(function(a,b){
+    var x=a[sortKey], y=b[sortKey];
+    if(x===null||x===undefined) return 1; if(y===null||y===undefined) return -1;
+    if(typeof x === 'string') return sortDir * x.localeCompare(y);
+    return sortDir * (x-y);
+  });
+  var html = rows.map(function(p){
+    var bal = p.bal_m, balTxt;
+    if(bal===null||bal===undefined) balTxt='\u2014';
+    else if(bal>0.05)  balTxt='<span class="stat-crit">'+fmt(bal,1)+' due</span>';
+    else if(bal<-0.05) balTxt='<span class="stat-good">'+fmt(bal,1)+' cr</span>';
+    else               balTxt='<span style="color:var(--ink-3)">'+fmt(bal,1)+'</span>';
+    var open = !!openRows[p.id];
+    var tr = '<tr class="prow" data-id="'+p.id+'" tabindex="0" role="button" aria-expanded="'+open+'">'+
+      '<td><span class="chev">\u25b6</span> '+p.name+'</td><td>'+(p.company||'\u2014')+'</td><td>'+(p.district||'\u2014')+
+      '</td><td class="mono">'+(p.cod||'\u2014')+'</td><td class="n">'+fmt(p.mw,1)+
+      '</td><td class="n">'+ppaCell(p)+'</td><td class="n">'+fmt(p.gwh)+
+      '</td><td class="n">'+(p.cf!=null?p.cf.toFixed(3):'\u2014')+'</td><td class="n">'+fmt(p.rev_bn,2)+
+      '</td><td class="n">'+fmt(p.roy_bn,3)+'</td><td class="n">'+p.yrs+'</td><td class="n">'+balTxt+
+      '</td><td class="mono">'+(p.last_fy||'\u2014')+'</td></tr>';
+    if(open) tr += '<tr class="drow"><td colspan="13">'+yearsTable(p.id, p)+'</td></tr>';
+    return tr;
+  }).join('');
+  document.querySelector('#t-plants tbody').innerHTML = html;
+  document.getElementById('cnt').textContent = rows.length+' of '+D.plants.length+
+    ' plants'+(q?' matching \u201c'+q+'\u201d':'');
+  document.getElementById('tc-plants').textContent = '('+fmt(D.plants.length)+')';
+}
+
+// ---- flat per-fiscal-year view (second tab) -----------------------------
+var yRows = null, ySortKey = 'rev', ySortDir = -1;
+function buildYearRows(){
+  if(yRows) return yRows;
+  var byId = {};
+  D.plants.forEach(function(p){ byId[p.id] = p; });
+  yRows = [];
+  Object.keys(D.years).forEach(function(pid){
+    var p = byId[pid] || {name:'#'+pid, company:null};
+    D.years[pid].forEach(function(r){
+      yRows.push({id:+pid, name:p.name, company:p.company, fy:r[0], gwh:r[1], rev:r[2],
+                  eroy:r[3], croy:r[4], due:r[5], recv:r[6], bal:r[7], pct:r[8],
+                  tier:r[9], age:r[10], mo:r[11], annual:r[12]});
+    });
+  });
+  return yRows;
+}
+function renderYears(){
+  var q = document.getElementById('q').value.toLowerCase().trim();
+  var rows = buildYearRows().filter(function(r){
+    if(!q) return true;
+    return (r.name||'').toLowerCase().indexOf(q) >= 0
+        || (r.company||'').toLowerCase().indexOf(q) >= 0
+        || (r.fy||'').toLowerCase().indexOf(q) >= 0;
+  });
+  rows.sort(function(a,b){
+    var x=a[ySortKey], y=b[ySortKey];
+    if(x===null||x===undefined) return 1; if(y===null||y===undefined) return -1;
+    if(typeof x === 'string') return ySortDir * x.localeCompare(y);
+    return ySortDir * (x-y);
+  });
+  document.querySelector('#t-years tbody').innerHTML = rows.map(function(r){
+    var balCls = r.bal===null ? '' : (r.bal > 0.05 ? 'stat-crit' : (r.bal < -0.05 ? 'stat-good' : ''));
+    var mark = r.annual===1 ? ' <span class="partial">(annual)</span>'
+             : (r.mo>0 && r.mo<12 ? ' <span class="partial">('+r.mo+'mo)</span>' : '');
+    return '<tr><td>'+r.name+'</td><td>'+(r.company||'\u2014')+'</td>'+
+      '<td class="mono">'+r.fy+mark+'</td>'+
+      '<td class="n">'+num(r.gwh,1)+'</td><td class="n">'+num(r.rev,1)+'</td>'+
+      '<td class="n">'+num(r.eroy,2)+'</td><td class="n">'+num(r.croy,2)+'</td>'+
+      '<td class="n">'+num(r.due,2)+'</td><td class="n">'+num(r.recv,2)+'</td>'+
+      '<td class="n '+balCls+'">'+num(r.bal,2)+'</td>'+
+      '<td class="n">'+(r.pct===null?'\u2014':r.pct.toFixed(2)+'%')+'</td>'+
+      '<td class="n">'+tierPill(r.tier)+'</td>'+
+      '<td class="n">'+(r.age===null?'\u2014':r.age)+'</td></tr>';
+  }).join('');
+  document.getElementById('cnt').textContent = fmt(rows.length)+' of '+fmt(buildYearRows().length)+
+    ' plant-years'+(q?' matching \u201c'+q+'\u201d':'');
+  document.getElementById('tc-years').textContent = '('+fmt(buildYearRows().length)+')';
+}
+
+// ---- project profile (third tab; also the map's click target) ----------
+var selProject = null;
+function plantById(id){
+  var f = D.plants.filter(function(p){ return p.id === id; });
+  return f.length ? f[0] : null;
+}
+function renderPlist(){
+  var q = document.getElementById('q').value.toLowerCase().trim();
+  var rows = D.plants.filter(function(p){
+    if(!q) return true;
+    return (p.name||'').toLowerCase().indexOf(q) >= 0
+        || (p.company||'').toLowerCase().indexOf(q) >= 0
+        || (p.district||'').toLowerCase().indexOf(q) >= 0;
+  });
+  document.getElementById('plist').innerHTML = rows.map(function(p){
+    return '<button type="button" data-id="'+p.id+'" role="option" aria-current="'+
+      (selProject===p.id)+'">'+p.name+
+      '<span class="pm">'+(p.mw!=null?fmt(p.mw,1)+' MW':'')+
+      (p.district?'  \u00b7  '+p.district:'')+'</span></button>';
+  }).join('') || '<div class="pempty">No project matches that search.</div>';
+  document.getElementById('cnt').textContent = rows.length+' of '+D.plants.length+
+    ' projects'+(q?' matching \u201c'+q+'\u201d':'');
+}
+function fact(k, v, sub){
+  return '<div class="fact"><div class="fk">'+k+'</div><div class="fv">'+
+    (v===null||v===undefined||v===''?'\u2014':v)+'</div>'+
+    (sub?'<div class="fs">'+sub+'</div>':'')+'</div>';
+}
+// Bikram Sambat dates arrive as DD/MM/YYYY on most rows and YYYY/MM/DD on a few,
+// so take whichever component is a plausible 4-digit BS year - same rule as the build.
+function bsYear(s){
+  if(typeof s !== 'string') return null;
+  var parts = s.match(/\d+/g) || [];
+  for(var i=0;i<parts.length;i++){
+    if(parts[i].length===4){ var v=+parts[i]; if(v>=1990 && v<=2200) return v; }
+  }
+  return null;
+}
+function licenceTimeline(p){
+  var a = bsYear(p.lic_from), b = bsYear(p.lic_to), c = bsYear(p.cod);
+  var now = p.last_fy ? 2000 + parseInt(String(p.last_fy).split('/')[0], 10) : null;
+  if(a==null || b==null || b<=a) return '';
+  var pct = function(y){ return Math.max(0, Math.min(100, 100*(y-a)/(b-a))); };
+  // a label centred on 0% or 100% overhangs the bar and scrolls the whole page
+  var anchor = function(v){ return v<=8 ? 'translateX(0)'
+                          : (v>=92 ? 'translateX(-100%)' : 'translateX(-50%)'); };
+  var nowPct = now!=null ? pct(now) : null;
+  var elapsed = now!=null ? now-a : null;
+  var expired = now!=null && now > b;
+  var html = '<div class="fact span tl'+(expired?' expired':'')+'">'+
+    '<div class="fk">Licence term</div>'+
+    '<div class="tlbar">'+
+      (nowPct!=null ? '<div class="tlfill" style="width:'+nowPct.toFixed(1)+'%"></div>' : '')+
+      (c!=null && c>=a && c<=b
+        ? '<div class="tltick" style="left:'+pct(c).toFixed(1)+'%" title="commissioned '+c+'"></div>'+
+          '<div class="tlcod" style="left:'+pct(c).toFixed(1)+'%;transform:'+anchor(pct(c))+'">COD '+c+'</div>'
+        : '')+
+      (nowPct!=null
+        ? '<div class="tldot" style="left:'+nowPct.toFixed(1)+'%" title="latest assessed '+now+'"></div>'+
+          '<div class="tlnow" style="left:'+nowPct.toFixed(1)+'%;transform:'+anchor(nowPct)+'">'+now+
+            (p.last_fy?' \u00b7 FY '+p.last_fy:'')+(expired?' \u00b7 expired':'')+'</div>'
+        : '')+
+    '</div>'+
+    '<div class="tlends"><span>Licensed <b>'+a+'</b></span>'+
+      (elapsed!=null
+        ? '<span'+(expired?' class="stat-crit"':'')+'>'+elapsed+' of '+(b-a)+' years elapsed'+
+          (expired?' \u2014 licence lapsed':' \u00b7 '+Math.round(nowPct)+'%')+'</span>'
+        : '<span></span>')+
+      '<span>Expires <b>'+b+'</b></span></div>'+
+    '</div>';
+  return html;
+}
+function renderProject(){
+  var host = document.getElementById('pcard');
+  var p = selProject!=null ? plantById(selProject) : null;
+  if(!p){ host.innerHTML = '<div class="pcard"><div class="pempty">'+
+    'Choose a project from the list, or select one on the map above.</div></div>'; return; }
+  var rows = D.years[String(p.id)] || [];
+  var latest = rows.length ? rows[rows.length-1] : null;
+  var age = latest && latest[10]!=null ? latest[10] : null;
+  var tier = null;
+  for(var i=rows.length-1;i>=0;i--){ if(rows[i][9]!=null){ tier = rows[i][9]; break; } }
+  var lic = (p.lic_from||p.lic_to) ? ((p.lic_from||'?')+' \u2192 '+(p.lic_to||'?')) : null;
+  var pos = p.prec==='exact' ? 'Surveyed' : (p.prec==='district' ? 'District only' : 'Not located');
+  host.innerHTML =
+    '<div class="pcard">'+
+      '<div class="pname">'+p.name+
+        (p.ccy==='USD'?'<span class="ccy">USD PPA</span>':'')+'</div>'+
+      '<div class="pco">'+(p.company||'Operator not recorded')+'</div>'+
+      '<div class="facts">'+
+        fact('Capacity', p.mw!=null?fmt(p.mw,1):null, 'MW installed')+
+        fact('Commissioned', p.cod, p.cod_ad?('AD '+p.cod_ad):null)+
+        fact('Age', age!=null?age:null, 'years, latest FY')+
+        fact('Royalty tier', tier?('Tier '+tier):null, tier===2?'past 15 years':(tier===1?'within 15 years':null))+
+        fact('District', p.district, p.province||null)+
+        fact('Licence', p.lic, lic)+
+        fact('Tariff class', p.ptype)+
+        (p.ccy==='USD'
+          ? fact('PPA rate', p.ppa_usd!=null?('$'+p.ppa_usd.toFixed(4)):null,
+                 'USD/kWh contracted'+(p.fx!=null?' \u00b7 fx ~'+p.fx.toFixed(2):''))
+          : fact('PPA rate', p.ppa_wet!=null?(p.ppa_wet.toFixed(2)+' / '+(p.ppa_dry!=null?p.ppa_dry.toFixed(2):'\u2014')):null,
+                 'NPR/kWh wet / dry'))+
+        fact('Billing currency', p.ccy||'NPR',
+             p.ccy==='USD'?'NPR figures reconstructed':'as filed')+
+        fact('Position', pos, p.prec==='exact'?null:'approximate')+
+        licenceTimeline(p)+
+      '</div>'+
+      '<div class="facts">'+
+        fact('Lifetime output', p.gwh!=null?fmt(p.gwh):null, 'GWh recorded')+
+        fact('Median CF', p.cf!=null?p.cf.toFixed(3):null, 'monthly filings')+
+        fact('Lifetime revenue', p.rev_bn!=null?fmt(p.rev_bn,2):null, 'NPR billion')+
+        fact('Lifetime royalty', p.roy_bn!=null?fmt(p.roy_bn,3):null, 'NPR billion')+
+        fact('Years assessed', p.yrs, 'fiscal years')+
+        fact('Closing balance', p.bal_m!=null?fmt(p.bal_m,1):null,
+             p.last_fy?('NPR m, FY '+p.last_fy):'NPR m')+
+      '</div>'+
+      yearsTable(p.id, p)+
+    '</div>';
+}
+function selectProject(id, jump){
+  selProject = id;
+  if(jump){
+    showTab('project');
+    var sec = document.getElementById('panel-project');
+    if(sec) sec.scrollIntoView({behavior:'smooth', block:'center'});
+  } else { renderPlist(); renderProject(); }
+}
+
+var activeTab = 'plants';
+function showTab(which){
+  activeTab = which;
+  ['plants','years','project'].forEach(function(t){
+    var btn = document.getElementById('tab-'+t), panel = document.getElementById('panel-'+t);
+    var on = (t === which);
+    btn.setAttribute('aria-selected', on); btn.tabIndex = on ? 0 : -1;
+    panel.hidden = !on;
+  });
+  var qEl = document.getElementById('q');
+  qEl.placeholder = which === 'years'
+    ? 'Search plant, company or fiscal year\u2026'
+    : 'Search plant, company or district\u2026';
+  refresh();
+}
+function refresh(){
+  if(activeTab === 'plants') renderPlants();
+  else if(activeTab === 'years') renderYears();
+  else { renderPlist(); renderProject(); }
+}
+
+function toggleRow(tr){
+  var id = tr.getAttribute('data-id');
+  if(openRows[id]) delete openRows[id]; else openRows[id] = 1;
+  renderPlants();
+  var again = document.querySelector('#t-plants tr.prow[data-id="'+id+'"]');
+  if(again) again.focus();
+}
+
+function wireTable(){
+  document.querySelectorAll('#t-plants th').forEach(function(th){
+    function go(){
+      var k = th.dataset.k;
+      if(sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = (k==='name'||k==='last_fy')?1:-1; }
+      document.querySelectorAll('#t-plants th').forEach(function(o){ o.removeAttribute('aria-sort'); });
+      th.setAttribute('aria-sort', sortDir>0?'ascending':'descending');
+      renderPlants();
+    }
+    th.addEventListener('click', go);
+    th.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+  });
+  document.getElementById('q').addEventListener('input', refresh);
+  document.querySelectorAll('#t-years th').forEach(function(th){
+    function go(){
+      var k = th.dataset.y;
+      if(ySortKey === k) ySortDir = -ySortDir;
+      else { ySortKey = k; ySortDir = (k==='name'||k==='company'||k==='fy') ? 1 : -1; }
+      document.querySelectorAll('#t-years th').forEach(function(o){ o.removeAttribute('aria-sort'); });
+      th.setAttribute('aria-sort', ySortDir>0?'ascending':'descending');
+      renderYears();
+    }
+    th.addEventListener('click', go);
+    th.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+  });
+  var tl = document.querySelector('.tabs');
+  tl.addEventListener('click', function(e){
+    var b = e.target.closest('button[role=tab]'); if(!b) return;
+    showTab(b.id.replace('tab-',''));
+  });
+  tl.addEventListener('keydown', function(e){
+    if(e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
+    e.preventDefault();
+    var seq = ['plants','years','project'];
+    var i = seq.indexOf(activeTab) + (e.key === 'ArrowRight' ? 1 : -1);
+    showTab(seq[(i + seq.length) % seq.length]);
+    document.getElementById('tab-'+activeTab).focus();
+  });
+  document.getElementById('tc-plants').textContent = '('+fmt(D.plants.length)+')';
+  document.getElementById('tc-years').textContent = '('+fmt(buildYearRows().length)+')';
+  document.getElementById('tc-project').textContent = '';
+  document.getElementById('plist').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-id]'); if(!b) return;
+    selectProject(+b.getAttribute('data-id'), false);
+  });
+  var tb = document.querySelector('#t-plants tbody');
+  tb.addEventListener('click', function(e){
+    var tr = e.target.closest('tr.prow'); if(tr) toggleRow(tr);
+  });
+  tb.addEventListener('keydown', function(e){
+    if(e.key!=='Enter' && e.key!==' ') return;
+    var tr = e.target.closest('tr.prow'); if(!tr) return;
+    e.preventDefault(); toggleRow(tr);
+  });
+  // the + lives inside both the inline plant expansion and the project card
+  function monthClick(e){
+    var b = e.target.closest('button.mx'); if(!b) return;
+    e.stopPropagation();
+    var k = b.getAttribute('data-pid')+'|'+b.getAttribute('data-fy');
+    if(openMonths[k]) delete openMonths[k]; else openMonths[k] = 1;
+    refresh();
+    var again = document.querySelector('button.mx[data-pid="'+b.getAttribute('data-pid')+
+      '"][data-fy="'+b.getAttribute('data-fy')+'"]');
+    if(again) again.focus();
+  }
+  tb.addEventListener('click', monthClick);
+  document.getElementById('pcard').addEventListener('click', monthClick);
+}
+
+function drawAll(){
+  chartEnergy(); chartCap(); chartSeason(); chartRate(); chartGen(); chartRoy(); chartRecon(); chartAge(); chartMap(); chartLic(); chartLead();
+}
+stats(); transTable(); reconTable(); wireTable(); renderPlants(); drawAll(); buildTableViews();
+
+// redraw on theme flip so colors resolve against the new tokens
+if(window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawAll);
+new MutationObserver(drawAll).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+var rt; addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(drawAll, 180); });
+})();
+</script>

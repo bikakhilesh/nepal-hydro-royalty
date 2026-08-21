@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# The operator income statement used by the reconciliation section is private
+# input, not part of this repo. Point HYDRO_XLSX at it locally.
+*.xlsx

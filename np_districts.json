@@ -1,0 +1,182 @@
+{
+ "Baglung": {
+  "lat": 28.26568,
+  "lon": 83.5972502,
+  "match": "District administration office Baglung, Hari Bahadur Khadka "
+ },
+ "Bajhanga": {
+  "lat": 29.5477308,
+  "lon": 81.1933393,
+  "match": "Bajhang District Hospital, NH64, Ridhapata, JayaPrithvi-09, "
+ },
+ "Bhojpur": {
+  "lat": 27.1743038,
+  "lon": 87.0934775,
+  "match": "भोजपुर जिल्ला, कोशी प्रदेश, नेपाल"
+ },
+ "Dailekh": {
+  "lat": 28.8380316,
+  "lon": 81.7106443,
+  "match": "Dailekh district prison, Dailekh Rajmarg, Ganeshsthan, Naray"
+ },
+ "Darchula": {
+  "lat": 29.9127333,
+  "lon": 80.7937159,
+  "match": "दार्चुला, सुदूरपश्चिम प्रदेश, नेपाल"
+ },
+ "Dhading": {
+  "lat": 27.9114659,
+  "lon": 84.8980987,
+  "match": "District Education Office, Dhading, Dhading Besi Marga, Adva"
+ },
+ "Dolakha": {
+  "lat": 27.6329785,
+  "lon": 86.2324209,
+  "match": "Dolakha District Hospital, Khadichaur - Jiri Highway, Jiri-0"
+ },
+ "Doti": {
+  "lat": 29.2667026,
+  "lon": 80.9828753,
+  "match": "District Administration Office, Doti, NH03, Silgadhi, Dipaya"
+ },
+ "Gorkha": {
+  "lat": 27.9949532,
+  "lon": 84.6279988,
+  "match": "Gorkha District Hospital, Gorkha-Ghyampesal Road, Gorkha-06,"
+ },
+ "Gulmi": {
+  "lat": 28.0682616,
+  "lon": 83.2482724,
+  "match": "Gulmi District Hospital, Khanigaun road, Resunga-08, Tamghas"
+ },
+ "Ilam": {
+  "lat": 26.8854074,
+  "lon": 87.9203052,
+  "match": "इलाम जिल्ला, कोशी प्रदेश, नेपाल"
+ },
+ "Kaski": {
+  "lat": 28.2127189,
+  "lon": 83.9810569,
+  "match": "Nepal Red Cross Society, Kaski District Chapter, सिमलचौर, Po"
+ },
+ "Kavrepalanchok": {
+  "lat": 27.6279479,
+  "lon": 85.5234513,
+  "match": "Kavrepalanchok District Multipurpose Cooperative Ltd, Shreek"
+ },
+ "Khotang": {
+  "lat": 27.2133094,
+  "lon": 86.7949062,
+  "match": "Khotang District Hospital, 13DR007, दिक्तेल, Diktel Rupakot "
+ },
+ "Lalitpur": {
+  "lat": 27.665847,
+  "lon": 85.322427,
+  "match": "District Court Lalitpur, न्हु पुखु (रानी पोखरी) मार्ग, कुमार"
+ },
+ "Lamjung": {
+  "lat": 28.2290844,
+  "lon": 84.3791341,
+  "match": "District Agriculture Office Lamjung, Thado Line, Besishahar,"
+ },
+ "Makawanpur": {
+  "lat": 27.4365389,
+  "lon": 85.0550812,
+  "match": "मकवानपुर जिल्ला, बागमती प्रदेश, नेपाल"
+ },
+ "Myagdi": {
+  "lat": 28.5439443,
+  "lon": 83.4632633,
+  "match": "म्याग्दी, गण्डकी प्रदेश, 33208, नेपाल"
+ },
+ "Nawalparasi": {
+  "lat": 27.7052362,
+  "lon": 84.4085919,
+  "match": "Nepal Badijya Bank, Bishal Chowk, Gaidakot-02, गैंडाकोट, Gai"
+ },
+ "Nuwakot": {
+  "lat": 27.9139628,
+  "lon": 85.1421083,
+  "match": "Nepal Red Cross Society, Nuwakot District Chapter, Pasang Lh"
+ },
+ "Okhaldunga": {
+  "lat": 27.3363024,
+  "lon": 86.4489456,
+  "match": "ओखलढुङ्गा जिल्ला, कोशी प्रदेश, 56010, नेपाल"
+ },
+ "Palpa": {
+  "lat": 27.8659598,
+  "lon": 83.5416744,
+  "match": "Palpa District Hospital Hostel, NH48, Tansen--04, Tansen, पा"
+ },
+ "Panchthar": {
+  "lat": 27.1488979,
+  "lon": 87.7663813,
+  "match": "Panchthar District Hospital, मेची राजमार्ग, Phidim-04, फिदिम"
+ },
+ "Parbat": {
+  "lat": 28.2116711,
+  "lon": 83.6757747,
+  "match": "Parbat District Hospital, NH70, Kushma-05, कुश्मा, Kushma, प"
+ },
+ "Pyuthan": {
+  "lat": 28.087496,
+  "lon": 82.8839438,
+  "match": "District court Pyuthan, NH09, मल्लरानी-०४, प्युठान, Mallaran"
+ },
+ "Ramechhap": {
+  "lat": 27.3808649,
+  "lon": 86.0617377,
+  "match": "District Health Office Manthali Ramechhap, Khurkot Manthali "
+ },
+ "Rashuwa": {
+  "lat": 28.1100125,
+  "lon": 85.2966703,
+  "match": "Rasuwa District Hospital, Heli Road, धुन्चे, Gosaikunda-06, "
+ },
+ "Rolpa": {
+  "lat": 28.3223102,
+  "lon": 82.6157842,
+  "match": "Rolpa District Hospital, NH53, Tallagaun, रोल्पा-०२, लिवाङ्,"
+ },
+ "Rukum": {
+  "lat": 28.6448822,
+  "lon": 82.5617218,
+  "match": "Shree Sani Bheri English Boarding school panga-3 Rukum East,"
+ },
+ "Sankhuwasabha": {
+  "lat": 27.2909987,
+  "lon": 87.3144334,
+  "match": "District Court Sankhuwasabha, 09DR002, Chainpur-06, चैनपुर, "
+ },
+ "Saptari": {
+  "lat": 26.540432,
+  "lon": 86.74586,
+  "match": "District Forest Office, Saptari, Adalat Marg, मैथिली चोक, Ra"
+ },
+ "Sindhupalchok": {
+  "lat": 27.9059127,
+  "lon": 85.7563055,
+  "match": "सिन्धुपाल्चोक जिल्ला, बागमती प्रदेश, नेपाल"
+ },
+ "Solukhumbu": {
+  "lat": 27.5153681,
+  "lon": 86.5858754,
+  "match": "Solukhumbu District Hospital, NH20, Solududhkunda-04, Phaplu"
+ },
+ "Sunsari": {
+  "lat": 26.5882743,
+  "lon": 87.1387569,
+  "match": "जिल्ला शिक्षा कार्यालय, सुनसरी, महेन्द्र राज्मार्ग्, Bhokrah"
+ },
+ "Taplejung": {
+  "lat": 27.3586827,
+  "lon": 87.6729259,
+  "match": "district court taplejung, NH02, Batase, Phungling-05, फुङलिङ"
+ },
+ "Tehrathum": {
+  "lat": 27.1290911,
+  "lon": 87.5346974,
+  "match": "Terhathum  District Hospital, F40, Loktantrik Chok, Myanglun"
+ }
+}
