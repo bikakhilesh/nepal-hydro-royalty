@@ -1,0 +1,130 @@
+# Contracted plant load factor and project cost, one row per listed ticker.
+# Hand-entered. This file is the only place these figures come from -- nothing
+# here is derived, and nothing is inferred from the fleet.
+#
+# An EMPTY ContractPLF means not available. It does not mean zero, and it must
+# not be filled with a fleet average or a number from a similar plant: the whole
+# point of the column is to compare a plant against its own contract. A plant
+# with no figure is reported as a dash and left out of any shortfall statistic.
+#
+# ContractPLF   percent, as the source states it (62.16, not 0.6216)
+# ContractEnergy annual contracted energy in GWh
+# DryPct        dry-season share of contracted energy, percent
+# CostPerMW     total project cost per MW, NPR million
+# Source        icra | care | prospectus | operator-model | annual-report
+# SourceUrl     the document the figure was read from. Pre-filled with the newest
+#               ICRA rationale where one exists, so filling a row is a click.
+# Note          anything a later reader needs, especially why a cell is blank.
+#
+# Do not enter a figure you have not seen in the document named in SourceUrl.
+Ticker,Company,ContractPLF,ContractEnergy,DryPct,CostPerMW,Source,SourceUrl,Note
+AHL,Asian Hydropower Limited,,,,,,,
+AHPC,Arun Valley Hydropower Development,,,,,,https://www.icranepal.com/wp-content/uploads/2024/01/A.543-Arun-Valley-Hydropower-Development-Company-Limited_BLR-Surveillance-_January-17-2024_Final.pdf,"rationale read, states no contracted PLF"
+AKJCL,Ankhu Khola Jalvidhyut Company Ltd.,,,,281,icra,https://www.icranepal.com/wp-content/uploads/2023/09/A.393-Ankhu-Khola-Jalvidhyut-Co.-Limited_Fresh-IR-BLR-Surveillance_Sep-2023_Final-1.pdf,"rationale gives 2 PLF figures (55.0, 63.0) - ambiguous, left blank"
+AKPL,Arun Kabeli Power Ltd.,,,,,,https://www.icranepal.com/wp-content/uploads/2024/01/A.546-Arun-Kabeli-Power-Ltd._Ratings-placed-on-Issuer-not-Cooperating-category_Jan-23-2024_Final.pdf,"rationale read, states no contracted PLF"
+APHL,Appolo Hydropower Limited,,,,,,,
+API,Api Power,,,,,,,
+BARUN,Barun Hydropower,,,,,,https://www.icranepal.com/wp-content/uploads/2019/11/53.-Rationale_Barun-Hydropower_Feb-2018.pdf,"rationale gives 2 PLF figures (48.0, 66.0) - ambiguous, left blank"
+BEDC,Bhugol Energy Development Company Limited,,,,196,icra,https://www.icranepal.com/wp-content/uploads/2025/03/A.1038-Bhugol-Energy-Development-Co.-Ltd._Issuer-Rating-and-BLR-Surveillance_March-2025.pdf,"rationale read, states no contracted PLF"
+BGWT,Bhagawati Hydropower Development Company Limited,,,,,,,
+BHCL,Bikash Hydropower Company Limited,,,,246,icra,https://www.icranepal.com/wp-content/uploads/2023/11/A.442-Bikash-Hydropower-Company-Limited-_Fresh-IR-BLR_October-2023_Final-.pdf,"regex read 79% from the rationale, outside the 55-75% band every verified contract falls in - check the PDF before using it"
+BHDC,Bindhyabasini Hydropower Development Company Limited,,,,,,,
+BHL,Balephi Hydropower Limited,,,,227,icra,https://www.icranepal.com/wp-content/uploads/2025/10/A.1339-Balephi-Energy_Fresh-BLR_September-2025_Final.pdf,"rationale read, states no contracted PLF"
+BHPL,Barahi Hydropower Public Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2025/06/A.1147-Barahi-Hydropower-Public-Limited_Rating-Withdrawn_June-2025_Final.pdf,could not read the PDF (URLError)
+BJHL,Bhujung Hydropower Limited,64,,,210,icra,https://www.icranepal.com/wp-content/uploads/2023/08/A.366-Bhujung-Hydropower-Limited_Fresh-IR-and-BLR-Surveillance_July-2023-Final.pdf,read from the rationale PDF
+BNHC,Buddha Bhumi Nepal Hydropower Company Limited,,,,,,,
+BPCL,Butwal Power,,,,,,,
+BUNGAL,Bungal Hydro Limited ,,,,,,https://www.icranepal.com/wp-content/uploads/2025/05/A.1116-Bungal-Hydro-Limited_Ratings-Withdrawn_May-2025.pdf,"rationale read, states no contracted PLF"
+CHCL,Chilime Hydropower,,,,,,,
+CHL,Chhyangdi Hydropower Ltd.,,,,225,icra,https://www.icranepal.com/wp-content/uploads/2025/01/A.966-Chhyangdi-Hydropower-Ltd_BLR-Surveillance_January-2025_Final.pdf,"rationale read, states no contracted PLF"
+CKHL,Chirkhwa Hydropower Limited,,,,194,icra,https://www.icranepal.com/wp-content/uploads/2023/02/A.183-Chirkhwa-Hydropower-Ltd_BLR-IR-surv_Feb-2023.pdf,"rationale read, states no contracted PLF"
+DHEL,Daramkhola Hydro Energy Limited,,,,,,,
+DHPL,Dibyashwori Hydropower Ltd.,,,,,,,
+DOLTI,Dolti Power Company Limited,59,,,245,icra,https://www.icranepal.com/wp-content/uploads/2025/08/A.1263-Dolti-Power-Co.-Ltd._Issuer-Rating-and-BLR-Surveillance_August-2025.pdf,read from the rationale PDF
+DORDI,Dordi Khola Jal Bidyut Company Limited,,,,242,icra,https://www.icranepal.com/wp-content/uploads/2026/07/B.226-Dordi-Khola-Jal-Bidhyut-Co.-Ltd_-Issuer-and-BLR-Surveillance-July-2026-1.pdf,"rationale read, states no contracted PLF"
+EHPL,Eastern Hydropower Limited,,,,,,,
+GHL,Ghalemdi Hydro Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2022/08/A.28-Ghalemdi-Hydro-Limited-Ratings-withdrawn.pdf,"rationale read, states no contracted PLF"
+GLH,GreenLife Hydropower Limited,,,,,,,
+GVL,Green Ventures Limited,64.40,295.83,17.72,230.59,operator-model,,"operator's own model, not in this repo; 295,832,287 kWh over 52.4 MW x 8760 h"
+HDHPC,Himal Dolakha Hydropower Company Limited,,,,,,,
+HHL,Himalayan Hydropower Limited,64,,,226,icra,https://www.icranepal.com/wp-content/uploads/2025/08/A.1244-Himalayan-Hydropower-Limited_BLR-IR-Surveillances_August-07-2024_Final-1.pdf,read from the rationale PDF
+HIMSTAR,Him Star Urja Company Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2024/02/A.584-Him-Star-Urja-Company-Limited_BLR-and-IR-Surv_Feb-2024_Final.pdf,"rationale read, states no contracted PLF"
+HPPL,Himalayan Power Partner Ltd.,,,,,,,
+HURJA,Himalaya Urja Bikas Company Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2022/11/A.100-Himalaya-Urja-Bikas-Company-Limited.pdf,"rationale read, states no contracted PLF"
+IHL,Ingwa Hydropower Limited,,,,,,,
+JOSHI,Joshi Hydropower Development Company Ltd,,,,,,,
+KAHL,Kalanga Hydro Limited ,,,,,,https://www.icranepal.com/wp-content/uploads/2023/04/A.232-Kalanga-Hydro-Ltd._Issuer-not-Cooperating_April-2023_Final.pdf,"rationale read, states no contracted PLF"
+KBSH,Kutheli Bukhari Small Hydropower Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2024/06/A.707-Kutheli-Bukhari-Small-Hydropower-Limited_Issuer-Rating-placed-on-Issuer-not-Cooperating-category_June-2024.pdf,"rationale read, states no contracted PLF"
+KHPL,Kalinchock Hydropower Limited ,67,,,,icra,https://www.icranepal.com/wp-content/uploads/2025/08/A.1226-Kalinchock-Hydropower-Limited_BLR-Surveillance-II_July-2025.pdf,read from the rationale PDF
+KKHC,Khanikhola Hydropower Co. Ltd.,,,,,,,
+KPCL,Kalika Power Company,,,,,,,
+LEC,Liberty Energy Company Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2022/11/A.102-Liberty-Energy-Company-Limited.pdf,"rationale read, states no contracted PLF"
+MABEL,Mabilung Energy Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2025/07/A.1175-Mabilung_Energy_Limited__Rating_surveillance_June-2025.pdf,could not read the PDF (URLError)
+MAKAR,Makar Jitumaya Suri Hydropower Limited,,,,,,,
+MANDU,Mandu Hydropower Limited,69,,,,icra,https://www.icranepal.com/wp-content/uploads/2026/07/B.230-Mandu-Hydropower-Limited_BLR-Surveillance-IR-withdrawal_July-2026_Final.pdf,read from the rationale PDF
+MBJC,Madhya Bhotekoshi Jalavidyut Company Limited,,,,,,,
+MCHL,Menchhiyam Hydropower Limited,,,,,,,
+MEHL,Manakamana Engineering Hydropower Limited,,,,,,,
+MEL,Modi Energy Limited,,,,259,icra,https://www.icranepal.com/wp-content/uploads/2025/10/A.1332-Modi-Jalvidhyut-Company-Limited_BLR-Surveillance_Sep-2025_final.pdf,"rationale read, states no contracted PLF"
+MEN,Mountain Energy Nepal Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2025/09/A.1284-Mountain-Hydro-Nepal-Limited_Ratings-review_September-04-2025.pdf,"rationale read, states no contracted PLF"
+MHCL,Molung Hydropower Company Limited,58,,,207,icra,https://www.icranepal.com/wp-content/uploads/2026/07/B.240-Molung-Hydropower-Co.-Limited_BLR-Surveillance_July-2026_Final.pdf,read from the rationale PDF
+MHL,Mandakini Hydropower Limited,,,,,,,
+MHNL,Mountain Hydro Nepal Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2025/09/A.1284-Mountain-Hydro-Nepal-Limited_Ratings-review_September-04-2025.pdf,"rationale read, states no contracted PLF"
+MKHC,Maya Khola Hydropower Company Limited,62,,,201,icra,https://www.icranepal.com/wp-content/uploads/2022/09/A.53-Maya-Khola-Hydropower-Company-Limited-Ratings-reaffirmed.pdf,PR says 'contract PLF of the project (~62%)' - approximate in the source
+MKHL,Mai Khola Hydropower Limited,,,,187,icra,https://www.icranepal.com/wp-content/uploads/2026/02/B.27-Mai-Khola-Hydropower-Limited_Issuer-Rating-Surveillance-III_February-05-2026.pdf,"rationale read, states no contracted PLF"
+MKJC,Mailung Khola Jal Vidhyut Company Limited,,,,,,,
+MMKJL,Mathillo Mailun Khola Jalvidhyut Limited,,,,,,,
+MSHL,Mid Solu Hydropower Limited,69,,,225,icra,https://www.icranepal.com/wp-content/uploads/2026/07/B.234-Mid-Solu-Hydropower-Limited_Issuer-Rating-withdrawal-and-BLR-surveillance_July-2026_Final.pdf,read from the rationale PDF
+NGPL,Ngadi Group Power Ltd.,,,,,,,
+NHDL,Nepal Hydro Developers Ltd.,,,,,,,
+NHPC,National Hydro Power,,,,411,icra,https://www.icranepal.com/wp-content/uploads/2024/10/A.888-National-Hydro-Power-Company-Limited_-BLR-IR-Survs._October-21-2024_Final-1.pdf,"rationale read, states no contracted PLF"
+NYADI,Nyadi Hydropower Limited,,,,,,,
+PHCL,Peoples Hydropower Company Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2025/11/A.1382-Peoples-Energy-Limited_BLR-and-IR-Surveillance_November-2025.pdf,could not read the PDF (URLError)
+PMHPL,Panchakanya Mai Hydropower,65,,,,icra,https://www.icranepal.com/wp-content/uploads/2026/05/B.124-Panchakanya-Mai-Hydropower-Limited_-BLR-Surveillance-April-2026.pdf,read from the rationale PDF
+PPCL,Panchthar Power Company Ltd.,,,,,,https://www.icranepal.com/wp-content/uploads/2025/06/A.1128-Panchthar-Power-Company-Ltd_Fresh-IR-and-BLR-Surveillance_May-2025_Upload.pdf,could not read the PDF (URLError)
+PPL,Peoples Power Limited,61,,,217,icra,https://www.icranepal.com/wp-content/uploads/2025/11/A.1382-Peoples-Energy-Limited_BLR-and-IR-Surveillance_November-2025.pdf,read from the rationale PDF
+RADHI,Radhi Bidhyut Company,,,,,,https://www.icranepal.com/wp-content/uploads/2025/01/A.981-Radhi-Bidyut-Company-Limited_Issuer-Rating-Surveillance_January-13-2025_Final.pdf,"rationale read, states no contracted PLF"
+RAWA,Rawa Energy Development Limited,,,,,,,
+RFPL,River Falls Power Limited,,,,,,,
+RHGCL,Rapti Hydro And General Construction Limited,,,,,,,
+RHPL,Rasuwagadhi Hydropower Company Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2019/11/33.-Rationale_Rasuwagadhi-Hydropower_IPO-Grading_January-2019-Final.pdf,"rationale read, states no contracted PLF"
+RIDI,Ridi Power Company Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2019/11/45.-Ridi-Hydropower-Company_Rationale_Final.pdf,"rationale gives 3 PLF figures (61.0, 64.0, 75.0) - ambiguous, left blank"
+RLEL,Ridge Line Energy Limited,,,,,,,
+RURU,Ru Ru Jalbidhyut Pariyojana Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2025/01/A.956-Ru-Ru-Jalbidhyut-Pariyojana_Limited_Fresh-Issuer-Rating-December-2024.pdf,"rationale read, states no contracted PLF"
+SAHAS,Sahas Urja Limited,,,,,,,
+SANVI,Sanvi Energy Limited,,,,,,,
+SGHC,Swet-Ganga Hydropower & Construction Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2025/08/A.1248-H.M.-Construction-Private-Limited_Ratings-withdrawal_August_2025_FINAL.pdf,"rationale read, states no contracted PLF"
+SGHL,Sanigad Hydro Limited,,,,226,icra,https://www.icranepal.com/wp-content/uploads/2024/01/A.545-Sanigad-Hydro_Fresh-Issuer-Rating_Jan-2024_Final.pdf,"rationale read, states no contracted PLF"
+SHEL,Singati Hydro Energy Limited,,,,,,,
+SHPC,Sanima Mai Hydropower,,,,,,,
+SIKLES,Sikles Hydropower Limited,,,,,,,
+SIPD,Shikhar Power Development Limited,,,,226,icra,https://www.icranepal.com/wp-content/uploads/2024/12/A.936-Shikhar-Power-Development-Ltd._Issuer-and-BLR-Surveillance_December-2024_Final.pdf,"rationale read, states no contracted PLF"
+SJCL,Sanjen Jalavidhyut Company Limited,,,,,,,
+SKHEL,Suryakunda Hydro Electric Limited,,,,,,,
+SKHL,Super Khudi Hydropower Limited,,,,,,,
+SMH,Super Mai Hydropower Limited,,,,191,icra,https://www.icranepal.com/wp-content/uploads/2025/10/A.1319-Super-Mai-Hydropower-Limited_BLR-surveillance_October-2025_Final.pdf,"rationale read, states no contracted PLF"
+SMHL,Super Madi Hydropower Limited,,,,206,icra,https://www.icranepal.com/wp-content/uploads/2026/04/B.99-Super-Madi-Hydropower-Limited_Issuer-BLR-Surveillance_April-02-2026.pdf,"rationale read, states no contracted PLF"
+SMJC,Sagarmatha Jalabidhyut Company Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2025/10/A.1325-Sagarmatha-Jalabidhyut-Co.-Limited_Ratings-Review_October-2025_Final.pdf,"rationale read, states no contracted PLF"
+SNORL,Snow Rivers Limited,68,,,201,icra,https://www.icranepal.com/wp-content/uploads/2026/03/B.44-Snow-Rivers-Limited_BLR-and-IR-surveillance_February-2026_Final.pdf,read from the rationale PDF
+SOHL,Solu Hydropower Limited,,,,,,,
+SPC,Samling Power Company Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2025/10/A.1329-Samling-Power-Company-Limited_Ratings-Review_October-2025_V1-1.pdf,"rationale read, states no contracted PLF"
+SPDL,Synergy Power Development Ltd.,,,,,,https://www.icranepal.com/wp-content/uploads/2025/05/A.1122-Synergy-Power-Development-Limited_Withdrawal_May-2025_Final.pdf,could not read the PDF (URLError)
+SPHL,Sayapatri Hydropower Limited,,,,,,,
+SPL,Shuvam Power Limited,,,,,,,
+SSHL,Shiva Shree Hydropower Ltd,,,,,,,
+TAMOR,Sanima Middle Tamor Hydropower Limited,,,,191,care,https://www.careratingsnepal.com/upload/CompanyFiles/PR/202503060357_Sanima_Middle_Tamor_Hydropower_Limited_-_Issuer_and_Bank_Facilities_Ratings_Reaffirmed.pdf,"rationale gives 2 PLF figures (64.37, 67.15) - ambiguous, left blank"
+TPC,Terhathum Power Company Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2026/05/B.128-Terhathum_Power_Company-Limited_Ratings-Withdrawal_April_2026.pdf,"rationale read, states no contracted PLF"
+TPKHL,Taksar Pikhuwa Khola Hydropower Limited ,,,,,,,
+TSHL,Three Star Hydropower Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2024/03/A.591-Three-Star-Hydropower_Issuer-and-BLR-Surv_Feb-2024_Final.pdf,"rationale read, states no contracted PLF"
+TVCL,Trishuli Jal Vidhyut Company Limited,,,,,icra,https://www.icranepal.com/wp-content/uploads/2026/07/B.225-Trishuli-Jal-Vidhyut-Company-Limited_BLR-Surveillance_July-09-2026_Final.pdf,"regex read 90% from the rationale, outside the 55-75% band every verified contract falls in - check the PDF before using it"
+UHEWA,Upper Hewakhola Hydropower Company Limited,62.16,,,166,care,https://www.careratingsnepal.com/upload/CompanyFiles/PR/202502110209_Upper_Hewa_Khola_Hydropower_Company_Limited_-_Bank_Facilities_Ratings_Assigned.pdf,read from the rating PR
+ULHC,Upper Lohore Khola Hydropower Company Limited,,,,,,,
+UMHL,United Modi Hydropower,,,,,,,
+UMRH,United IDI Mardi RB Hydropower Limited,,,,,,,
+UNHPL,Union Hydropower Limited,,,,,,,
+UPCL,Universal Power Company Ltd,,,,,,,
+UPPER,Upper Tamakoshi Hydropower Ltd,,,,,,https://www.icranepal.com/wp-content/uploads/2022/12/A.127-Upper-Tamakoshi-Hydropower-Ltd..pdf,"rationale read, states no contracted PLF"
+USHEC,Upper Solu Hydro Electric Company Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2025/08/A.1232-Upper-Solu-Hydro-Electric-Company-Limited_Ratings-Withdrawal_August-2025.pdf,"rationale read, states no contracted PLF"
+USHL,Upper Syange Hydropower Limited,,,,,,,
+VLUCL,Vision Lumbini Urja Company Limited,,,,,,https://www.icranepal.com/wp-content/uploads/2026/05/B.143-Vision-Lumbini-Urja-Company-Limited_BLR-Surveillance_May-07-2026.pdf,could not read the PDF (URLError)
+YMHL,Yambaling Hydropower Limited,59,,,,icra,https://www.icranepal.com/wp-content/uploads/2023/12/A.501-Yambaling-Hydropower-Limited_BLR-Surveillance_Dec-2023-Final-1.pdf,read from the rationale PDF
