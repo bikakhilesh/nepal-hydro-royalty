@@ -2,15 +2,25 @@ name: Refresh from RMS
 
 # Re-scrapes rmsdoed.gov.np, rebuilds every artefact and commits the result.
 #
-# Monthly, not nightly, and on purpose: one full pass is ~3,700 GETs against a
-# government server that publishes a month in arrears, so a faster cadence would
-# be pure load with nothing new to show for it.
+# Daily, but only the current fiscal year: a filed year never changes again, so
+# fetching nineteen of them to learn about one is the expensive way to find
+# nothing. 198 requests a day instead of 3,762. The full history is re-scraped
+# on the 5th of each month, which is what catches a correction to an older year.
+#
+# The commit step judges on the scraped data, not the rebuilt page, so a day
+# where the register filed nothing leaves no trace in the repo.
 
 on:
   schedule:
-    - cron: '17 3 5 * *'      # 5th of each month, 03:17 UTC
+    - cron: '17 3 * * *'      # daily 03:17 UTC (09:02 Kathmandu) - current year only
+    - cron: '41 2 5 * *'      # 5th monthly - full history, catches back-year edits
   workflow_dispatch:
     inputs:
+      scope:
+        description: 'How much to scrape'
+        type: choice
+        default: latest
+        options: [latest, full]
       register:
         description: 'Also re-fetch the plant register (198 GETs)'
         type: boolean
@@ -42,14 +52,27 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: Scrape energy + royalty detail
+      - name: Scrape the current fiscal years
+        if: github.event.schedule == '17 3 * * *' || inputs.scope == 'latest'
+        run: python hydro.py latest
+
+      - name: Scrape the full history
+        if: github.event.schedule == '41 2 5 * *' || inputs.scope == 'full'
         run: python hydro.py scrape
 
+      # Catches a plant that has just started generating: without this it would
+      # have filings and no licence, company, district or commissioning date.
       - name: Scrape plant register
         if: github.event_name == 'schedule' || inputs.register
         run: python hydro.py meta
 
-      - name: Re-resolve coordinates
+      # Offline - reads the cached OSM/Wikidata candidates, no network. Runs every
+      # time so a new plant lands on the map with the same build that first shows
+      # its generation, rather than sitting in the tables and nowhere on the map.
+      - name: Place any new plants
+        run: python hydro.py coords
+
+      - name: Re-resolve coordinates from source
         if: inputs.geo
         run: python hydro.py geo
 
@@ -70,14 +93,18 @@ jobs:
           python hydro.py --stats >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Commit if anything changed
+      - name: Commit if the data actually changed
         run: |
           git config user.name  'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          if git diff --cached --quiet; then
+          # Judge on the scraped inputs, not the build outputs. The rebuilt page
+          # carries the retrieval date, so it differs every single run; committing
+          # on that would push ~3 MB a day and call an unchanged register news.
+          if git diff --quiet -- '*.csv' 'np_*.json' 'geo_candidates.json'; then
             echo 'Nothing changed: RMS has not filed anything new.' >> "$GITHUB_STEP_SUMMARY"
+            git checkout -- .
             exit 0
           fi
+          git add -A
           git commit -m "data: refresh from RMS $(date -u +%Y-%m-%d)"
           git push

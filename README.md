@@ -77,6 +77,7 @@ basemap renders and your own layers just never appear.
 ## Refresh the data
 
 ```bash
+python hydro.py latest    # the two newest fiscal years  396 GETs, ~15 s
 python hydro.py scrape    # energy + royalty detail   3,762 GETs, ~2.5 min
 python hydro.py meta      # plant register              198 GETs, ~40 s
 python hydro.py geo       # OSM + Wikidata + districts + outline + positions
@@ -110,14 +111,32 @@ could never have caught it, because the workbook is always there.
 Two workflows keep the published site current without anyone running anything.
 
 **`.github/workflows/refresh-data.yml`** — re-scrapes RMS, rebuilds the
-dashboard and both maps, and commits whatever changed. Runs on the 5th of each
-month, or on demand from the Actions tab, where the plant register and the
-coordinate resolution are separate opt-in toggles.
+dashboard and both maps, and commits whatever changed. Daily at 03:17 UTC, plus
+a full-history pass on the 5th of each month, or on demand from the Actions tab.
 
-Monthly is deliberate. A full pass is ~3,700 GETs against a government server
-that publishes a month in arrears, so a nightly schedule would add load and
-find nothing. Coordinate resolution is off by default for the same reason: it
-calls Nominatim, whose policy caps you at one request a second.
+**The daily run fetches only the two newest fiscal years — 396 requests, not
+3,762.** A filed year never changes again, so re-reading nineteen of them to
+learn about one is the expensive way to find nothing; `hydro.py latest` scrapes
+the newest years and merges them over what is on disk.
+
+Two years rather than one, because of the year boundary. When Shrawan opens a
+new fiscal year the dropdown's newest entry moves while the year that just
+closed is still being filed — its Jestha and Asar rows land weeks late — and
+following only the newest entry would walk away from them. As of Aug 2026 the
+register already lists 083/84 with no filings in it yet, so a one-year window
+would have been scraping an empty year and nothing else.
+
+A **new plant** is picked up without any special handling: the plant list is
+re-read from the site on every run, and a plant that has just begun generating
+can only have filings in those same newest years. The register pass gives it a
+licence, company, district and commissioning date; `coords` then places it on
+the map in the same build, which is why that step runs every time — it is
+offline, reading the cached OSM/Wikidata candidates, so it costs nothing.
+Full `geo` stays opt-in because it calls Nominatim, whose policy caps you at
+one request a second.
+
+What the daily pass **cannot** see is a correction to an older year. That is
+what the monthly full re-scrape is for.
 
 A scrape that half-fails still writes perfectly well-formed CSVs — just short
 ones — and committing those would overwrite good data with a subset, silently.
@@ -247,6 +266,18 @@ official record — read it against the source before relying on a number.
   nothing for 066/67. The counter cannot tell those apart from a real HTTP
   error, so a healthy full scrape reports ~61% "failures" and still produces
   the complete 1,469 plant-years. Judge a run by the cleaned row counts.
+- **The raw scrape used to be nondeterministic, and it mattered.** The thread
+  pool yields in completion order, which varies run to run, so `rms_monthly.csv`
+  rewrote itself almost entirely on every scrape even when not one figure had
+  changed — a 14,000-line diff reporting nothing. Rows are now sorted to a fixed
+  key before writing, and two consecutive network scrapes produce byte-identical
+  files. Without that, a daily job commits megabytes of reshuffling as if it
+  were news.
+- **`Received` moves within the day.** It is the only field that does. A
+  latest-years scrape an hour after a full one found 83 plants with different
+  `Received` and `Balance` figures for 082/83 and everything else untouched —
+  royalty receipts land continuously, so the current year is genuinely live in a
+  way the closed years are not.
 - **One known source error.** Upper Bhotekoshi 2083/02 files a USD invoice of
   22.94m against a ~2.9m trend; its own royalty implies ~2.95m. It is left as
   filed rather than silently corrected — it inflates that plant's latest year.

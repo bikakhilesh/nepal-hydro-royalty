@@ -4,6 +4,7 @@
     python hydro.py                 rebuild the dashboard from existing CSVs (default)
     python hydro.py build           same, explicitly
     python hydro.py scrape          re-fetch energy + royalty detail (3,762 GETs)
+    python hydro.py latest          re-fetch only the current fiscal year (198 GETs)
     python hydro.py meta            re-fetch the plant register       (198 GETs)
     python hydro.py geo             re-fetch coordinates, districts, outline, terrain
     python hydro.py mapsvg          export the fleet map as a standalone SVG
@@ -171,24 +172,82 @@ def scrape_one(fiscal_id, plant_id):
     return df, summ
 
 
-def cmd_scrape(workers=6):
+def _merge_year(fresh, fname, fids):
+    """Drop fiscal years `fids` from the file on disk and put `fresh` in their place.
+
+    The existing rows are read as text and never coerced, so the years this pass
+    did not touch are written back exactly as they were found. Round-tripping
+    them through pandas' type inference instead would reformat numbers and NaNs
+    and rewrite the whole file, which is the churn this is here to avoid.
+    """
+    path = P(fname)
+    if not os.path.exists(path):
+        return fresh
+    old = pd.read_csv(path, dtype=str, keep_default_na=False, low_memory=False)
+    if "FiscalId" not in old.columns:
+        return fresh
+    drop = {str(f) for f in fids}
+    kept = old[~old.FiscalId.astype(str).isin(drop)]
+    print(f"  {fname}: {len(kept):,} rows kept + {len(fresh):,} refreshed")
+    return pd.concat([kept, fresh], ignore_index=True) if len(kept) else fresh
+
+
+def cmd_scrape(workers=6, latest_only=False, years=2):
     d = dropdowns()
     plants  = d[[k for k in d if "plant" in k][0]]
     fiscals = d[[k for k in d if "fiscal" in k or "year" in k][0]]
+
+    # A filed year never changes again, so re-fetching nineteen of them to learn
+    # about one is the expensive way to find nothing. latest_only takes the newest
+    # years and merges them over what is on disk: 396 requests instead of 3,762.
+    #
+    # Two years, not one, and the reason is the year boundary. The moment Shrawan
+    # opens a new fiscal year the dropdown's newest entry moves, and the year that
+    # just closed is still being filed -- its Jestha and Asar rows arrive weeks
+    # late. Following only the newest entry would walk away from them.
+    #
+    # A new plant is picked up regardless: the plant list is re-read from the site
+    # on every run, and a plant that has just started generating can only have
+    # filings in these same newest years.
+    keep_fids = None
+    if latest_only:
+        order = sorted(fiscals, key=lambda k: str(fiscals[k]))
+        keep_fids = order[-years:]
+        fiscals = {k: fiscals[k] for k in keep_fids}
+
     jobs = [(f, p) for p in plants for f in fiscals]
-    print(f"{len(plants)} plants x {len(fiscals)} fiscal years = {len(jobs)} requests")
+    print(f"{len(plants)} plants x {len(fiscals)} fiscal years = {len(jobs)} requests"
+          + (f"  [latest {years}: {', '.join(fiscals.values())}]" if latest_only else ""))
     res, failed = _pool(scrape_one, jobs, workers, "energy")
     rows, summaries = [], []
     for df, summ in res:
         pid, fid = summ["PlantId"], summ["FiscalId"]
         if not df.empty:
             df["Plant"], df["FiscalYear"] = plants[pid], fiscals[fid]
+            df["_seq"] = range(len(df))      # the site's own row order within a table
             rows.append(df)
         summ["Plant"], summ["FiscalYear"] = plants[pid], fiscals[fid]
         summaries.append(summ)
+
+    # The pool yields in completion order, which varies run to run with six
+    # threads on a variable network, so the raw files rewrote themselves almost
+    # entirely on every scrape even when not one figure had changed. Sort to a
+    # fixed key: identical data has to produce identical bytes, or a daily job
+    # commits megabytes of reshuffling and reports it as news.
     monthly = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
+    summary = pd.DataFrame(summaries)
+    if latest_only:
+        monthly = _merge_year(monthly, "rms_monthly.csv", keep_fids)
+        summary = _merge_year(summary, "rms_summary.csv", keep_fids)
+
+    if not monthly.empty:
+        monthly = (monthly.sort_values(["PlantId", "FiscalId", "_seq"], kind="stable")
+                          .drop(columns="_seq").reset_index(drop=True))
     monthly.to_csv(P("rms_monthly.csv"), index=False)
-    pd.DataFrame(summaries).to_csv(P("rms_summary.csv"), index=False)
+    if not summary.empty:
+        summary = (summary.sort_values(["PlantId", "FiscalId"], kind="stable")
+                          .reset_index(drop=True))
+    summary.to_csv(P("rms_summary.csv"), index=False)
     print(f"monthly {monthly.shape} | failures {len(failed)}")
     clean()
 
@@ -1278,6 +1337,7 @@ if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
     cmd = args[0] if args else "build"
     if cmd == "scrape": cmd_scrape()
+    elif cmd == "latest": cmd_scrape(latest_only=True)
     elif cmd == "clean": clean()
     elif cmd == "meta": cmd_meta()
     elif cmd == "geo": cmd_geo()
