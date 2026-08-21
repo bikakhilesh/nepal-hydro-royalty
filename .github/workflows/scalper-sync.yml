@@ -1,0 +1,102 @@
+name: Sync scalper series
+
+# Copies one CSV out of the private stock-scalper repo and commits it here.
+#
+# The point of committing rather than fetching at build time: the dashboard build
+# then reads an ordinary local file and needs no credential of its own, so the
+# daily refresh keeps working whatever happens to the token. It also means the
+# series is versioned alongside the RMS data it will be joined to, and a bad sync
+# is a diff you can read rather than a number that silently moved.
+#
+# Runs before the RMS refresh, not after, so the day's rebuild sees the day's
+# series rather than yesterday's.
+
+on:
+  schedule:
+    - cron: '05 2 * * *'      # daily 02:05 UTC, ~70 min ahead of the RMS refresh
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scalper-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      # The secret as a boolean, never as a value: `secrets` is not available to a
+      # step `if` but `env` is, and this keeps the credential out of the job
+      # environment entirely.
+      HAS_SCALPER: ${{ secrets.SCALPER_TOKEN != '' }}
+      SRC: _scalper/combined/hydro_power_combined.csv
+      DST: scalper_hydro_power.csv
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # GITHUB_TOKEN is scoped to this repo and cannot read another one, so this
+      # needs a fine-grained PAT with Contents: read on bikakhilesh/stock-scalper.
+      #
+      # Both guards are load-bearing and catch different things. The `if` covers
+      # the secret never having been set; continue-on-error covers the day the PAT
+      # expires, which is present-but-invalid and sails straight past the `if`.
+      # Neither should take the sync down noisily -- the next step decides what to
+      # do by looking at whether a file actually arrived.
+      - name: Fetch the private series
+        if: env.HAS_SCALPER == 'true'
+        continue-on-error: true
+        uses: actions/checkout@v5
+        with:
+          repository: bikakhilesh/stock-scalper
+          token: ${{ secrets.SCALPER_TOKEN }}
+          path: _scalper
+          sparse-checkout: combined/hydro_power_combined.csv
+          sparse-checkout-cone-mode: false
+
+      - name: Commit it if it changed
+        run: |
+          set -euo pipefail
+
+          # One check for three failures: token unset, token expired, file moved or
+          # renamed upstream. In all three no file arrives, and none of them is a
+          # reason to go red -- the repo still holds the last good copy.
+          if [ ! -f "$SRC" ]; then
+            echo 'No series fetched: the token is unset or expired, or the path moved.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'The committed copy is untouched.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # Same principle as guard.py: a sync that arrives short has lost something,
+          # and overwriting good data with it is worse than doing nothing. Growth is
+          # expected, shrinkage is not, so refuse rather than commit and go red so it
+          # gets looked at.
+          new=$(wc -l < "$SRC")
+          if [ -f "$DST" ]; then
+            old=$(wc -l < "$DST")
+            if [ "$new" -lt "$old" ]; then
+              echo "FAIL: $new rows against $old committed -- the series shrank." >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+          fi
+
+          cp "$SRC" "$DST"
+
+          # Stage first, then compare. `git diff` alone reports no change for a file
+          # that is not tracked yet, so on the very first run it would decide there
+          # was nothing to do and never commit anything.
+          git add "$DST"
+          if git diff --cached --quiet -- "$DST"; then
+            echo "Unchanged: $new rows, identical to the committed copy." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "data: sync scalper series $(date -u +%Y-%m-%d)"
+          git push
+          echo "Committed $new rows." >> "$GITHUB_STEP_SUMMARY"

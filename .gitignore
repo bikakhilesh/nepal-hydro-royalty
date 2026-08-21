@@ -10,3 +10,8 @@ venv/
 
 # preview-only copy of the 3D map; the Pages workflow makes its own
 terrain.html
+
+# Working checkout the refresh workflow makes of the scalper repo. It carries its
+# own .git, and the commit step runs `git add -A`, which would record it as an
+# embedded-repo gitlink -- a broken pointer for anyone who clones this.
+_scalper/
