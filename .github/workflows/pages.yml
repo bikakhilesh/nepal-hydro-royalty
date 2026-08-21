@@ -39,7 +39,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
+      # Pin to the branch tip. On a workflow_run event the default checkout is
+      # github.sha, which is the head commit as of when the refresh *started* --
+      # one commit behind the data that refresh then pushed. Deploy would go
+      # green and republish the previous build, which is worse than failing.
       - uses: actions/checkout@v5
+        with:
+          ref: main
 
       - name: Assemble the site
         run: |
