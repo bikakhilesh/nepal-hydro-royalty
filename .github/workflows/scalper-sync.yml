@@ -40,14 +40,17 @@ jobs:
       # GITHUB_TOKEN is scoped to this repo and cannot read another one, so this
       # needs a fine-grained PAT with Contents: read on bikakhilesh/stock-scalper.
       #
-      # Both guards are load-bearing and catch different things. The `if` covers
-      # the secret never having been set; continue-on-error covers the day the PAT
-      # expires, which is present-but-invalid and sails straight past the `if`.
-      # Neither should take the sync down noisily -- the next step decides what to
-      # do by looking at whether a file actually arrived.
+      # Skipped when the secret was never set, but allowed to fail loudly when it
+      # is set and does not work. This workflow does one thing; if it cannot reach
+      # the source there is nothing to be quietly resilient about, and the RMS
+      # refresh is a separate workflow that a red run here does not touch.
+      #
+      # It was briefly continue-on-error, which was wrong twice over: it made an
+      # unreachable source look like a clean run, and `conclusion` is reported as
+      # success for a continue-on-error step, so the failure was invisible from
+      # outside as well as in.
       - name: Fetch the private series
         if: env.HAS_SCALPER == 'true'
-        continue-on-error: true
         uses: actions/checkout@v5
         with:
           repository: bikakhilesh/stock-scalper
@@ -72,7 +75,7 @@ jobs:
             # upstream. In none of them is going red the right answer -- the repo
             # still holds the last good copy.
             if [ ! -f "$src" ]; then
-              echo "- \`$dst\`: not fetched" >> "$GITHUB_STEP_SUMMARY"
+              echo "- \`$dst\`: no file at \`$1\` in the scalper repo" >> "$GITHUB_STEP_SUMMARY"
               return 0
             fi
             got=$((got + 1))
@@ -108,7 +111,14 @@ jobs:
           # and must not be reported in the same words -- a run that compared nothing
           # should never read as a clean bill of health.
           if [ "$got" = 0 ]; then
-            echo 'Nothing fetched: the token is unset or expired, or both paths moved.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Neither path matched. The checkout itself worked, so this is the paths,' >> "$GITHUB_STEP_SUMMARY"
+            echo 'not the token. What the scalper repo actually holds:' >> "$GITHUB_STEP_SUMMARY"
+            echo '' >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            # ls-tree reads the tree object, so it lists the whole repo even though
+            # the working copy is a two-file sparse checkout.
+            git -C _scalper ls-tree -r --name-only HEAD | head -60 >> "$GITHUB_STEP_SUMMARY" || true
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
             echo 'The committed copies are untouched.' >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
