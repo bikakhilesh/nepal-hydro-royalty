@@ -290,8 +290,8 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     <div class="eyebrow">Department of Electricity Development &middot; Royalty Management System</div>
     <h1>Nepal Hydropower Royalty Ledger</h1>
     <p class="lede">Every monthly energy bill and royalty assessment DoED publishes for Nepal's
-      connected hydropower fleet &mdash; <span id="p-plants">&nbsp;</span> plants, <span id="p-nfy">&nbsp;</span> fiscal years &mdash; scraped, reconciled and read for
-      what it reveals about how the country actually charges for its rivers.</p>
+      connected hydropower fleet &mdash; <span id="p-plants">&nbsp;</span> plants,
+      <span id="p-nfy">&nbsp;</span> fiscal years.</p>
     <div class="prov">
       <span>Fiscal years <b id="p-span"></b></span>
       <span>Monthly rows <b id="p-rows"></b></span>
@@ -641,13 +641,13 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
   <div class="grid2">
     <div class="card">
       <div class="ctitle" style="margin-bottom:12px">How this was collected</div>
-      <p style="margin:0 0 12px;font-size:14px;color:var(--ink-2)">The DoED energy-detail page is
-      server-rendered: a plain GET carrying <code class="mono">FiscalId</code> and
-      <code class="mono">PlantId</code> returns the full table. No login, no JavaScript, no token.
-      All 198 &times; 19 combinations were fetched &mdash; 3,762 requests, zero failures &mdash; and the HTML
-      tables parsed directly. A second read-only pass over the plant register
-      (<code class="mono">/Core/Home/PlantCreate/{id}</code>, 198 GETs) supplies the commercial
-      operation date, licence, owning company and district behind every plant.</p>
+      <p style="margin:0 0 12px;font-size:14px;color:var(--ink-2)">The register&rsquo;s energy-detail
+      page is server-rendered: a plain GET carrying a fiscal-year and a plant identifier returns the
+      full table. No login, no JavaScript, no token. Every plant &times; fiscal-year combination is
+      fetched and the HTML tables parsed directly. A second read-only pass over the plant register
+      supplies the commercial operation date, licence, owning company and district behind every
+      plant. The current two fiscal years are re-read daily, since receipts post continuously; the
+      full history monthly, which is what catches a correction to a closed year.</p>
       <p style="margin:0;font-size:14px;color:var(--ink-2)">Royalty reconciles as
       <code class="mono">Previous Due + Energy + Capacity &minus; Received = Balance</code> to the paisa,
       which is the main check that the parse is faithful.</p>
