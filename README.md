@@ -89,7 +89,14 @@ python hydro.py --stats   # summary only, write nothing
 
 The revenue reconciliation section appears only when the workbook at `HYDRO_XLSX`
 (a listed operator's quarterly income statement) is present, and is skipped
-silently otherwise. That workbook is private input and is not in this repo.
+silently otherwise. That workbook is private input and is not in this repo, so
+CI never has it and **the published site is the seven-section build**. Supply
+the workbook locally and section 06 appears, renumbering the rest.
+
+The page must survive both shapes. It did not at first: `reconTable()` read
+`D.recon.median_abs_pct` unconditionally, so on a build with no workbook it
+threw before any chart was drawn and the site served a page of empty panels.
+A local build could never catch it, because the workbook is always there.
 
 ## Automation
 

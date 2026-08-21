@@ -945,7 +945,11 @@ def build_payload():
         "plant_years": sum(len(v) for v in years.values()),
         "month_rows": sum(len(v2) for v in months.values() for v2 in v.values()),
         "median_lead": licence["median_lead"], "licence_peak": licence["peak_year"],
-        "cod_known": int(m.CodBsYear.notna().sum()), "cod_total": int(len(m))}
+        "cod_known": int(m.CodBsYear.notna().sum()), "cod_total": int(len(m)),
+        # when the register was last read, taken from the raw scrape file rather
+        # than from today - a rebuild does not make the data any fresher
+        "retrieved": time.strftime("%d %b %Y",
+                                   time.gmtime(os.path.getmtime(P("rms_monthly.csv"))))}
     return payload
 
 

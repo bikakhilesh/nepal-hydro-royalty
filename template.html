@@ -231,16 +231,16 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     <div class="eyebrow">Department of Electricity Development &middot; Royalty Management System</div>
     <h1>Nepal Hydropower Royalty Ledger</h1>
     <p class="lede">Every monthly energy bill and royalty assessment DoED publishes for Nepal's
-      connected hydropower fleet &mdash; 193 plants, 17 fiscal years &mdash; scraped, reconciled and read for
+      connected hydropower fleet &mdash; <span id="p-plants">&nbsp;</span> plants, <span id="p-nfy">&nbsp;</span> fiscal years &mdash; scraped, reconciled and read for
       what it reveals about how the country actually charges for its rivers.</p>
     <div class="prov">
       <span>Source <b>rmsdoed.gov.np</b></span>
       <span>Fiscal years <b id="p-span"></b></span>
       <span>Monthly rows <b id="p-rows"></b></span>
-      <span>Requests <b>3,960 &middot; 0 failures</b></span>
+      <span>Plant-years <b id="p-py"></b></span>
       <span>Plants profiled <b>198</b></span>
       <span>Located <b>178</b></span>
-      <span>Retrieved <b>19 Aug 2026</b></span>
+      <span>Retrieved <b id="p-ret"></b></span>
     </div>
   </div>
 </header>
@@ -438,7 +438,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     district holds &mdash; not where any one of them is. Half-filled dots are on the correct watercourse but at an arbitrary point along it. <span id="map-note"></span></div>
 </section>
 
-<section>
+<section id="sec-recon">
   <div class="shead"><span class="snum">06</span><h2>The register reproduces a listed company&rsquo;s revenue</h2></div>
   <p class="sdek">The royalty base is the plant&rsquo;s energy invoice, and that invoice is the operating
     company&rsquo;s top line. Mapping RMS billing months onto the Shrawan&ndash;Asar accounting year for
@@ -819,6 +819,7 @@ function chartRoy(){
 
 // ---- 8. revenue reconciliation ------------------------------------------
 function chartRecon(){
+  if(!D.recon) return;
   var d = D.recon.rows;
   var f = frame('c-recon',{m:{t:14,r:14,b:56,l:44},label:'RMS billing versus reported energy revenue by quarter'});
   if(!f) return;
@@ -839,6 +840,7 @@ function chartRecon(){
   });
 }
 function reconTable(){
+  if(!D.recon) return;
   var R = D.recon;
   document.getElementById('r-med').textContent = R.median_abs_pct+'%';
   document.querySelector('#t-recon tbody').innerHTML = R.rows.map(function(r){
@@ -1212,6 +1214,12 @@ function stats(){
   }).join('');
   document.getElementById('p-span').textContent = s.fy_span;
   document.getElementById('p-rows').textContent = fmt(s.rows);
+  // the lede used to carry these as literals; they drift the moment a monthly
+  // refresh picks up a new plant or a new fiscal year, so read them off the payload
+  document.getElementById('p-plants').textContent = s.plants;
+  document.getElementById('p-nfy').textContent    = s.n_fy;
+  document.getElementById('p-py').textContent     = fmt(s.plant_years);
+  document.getElementById('p-ret').textContent    = s.retrieved;
   var r = D.royalty;
   var LC = D.licence;
   document.getElementById('n-lic').textContent =
@@ -1672,6 +1680,17 @@ function wireTable(){
 function drawAll(){
   chartEnergy(); chartCap(); chartSeason(); chartRate(); chartGen(); chartRoy(); chartRecon(); chartAge(); chartMap(); chartLic(); chartLead();
 }
+// Section 06 exists only when an operator workbook was supplied at build time
+// (HYDRO_XLSX). CI has no workbook, so D.recon is absent there — drop the whole
+// section and close the gap in the numbering rather than shipping a dead panel.
+if(!D.recon){
+  var rsec = document.getElementById('sec-recon');
+  if(rsec) rsec.parentNode.removeChild(rsec);
+  Array.prototype.forEach.call(document.querySelectorAll('.snum'), function(n,i){
+    n.textContent = ('0'+(i+1)).slice(-2);
+  });
+}
+
 stats(); transTable(); reconTable(); wireTable(); renderPlants(); drawAll(); buildTableViews();
 
 // redraw on theme flip so colors resolve against the new tokens
