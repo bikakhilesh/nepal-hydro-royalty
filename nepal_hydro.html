@@ -287,9 +287,9 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 
 <header>
   <div class="wrap">
-    <div class="eyebrow">Department of Electricity Development &middot; Royalty Management System</div>
+    <div class="eyebrow">Nepal &middot; hydropower royalty filings</div>
     <h1>Nepal Hydropower Royalty Ledger</h1>
-    <p class="lede">Every monthly energy bill and royalty assessment DoED publishes for Nepal's
+    <p class="lede">Every monthly energy bill and royalty assessment filed for Nepal's
       connected hydropower fleet &mdash; <span id="p-plants">&nbsp;</span> plants,
       <span id="p-nfy">&nbsp;</span> fiscal years.</p>
     <div class="prov">
@@ -342,7 +342,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 
 <section>
   <div class="shead"><span class="snum">02</span><h2>The fifteen-year threshold, verified against the register</h2></div>
-  <p class="sdek">DoED publishes a commercial operation date for every licensed plant. Joining those
+  <p class="sdek">The register carries a commercial operation date for every licensed plant. Joining those
     dates to the assessments turns the pattern above into a testable claim &mdash; and it holds with a
     sharpness rarely seen in administrative data. Below age 15 essentially no plant pays the high
     capacity rate; from age 15 essentially all of them do.</p>
@@ -533,17 +533,17 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 <section id="sec-recon">
   <div class="shead"><span class="snum">06</span><h2>The register reproduces a listed company&rsquo;s revenue</h2></div>
   <p class="sdek">The royalty base is the plant&rsquo;s energy invoice, and that invoice is the operating
-    company&rsquo;s top line. Mapping RMS billing months onto the Shrawan&ndash;Asar accounting year for
+    company&rsquo;s top line. Mapping register billing months onto the Shrawan&ndash;Asar accounting year for
     Likhu-4 (52.4&nbsp;MW, Green Ventures Co. Ltd, commissioned 2078/07/21) reproduces its reported <i>Income from Sale of Energy</i> quarter by quarter
     &mdash; six of eleven quarters land within 0.01%, on figures of NPR 270&ndash;570&nbsp;million.</p>
 
   <div class="grid2">
     <figure class="card">
-      <figcaption><div class="ctitle">RMS billing vs. reported energy revenue</div>
+      <figcaption><div class="ctitle">Register billing vs. reported energy revenue</div>
       <div class="csub">Standalone quarters, NPR million</div></figcaption>
       <div class="chart" id="c-recon"></div>
       <div class="legend">
-        <span><i style="background:var(--s1)"></i>RMS billing (scraped)</span>
+        <span><i style="background:var(--s1)"></i>Register billing (scraped)</span>
         <span><i style="background:var(--s2)"></i>Reported in accounts</span>
       </div>
     </figure>
@@ -552,17 +552,17 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <div class="csub" style="margin-bottom:0">Median absolute gap <b id="r-med"></b></div></div>
       <div class="tw" style="border:0;border-radius:0;max-height:392px;overflow-y:auto">
         <table id="t-recon"><thead><tr>
-          <th>Quarter</th><th class="n">RMS</th><th class="n">Reported</th><th class="n">Diff</th>
+          <th>Quarter</th><th class="n">Register</th><th class="n">Reported</th><th class="n">Diff</th>
         </tr></thead><tbody></tbody></table>
       </div>
     </div>
   </div>
-  <div class="note"><b>Two adjustments make it line up.</b> RMS files each fiscal block Asar&ndash;Jestha,
+  <div class="note"><b>Two adjustments make it line up.</b> The register files each fiscal block Asar&ndash;Jestha,
     one month ahead of the Shrawan&ndash;Asar accounting year, so the window has to be shifted; and the
     published quarterly figures are cumulative year-to-date, so they have to be differenced.</div>
   <div class="note warn"><b>Where it breaks is informative.</b> The &minus;20.7% quarter is Baisakh 2081,
-    carrying the RMS remark <i lang="ne">&ldquo;&#2348;&#2367;&#2354; &#2352;&#2325;&#2350; &#2348;&#2352;&#2366;&#2348;&#2352; short supply penalty &#2325;&#2366;&#2351;&#2350; &#2327;&#2352;&#2375;&#2325;&#2379; &#2404;&rdquo;</i>
-    &mdash; a short-supply penalty equal to the whole bill. RMS books settlement net of the penalty
+    carrying the register remark <i lang="ne">&ldquo;&#2348;&#2367;&#2354; &#2352;&#2325;&#2350; &#2348;&#2352;&#2366;&#2348;&#2352; short supply penalty &#2325;&#2366;&#2351;&#2350; &#2327;&#2352;&#2375;&#2325;&#2379; &#2404;&rdquo;</i>
+    &mdash; a short-supply penalty equal to the whole bill. The register books settlement net of the penalty
     (zero); the accounts recognise revenue gross on accrual. The gap is a difference in basis, not in data.</div>
 </section>
 
@@ -676,8 +676,8 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <footer>
-  <div>Built from public data published by the Department of Electricity Development, Government of
-  Nepal. Figures are as recorded in the RMS register and may differ from audited accounts.
+  <div>Built from public royalty filings. Figures are as recorded in the register and may differ
+  from audited accounts.
   Capacity factor assumes a 730-hour month. Bikram Sambat fiscal years throughout.</div>
 </footer>
 </div>
@@ -913,7 +913,7 @@ function chartRoy(){
 function chartRecon(){
   if(!D.recon) return;
   var d = D.recon.rows;
-  var f = frame('c-recon',{m:{t:14,r:14,b:56,l:44},label:'RMS billing versus reported energy revenue by quarter'});
+  var f = frame('c-recon',{m:{t:14,r:14,b:56,l:44},label:'Register billing versus reported energy revenue by quarter'});
   if(!f) return;
   var max = Math.max.apply(null, d.map(function(r){ return Math.max(r.rms,r.rep); }))/1e6;
   yAxis(f, max, 4, function(v){ return fmt(v); });
@@ -925,7 +925,7 @@ function chartRecon(){
     bar(f, x0+bw+2, f.m.t+f.ih-hB, bw-1, hB, css('--s2'));
     var hit = el('rect',{x:f.m.l+i*gw,y:f.m.t,width:gw,height:f.ih,class:'hit'});
     hit.addEventListener('mousemove',function(e){ showTip(e, r.label,
-      ['RMS       '+fmt(r.rms/1e6,1)+'m','Reported  '+fmt(r.rep/1e6,1)+'m',
+      ['Register  '+fmt(r.rms/1e6,1)+'m','Reported  '+fmt(r.rep/1e6,1)+'m',
        'Diff      '+fmt(r.diff/1e6,2)+'m ('+r.pct.toFixed(2)+'%)']); });
     hit.addEventListener('mouseleave',hideTip); f.svg.appendChild(hit);
     xLabel(f, f.m.l+i*gw+gw/2, r.label.replace(' ','\u2009'), true);
@@ -1294,7 +1294,7 @@ function chartMap(){
     'for existing, under construction and future. The green and blue diamonds are the '+
     ((M.plan_plants||[]).length)+' pipeline projects the sheet carries \u2014 licensed, surveyed or '+
     'applied-for, and so absent from a royalty register that only sees plants which generate. '+
-    'Operating plants are NOT taken from the sheet: RMS is three years newer and locates them better.';
+    'Operating plants are NOT taken from the sheet: the register is three years newer and locates them better.';
 }
 
 // ---- 11. licensing pipeline ---------------------------------------------
