@@ -138,18 +138,33 @@ one request a second.
 What the daily pass **cannot** see is a correction to an older year. That is
 what the monthly full re-scrape is for.
 
-A scrape that half-fails still writes perfectly well-formed CSVs — just short
-ones — and committing those would overwrite good data with a subset, silently.
-So `.github/scripts/guard.py` compares each file against the committed version
-and fails the run if it came back below 95% of it. Growth is fine, a small
-wobble is fine, a collapse stops everything before the commit step.
+### Nothing may disappear
 
-It checks the **cleaned** files, not the raw ones, and the first CI run is why:
+A scrape that half-fails still writes perfectly well-formed CSVs — just short
+ones. Two mechanisms stop that reaching the repo.
+
+**Every write is a merge keyed on what came back**, never on what was asked
+for. `_merge_on()` replaces only the rows whose key is in the response set and
+leaves the rest untouched, so a failed request keeps its subject rather than
+deleting it. This applies to the full scrape and the plant register too, not
+just the incremental pass — the full run is the one that is supposed to repair
+the data, and it was the least protected of the three. The deliberate
+consequence: a row can only be removed by a *successful* fetch that returns
+nothing for it, so a plant delisted at source keeps its history here.
+
+**`.github/scripts/guard.py` then checks that nothing vanished** — every
+plant-year and every plant present in the committed data must still be present.
+Growth is fine; disappearance never is. A row-count floor cannot do this job: at
+14,142 rows a 95% floor tolerates 707 missing rows, about **twelve entire plant
+histories**, so a handful of plants could evaporate and the job would still go
+green. The floor is kept as a second, coarser net for failures that change a
+file's shape rather than its keys.
+
+It checks the **cleaned** files, not the raw ones, and an early CI run is why:
 it flagged `rms_summary.csv` at 39% and was wrong to. The raw summary carries a
 placeholder row for every plant-year with no filing, the original scraper wrote
 those and the current one drops them, so the guard was comparing formats rather
-than data. The cleaned files are what the build reads and what an outage would
-genuinely shrink.
+than data.
 
 **`.github/workflows/pages.yml`** — publishes to GitHub Pages on every push
 that touches a built file. The terrain map is the reason this exists: it needs

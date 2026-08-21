@@ -172,31 +172,36 @@ def scrape_one(fiscal_id, plant_id):
     return df, summ
 
 
-def _merge_year(fresh, fname, got):
-    """Replace exactly the (plant, year) pairs in `got` and leave the rest alone.
+def _merge_on(fresh, fname, keys, got, label):
+    """Replace exactly the rows whose key is in `got`; leave every other row alone.
 
-    Keyed on what actually came back, not on the fiscal year asked for. Dropping
-    the whole year and re-adding whatever arrived looks equivalent and is not: a
-    request that fails leaves no fresh rows, so that plant's year would be
-    deleted outright. On a daily job the erosion would be silent and the 95%
-    guard far too coarse to notice one plant going missing. A stale row is a
-    much better failure than a deleted one, and the monthly full pass corrects it.
+    Keyed on what actually came back, never on what was asked for. Writing only
+    the response is the obvious thing and it is wrong: a request that fails
+    contributes no rows, so its subject gets deleted outright. That applies to
+    every scrape, not just the incremental one -- the full pass is the run that
+    is supposed to repair the data, and it was the least protected of the three.
 
-    Existing rows are read as text and never coerced, so untouched years are
-    written back exactly as found. Round-tripping them through pandas' type
-    inference would reformat numbers and rewrite the file for no reason.
+    Consequence worth naming: a row can only be removed by a successful fetch
+    that returns nothing for it. A plant delisted from the site keeps its history
+    here rather than evaporating. That is the intended direction of the failure.
+
+    Existing rows are read as text and never coerced, so anything this pass did
+    not touch is written back exactly as found. Round-tripping it through pandas'
+    type inference would reformat numbers and rewrite the file for no reason.
     """
     path = P(fname)
-    if not os.path.exists(path):
+    if fresh is None or not os.path.exists(path):
         return fresh
     old = pd.read_csv(path, dtype=str, keep_default_na=False, low_memory=False)
-    if not {"PlantId", "FiscalId"} <= set(old.columns):
+    if not set(keys) <= set(old.columns):
         return fresh
-    key = list(zip(old.PlantId.astype(str), old.FiscalId.astype(str)))
+    key = list(zip(*[old[k].astype(str) for k in keys]))
     kept = old[[k not in got for k in key]]
     print(f"  {fname}: {len(kept):,} rows kept + {len(fresh):,} refreshed "
-          f"({len(got):,} plant-years re-read)")
-    return pd.concat([kept, fresh], ignore_index=True) if len(kept) else fresh
+          f"({len(got):,} {label} re-read)")
+    if not len(kept):
+        return fresh
+    return pd.concat([kept, fresh], ignore_index=True) if len(fresh) else kept
 
 
 def cmd_scrape(workers=6, latest_only=False, years=2):
@@ -244,11 +249,19 @@ def cmd_scrape(workers=6, latest_only=False, years=2):
     # commits megabytes of reshuffling and reports it as news.
     monthly = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
     summary = pd.DataFrame(summaries)
-    if latest_only:
-        monthly = _merge_year(monthly, "rms_monthly.csv", got)
-        summary = _merge_year(summary, "rms_summary.csv", got)
+
+    # Always merge, full pass included. A failed request must not delete its
+    # subject, and "we asked for everything" is not the same as "everything came
+    # back" -- CI has returned nothing for half a run.
+    K = ["PlantId", "FiscalId"]
+    monthly = _merge_on(monthly, "rms_monthly.csv", K, got, "plant-years")
+    summary = _merge_on(summary, "rms_summary.csv", K, got, "plant-years")
 
     if not monthly.empty:
+        # rows recovered from disk carry no _seq; they sort last within their
+        # key, which is harmless because a key is never half-old and half-fresh
+        if "_seq" not in monthly.columns:
+            monthly["_seq"] = np.nan
         monthly = (monthly.sort_values(["PlantId", "FiscalId", "_seq"], kind="stable")
                           .drop(columns="_seq").reset_index(drop=True))
     monthly.to_csv(P("rms_monthly.csv"), index=False)
@@ -374,8 +387,17 @@ def cmd_meta(workers=6):
     ids = sorted(int(k) for k in dropdowns()['plantid'])
     print(f"plant register: {len(ids)} pages")
     rows, failed = _pool(scrape_plant, ids, workers, "meta")
-    pd.DataFrame(rows).sort_values("UrlId").to_csv(P("rms_plants_meta.csv"), index=False)
-    print(f"wrote rms_plants_meta.csv ({len(rows)} plants, {len(failed)} failures)")
+    fresh = pd.DataFrame(rows)
+    # Same rule as the energy scrape: a page that failed must keep the plant it
+    # describes. Writing only the response would drop it, taking its commissioning
+    # date, company, district and map position with it, and ten could go before
+    # the row-count guard noticed.
+    got = {(str(r["UrlId"]),) for r in rows}
+    merged = _merge_on(fresh, "rms_plants_meta.csv", ["UrlId"], got, "plants")
+    merged = merged.copy()
+    merged["UrlId"] = pd.to_numeric(merged.UrlId, errors="coerce")
+    merged.sort_values("UrlId").to_csv(P("rms_plants_meta.csv"), index=False)
+    print(f"wrote rms_plants_meta.csv ({len(merged)} plants, {len(failed)} failures)")
 
 
 # ═════════════════════════════════════════════════════════════ geo lookups ══

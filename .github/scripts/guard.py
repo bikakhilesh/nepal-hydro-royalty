@@ -1,66 +1,98 @@
 #!/usr/bin/env python
-"""Refuse to commit a scrape that came back smaller than the one it replaces.
+"""Refuse to commit a scrape that lost something the committed one had.
 
-A partial failure -- the site 500s on half the plants, a session drops, the
-markup shifts -- still produces perfectly well-formed CSVs, just short ones.
-Committing those overwrites good data with a subset and the loss is silent.
-So: the row count may grow (new filings) and may wobble down a little
-(a correction, a withdrawn row), but a real collapse stops the run.
+Two checks, because they catch different failures.
 
-Deliberately checks the CLEANED files, not the raw ones. The raw summary
-carries a placeholder row for every plant-year the register has no filing
-for, and how those are recorded is an implementation detail that has already
-changed once -- 2,293 of 3,762 raw rows are empty. Counting them compares
-formats rather than data. The cleaned files are what the build reads and
-what a real outage would actually shrink.
+VANISHED KEYS is the sharp one: every plant-year in the committed data must
+still be present, and every plant in the register must still be there. A
+row-count floor cannot see this. At 14,142 rows a 95% floor tolerates 707
+missing rows, which is about twelve entire plant histories -- so a handful of
+plants could evaporate on a bad run and the job would go green. Growth is
+fine and expected; disappearance is not, and it is never routine.
 
-Fails the job on shrinkage past the tolerance; prints and passes otherwise.
+SHRINKAGE is the coarse net, kept for the failures that change a file's shape
+rather than its keys: a truncated write, a parse that collapses every row.
+
+Deliberately checks the CLEANED files. The raw summary carries a placeholder
+row for every plant-year with no filing, and how those are recorded has
+already changed once, so counting them compares formats rather than data.
+
+Fails the job on either; prints and passes otherwise.
 """
+import io
 import subprocess
 import sys
 
-TOLERANCE = 0.95          # a new file below 95% of the old one is a failure
-FILES = ["rms_monthly_clean.csv", "rms_summary_clean.csv", "rms_plants_meta.csv"]
+import pandas as pd
+
+TOLERANCE = 0.95
+# file -> columns whose combined value identifies a row that must not disappear
+KEYED = {
+    "rms_monthly_clean.csv": ["PlantName", "FiscalYear"],
+    "rms_summary_clean.csv": ["PlantId", "FiscalId"],
+    "rms_plants_meta.csv":   ["UrlId"],
+}
 
 
-def rows_in_head(path):
-    """Row count of the committed version, or None if it isn't in HEAD yet."""
+def committed(path):
+    """The version in HEAD, or None if it isn't committed yet."""
     p = subprocess.run(["git", "show", f"HEAD:{path}"], capture_output=True)
-    if p.returncode != 0:
+    return p.stdout if p.returncode == 0 else None
+
+
+def keys_of(raw, cols):
+    df = pd.read_csv(io.BytesIO(raw), dtype=str, keep_default_na=False, low_memory=False)
+    if not set(cols) <= set(df.columns):
         return None
-    return p.stdout.count(b"\n")
-
-
-def rows_on_disk(path):
-    with open(path, "rb") as fh:
-        return fh.read().count(b"\n")
+    return set(zip(*[df[c] for c in cols]))
 
 
 failed = False
-for path in FILES:
+for path, cols in KEYED.items():
+    old_raw = committed(path)
     try:
-        new = rows_on_disk(path)
+        with open(path, "rb") as fh:
+            new_raw = fh.read()
     except FileNotFoundError:
         print(f"FAIL {path}: the scrape did not write it at all")
         failed = True
         continue
 
-    old = rows_in_head(path)
-    if old is None:
-        print(f"ok   {path}: {new:,} rows (new file, nothing to compare)")
+    if old_raw is None:
+        print(f"ok   {path}: new file, nothing to compare")
         continue
 
-    floor = int(old * TOLERANCE)
-    verdict = "ok  " if new >= floor else "FAIL"
-    print(f"{verdict} {path}: {new:,} rows against {old:,} committed "
-          f"({new / old:.1%}, floor {floor:,})")
-    if new < floor:
+    # --- keys present before must still be present ---------------------------
+    old_keys, new_keys = keys_of(old_raw, cols), keys_of(new_raw, cols)
+    if old_keys is None or new_keys is None:
+        print(f"FAIL {path}: expected columns {cols} are missing")
+        failed = True
+        continue
+
+    gone = old_keys - new_keys
+    added = new_keys - old_keys
+    label = "+".join(cols)
+    if gone:
+        print(f"FAIL {path}: {len(gone)} {label} disappeared, e.g. "
+              + ", ".join(" ".join(k) for k in sorted(gone)[:4]))
+        failed = True
+    else:
+        print(f"ok   {path}: {len(new_keys):,} {label} present, none lost"
+              + (f", {len(added)} new" if added else ""))
+
+    # --- and the file must not have collapsed in size ------------------------
+    old_n, new_n = old_raw.count(b"\n"), new_raw.count(b"\n")
+    floor = int(old_n * TOLERANCE)
+    if new_n < floor:
+        print(f"FAIL {path}: {new_n:,} rows against {old_n:,} committed "
+              f"({new_n / old_n:.1%}, floor {floor:,})")
         failed = True
 
 if failed:
-    print("\nThe scrape came back short. Not committing -- the data in the "
-          "repo is better than what this run produced. Check whether "
-          "rmsdoed.gov.np is up and whether its markup has changed.")
+    print("\nNot committing. The data in the repo is better than what this run "
+          "produced. A row that exists must not vanish because a request failed; "
+          "check whether the source is up and whether its markup has changed, "
+          "then re-run a full scrape before committing anything.")
     sys.exit(1)
 
-print("\nAll files at or above the floor.")
+print("\nNothing lost.")
