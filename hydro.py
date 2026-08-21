@@ -172,23 +172,30 @@ def scrape_one(fiscal_id, plant_id):
     return df, summ
 
 
-def _merge_year(fresh, fname, fids):
-    """Drop fiscal years `fids` from the file on disk and put `fresh` in their place.
+def _merge_year(fresh, fname, got):
+    """Replace exactly the (plant, year) pairs in `got` and leave the rest alone.
 
-    The existing rows are read as text and never coerced, so the years this pass
-    did not touch are written back exactly as they were found. Round-tripping
-    them through pandas' type inference instead would reformat numbers and NaNs
-    and rewrite the whole file, which is the churn this is here to avoid.
+    Keyed on what actually came back, not on the fiscal year asked for. Dropping
+    the whole year and re-adding whatever arrived looks equivalent and is not: a
+    request that fails leaves no fresh rows, so that plant's year would be
+    deleted outright. On a daily job the erosion would be silent and the 95%
+    guard far too coarse to notice one plant going missing. A stale row is a
+    much better failure than a deleted one, and the monthly full pass corrects it.
+
+    Existing rows are read as text and never coerced, so untouched years are
+    written back exactly as found. Round-tripping them through pandas' type
+    inference would reformat numbers and rewrite the file for no reason.
     """
     path = P(fname)
     if not os.path.exists(path):
         return fresh
     old = pd.read_csv(path, dtype=str, keep_default_na=False, low_memory=False)
-    if "FiscalId" not in old.columns:
+    if not {"PlantId", "FiscalId"} <= set(old.columns):
         return fresh
-    drop = {str(f) for f in fids}
-    kept = old[~old.FiscalId.astype(str).isin(drop)]
-    print(f"  {fname}: {len(kept):,} rows kept + {len(fresh):,} refreshed")
+    key = list(zip(old.PlantId.astype(str), old.FiscalId.astype(str)))
+    kept = old[[k not in got for k in key]]
+    print(f"  {fname}: {len(kept):,} rows kept + {len(fresh):,} refreshed "
+          f"({len(got):,} plant-years re-read)")
     return pd.concat([kept, fresh], ignore_index=True) if len(kept) else fresh
 
 
@@ -219,9 +226,10 @@ def cmd_scrape(workers=6, latest_only=False, years=2):
     print(f"{len(plants)} plants x {len(fiscals)} fiscal years = {len(jobs)} requests"
           + (f"  [latest {years}: {', '.join(fiscals.values())}]" if latest_only else ""))
     res, failed = _pool(scrape_one, jobs, workers, "energy")
-    rows, summaries = [], []
+    rows, summaries, got = [], [], set()
     for df, summ in res:
         pid, fid = summ["PlantId"], summ["FiscalId"]
+        got.add((str(pid), str(fid)))        # what actually came back, for the merge
         if not df.empty:
             df["Plant"], df["FiscalYear"] = plants[pid], fiscals[fid]
             df["_seq"] = range(len(df))      # the site's own row order within a table
@@ -237,8 +245,8 @@ def cmd_scrape(workers=6, latest_only=False, years=2):
     monthly = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
     summary = pd.DataFrame(summaries)
     if latest_only:
-        monthly = _merge_year(monthly, "rms_monthly.csv", keep_fids)
-        summary = _merge_year(summary, "rms_summary.csv", keep_fids)
+        monthly = _merge_year(monthly, "rms_monthly.csv", got)
+        summary = _merge_year(summary, "rms_summary.csv", got)
 
     if not monthly.empty:
         monthly = (monthly.sort_values(["PlantId", "FiscalId", "_seq"], kind="stable")
