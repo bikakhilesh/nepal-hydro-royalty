@@ -781,6 +781,33 @@ def _snap_to_river(plant_name, river_field, lat, lon, idx, max_km=50):
     return bp[1], bp[0], name
 
 
+# The register's DistrictId is sometimes the company's registered office rather
+# than where the plant stands. It is rare -- two rows of 198 -- but it moves a
+# plant the width of the country on the map, and the river snap cannot rescue it
+# because the named river is then hundreds of km from the centroid it starts at.
+# Corrected by hand, with the evidence, in the same spirit as the ALIAS table.
+DISTRICT_FIX = {
+    # Tundi Power's Chimkhola-Rahughat-Mangale, on the Rahughat in Raghuganga RM,
+    # Myagdi. The register files it under Lalitpur, which is the office.
+    "Rahughat Mangale": "Myagdi",
+    # 21.3 MW at Kuinemangle, Raghuganga RM-8, Myagdi -- the same municipality.
+    "Thulo Khola HPP":  "Myagdi",
+}
+
+
+def _fix_districts(m):
+    """Apply DISTRICT_FIX in place; returns how many rows moved."""
+    if "PlantName" not in m.columns: return 0
+    key = m.PlantName.astype(str).str.strip()
+    n = 0
+    for name, dist in DISTRICT_FIX.items():
+        hit = key == name
+        if hit.any() and (m.loc[hit, "DistrictId"] != dist).any():
+            m.loc[hit, "DistrictId"] = dist
+            n += int(hit.sum())
+    return n
+
+
 def resolve_coords():
     """Assign each plant a position: an exact name match where one exists,
     otherwise its district centroid, flagged approximate.
@@ -789,6 +816,8 @@ def resolve_coords():
     39.7817,-89.6501 (Springfield, Illinois), an unedited form default. So is
     'Province 1', carried by 97 plants including many demonstrably elsewhere."""
     m = pd.read_csv(P("rms_plants_meta.csv"), dtype=str).replace(r"^\s*$", np.nan, regex=True)
+    moved = _fix_districts(m)
+    if moved: print(f"  district corrected on {moved} plant(s) filed under their office")
     m["PlantId"] = m.Id.astype(int)
     m["Cap_kW"] = pd.to_numeric(m.PlantCapacity, errors="coerce")
     if "Rivers" not in m.columns: m["Rivers"] = None
@@ -995,6 +1024,7 @@ def load():
     d = pd.read_csv(P("rms_monthly_clean.csv"))
     s = pd.read_csv(P("rms_summary_clean.csv"))
     m = pd.read_csv(P("rms_plants_meta.csv"), dtype=str).replace(r"^\s*$", np.nan, regex=True)
+    _fix_districts(m)
     m["PlantId"]   = m.Id.astype(int)
     m["PlantName"] = m.PlantName.str.replace(r"\s+", " ", regex=True).str.strip()
     m["CodBsYear"] = m.MitiofOperation.map(bs_year)

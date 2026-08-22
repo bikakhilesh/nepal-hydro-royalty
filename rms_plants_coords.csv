@@ -180,7 +180,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 191,Sagu khola 1 HPP,5500.0,Dolakha,Bagmati,27.6329785,86.2324209,district,district centroid,Dolakha
 192,Sagu Khola HEP,20000.0,Dolakha,Bagmati,27.6329785,86.2324209,district,district centroid,Dolakha
 193,Upper Tadi,11000.0,Nuwakot,Bagmati,27.9139628,85.1421083,district,district centroid,Nuwakot
-194,Rahughat Mangale,37000.0,Lalitpur,Bagmati,27.665847,85.322427,district,district centroid,Lalitpur
+194,Rahughat Mangale,37000.0,Myagdi,Bagmati,28.5439443,83.4632633,district,district centroid,Myagdi
 195,Lower Solu Hydropower Project,82000.0,Solukhumbu,Province 1,27.5222,86.5758,river,"on Solu Khola, nearest Solukhumbu",Solu Khola
 196,Kabeli-3 Cascade HEP,21930.0,Taplejung,Province 1,27.2914,87.6958,river,"on Kabeli, nearest Taplejung",Kabeli
 197,Upper Piluwa 3 HPP,4950.0,Rolpa,Province 1,28.3223102,82.6157842,district,district centroid,Rolpa
@@ -188,7 +188,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 199,Upper Rahughat,48500.0,Myagdi,Gandaki,28.5439443,83.4632633,district,district centroid,Myagdi
 200,Upper Gaddi Gad,1550.0,Doti,Sudurpashchim,29.2667026,80.9828753,district,district centroid,Doti
 201,Daram Khola HEP,9600.0,Baglung,Gandaki,28.2641,83.4304,river,"on Daram Khola, nearest Baglung",Daram Khola
-202,Thulo Khola HPP,21300.0,Lalitpur,Bagmati,27.665847,85.322427,district,district centroid,Lalitpur
+202,Thulo Khola HPP,21300.0,Myagdi,Bagmati,28.5439443,83.4632633,district,district centroid,Myagdi
 203,Madme Khola HPP,24000.0,Kaski,Gandaki,28.2127189,83.9810569,district,district centroid,Kaski
 204,Khorunga Khola HPP,4800.0,Tehrathum,Province 1,27.1290911,87.5346974,district,district centroid,Tehrathum
 205,Hidi Khola HEP,6820.0,Lamjung,Gandaki,28.2290844,84.3791341,district,district centroid,Lamjung
