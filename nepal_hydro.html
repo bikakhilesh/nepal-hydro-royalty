@@ -97,6 +97,10 @@ th,td{padding:9px 13px;text-align:left;border-bottom:1px solid var(--line-soft);
 th{background:var(--surface-2);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
   color:var(--ink-3);font-weight:600;position:sticky;top:0;cursor:pointer;user-select:none}
 th.n,td.n{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+/* The company column runs to 426px on the longest registered name and pushes
+   every figure past the fold. Capped and ellipsised; the full string is still
+   in the row's expanded detail. */
+#t-plants td:nth-child(2){max-width:210px;overflow:hidden;text-overflow:ellipsis}
 th:hover{color:var(--accent)}
 th[aria-sort]{color:var(--accent)}
 tbody tr:hover{background:var(--surface-2)}
@@ -593,11 +597,11 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <th data-k="district" tabindex="0">District</th>
       <th data-k="cod" tabindex="0">COD (BS)</th>
       <th data-k="mw" class="n" tabindex="0">MW</th>
+      <th data-k="rpm" class="n" tabindex="0">NPR m/MW/yr</th>
+      <th data-k="cplf" class="n" tabindex="0">Own PLF ref</th>
       <th data-k="ppa" class="n" tabindex="0">PPA NPR/kWh</th>
       <th data-k="gwh" class="n" tabindex="0">Lifetime GWh</th>
       <th data-k="cf" class="n" tabindex="0">Median CF</th>
-      <th data-k="cplf" class="n" tabindex="0">Own PLF ref</th>
-      <th data-k="rpm" class="n" tabindex="0">NPR m/MW/yr</th>
       <th data-k="rev_bn" class="n" tabindex="0">Revenue NPR bn</th>
       <th data-k="roy_bn" class="n" tabindex="0">Royalty NPR bn</th>
       <th data-k="yrs" class="n" tabindex="0">Years</th>
@@ -1621,10 +1625,10 @@ function renderPlants(){
     var tr = '<tr class="prow" data-id="'+p.id+'" tabindex="0" role="button" aria-expanded="'+open+'">'+
       '<td><span class="chev">\u25b6</span> '+p.name+'</td><td>'+(p.company||'\u2014')+'</td><td>'+(p.district||'\u2014')+
       '</td><td class="mono">'+(p.cod||'\u2014')+'</td><td class="n">'+fmt(p.mw,1)+
-      '</td><td class="n">'+ppaCell(p)+'</td><td class="n">'+fmt(p.gwh)+
-      '</td><td class="n">'+(p.cf!=null?p.cf.toFixed(3):'\u2014')+
+      '</td><td class="n">'+(p.rpm!=null?fmt(p.rpm,1):'\u2014')+
       '</td><td class="n">'+plfRefCell(p)+
-      '</td><td class="n">'+(p.rpm!=null?fmt(p.rpm,1):'\u2014')+'</td><td class="n">'+fmt(p.rev_bn,2)+
+      '</td><td class="n">'+ppaCell(p)+'</td><td class="n">'+fmt(p.gwh)+
+      '</td><td class="n">'+(p.cf!=null?p.cf.toFixed(3):'\u2014')+'</td><td class="n">'+fmt(p.rev_bn,2)+
       '</td><td class="n">'+fmt(p.roy_bn,3)+'</td><td class="n">'+p.yrs+'</td><td class="n">'+balTxt+
       '</td><td class="mono">'+(p.last_fy||'\u2014')+'</td></tr>';
     if(open) tr += '<tr class="drow"><td colspan="15">'+yearsTable(p.id, p)+'</td></tr>';
