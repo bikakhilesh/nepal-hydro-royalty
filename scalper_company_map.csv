@@ -60,7 +60,7 @@ NGPL,Ngadi Group Power Ltd.,Nyadi Group (P) Ltd. Lamjung,40,1,5.0,Siuri HP,Lamju
 NHDL,Nepal Hydro Developers Ltd.,Nepal Hydro Developer Ltd.,47,1,3.52,Charnawati khola HP,Dolakha,lookup,researched: Charnawati khola HP
 NHPC,National Hydro Power,National Hydropower Company Limited Katmandu,10,1,7.5,Indrawati 3,Sindhupalchok,lookup,matched on name
 NYADI,Nyadi Hydropower Limited,Nyadi Hydropower Limited,130,1,30.0,Nyadi,Lamjung,lookup,matched on name
-PHCL,Peoples Hydropower Company Limited,Peoples Power Limited,143,1,4.96,Puwa 2,Ilam,lookup,matched on name
+PHCL,Peoples Hydropower Company Limited,Peoples Hydropower Co. Ltd.,151,1,54.0,Super Dordi Kha,Lamjung,lookup,"Super Dordi Kha 54 MW; the auto-match gave this Peoples Power Ltd (Puwa 2, 5 MW) because CO_EXPAND folds power into hydropower and the two names then key alike -- PPL is the real owner of Puwa 2"
 PMHPL,Panchakanya Mai Hydropower,"Panchakanya Mai Hydropwer limited Harihar bhawan, Pulchowk, Lalitpur",62;70,2,18.1,Upper Mai | Upper Mai -C,Ilam,lookup,researched: Upper Mai | Upper Mai -C
 PPCL,Panchthar Power Company Ltd.,"Panchthar Power Company Pvt. Ltd. Hativan 15, Lalitpur",68,1,14.9,Hewa Khola A,,lookup,matched on name
 PPL,Peoples Power Limited,Peoples Power Limited,143,1,4.96,Puwa 2,Ilam,lookup,matched on name
@@ -69,7 +69,7 @@ RAWA,Rawa Energy Development Limited,Rawa Energy Development Pvt Ltd,106,1,3.0,R
 RFPL,River Falls Power Limited,RIver Falls Power Limited,156,1,10.3,Down Piluwa,Sankhuwasabha,lookup,matched on name
 RHGCL,Rapti Hydro And General Construction Limited,Rapti Hydro and General Construction Limited,150,1,5.0,Rukum gad,Rukum,lookup,matched on name
 RHPL,Rasuwagadhi Hydropower Company Limited,Rasuwagadhi Hydropower Company Ltd. Maharajgunj,180,1,111.0,Rasuwagadhi HPP,Rashuwa,lookup,matched on name
-RIDI,Ridi Power Company Limited,Ridi Hydro Power Development Company Limited Ridi,6,1,2.4,Ridi Khola HP,Palpa,lookup,matched on name
+RIDI,Ridi Power Company Limited,"Ridi Power Company Ltd Trade Tower,Thapathali",98,1,9.9,Iwa Khola,Taplejung,lookup,"Iwa Khola 9.9 MW. Was pointed at Ridi Hydro Power Development Co (Ridi Khola, 2.4 MW), a different company that shares the word Ridi; the register carries this ticker's own name verbatim on Iwa Khola"
 RLEL,Ridge Line Energy Limited,Ridge Line Energy Limited Kupandole,160,1,9.05,Super Chepe,Gorkha,lookup,matched on name
 RURU,Ru Ru Jalbidhyut Pariyojana Limited,Ruru Jalbidyut Pariyojana Pvt. Ltd,48,1,5.0,Upper Hugdi,Gulmi,lookup,researched: Upper Hugdi
 SAHAS,Sahas Urja Limited,Sahas Urja Limited,139,1,86.0,Solu Khola (Dudhkoshi),Solukhumbu,lookup,matched on name

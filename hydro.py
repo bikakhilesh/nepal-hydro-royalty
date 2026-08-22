@@ -1344,6 +1344,8 @@ def build_payload():
     if mp: payload["map"] = mp
     rc = _recon_payload(d, m)
     if rc: payload["recon"] = rc
+    co = _co_payload(d, m)
+    if co: payload["co"] = co
 
     payload["stats"] = {
         "plants": int(d.PlantName.nunique()),
@@ -1458,6 +1460,243 @@ def _reported_quarters():
         return json.load(open(cache, encoding="utf-8"))["cum"]
     except (FileNotFoundError, KeyError, ValueError):
         return None
+
+
+def _dividends(tickers):
+    """Declared dividends per ticker, newest first, plus the sector by year.
+
+    nepse_dividends.csv is every listed company on the exchange; only the hydro
+    tickers are read out of it. Percentages are of par, and par is NPR 100
+    throughout NEPSE, so a cash figure of 0.53% is 53 paisa a share.
+
+    Bonus and cash are kept apart and never added into one number on the page.
+    They are not the same transaction: cash leaves the company, a bonus issue
+    prints shares against reserves and leaves the balance sheet where it was.
+    Reading a 10% bonus as a 10% dividend is the easiest mistake to make with
+    this file, and the sector has spent a decade moving from one to the other --
+    a total that hid the shift would hide the finding.
+    """
+    try:
+        dv = pd.read_csv(P("nepse_dividends.csv"), dtype=str).fillna("")
+    except FileNotFoundError:
+        return {}, []
+    dv = dv.rename(columns={"Bonus (%)": "bonus", "Cash (%)": "cash",
+                            "Announcement Date": "ann", "Fiscal Year": "fy"})
+    dv = dv[dv.Symbol.isin(set(tickers))].copy()
+    if dv.empty: return {}, []
+    # Unilever files its cash with a thousands separator; nothing else in the
+    # file does, and nothing hydro does, but the parse has to survive it anyway
+    for c in ("bonus", "cash"):
+        dv[c] = pd.to_numeric(dv[c].str.replace(",", ""), errors="coerce").fillna(0.0)
+    # "2081/2082" -> BS 2081, the year the financials call AD 2024/25
+    dv["y"] = pd.to_numeric(dv.fy.str.slice(0, 4), errors="coerce")
+    dv = dv.dropna(subset=["y"]).sort_values("y", ascending=False)
+
+    per = {tk: [[int(t.y), r(t.bonus, 2), r(t.cash, 2), t.ann or None]
+                for t in g.itertuples()]
+           for tk, g in dv.groupby("Symbol")}
+
+    by_year = []
+    for y, g in dv.groupby(dv.y.astype(int)):
+        by_year.append({"y": int(y), "n": int(g.Symbol.nunique()),
+                        "cash": r(g.cash.median(), 3), "bonus": r(g.bonus.median(), 3),
+                        # a cash line under one per cent of par is the withholding
+                        # on the bonus issue beside it, not a distribution
+                        "n_cash": int((g.cash > 1).sum()),
+                        "n_bonus": int((g.bonus > 0).sum())})
+    return per, by_year
+
+
+def _co_payload(d, m):
+    """Every listed hydro ticker, with the register's meter beside its own books.
+
+    Three files meet here and no two of them share a key. The financials are
+    filed per NEPSE ticker and per AD fiscal year; the register is filed per
+    plant and per BS fiscal year; the load factors are hand-entered per ticker.
+    scalper_company_map.csv is the bridge, and the two calendars are the same
+    year offset by 57 -- AD 2024/25 is BS 2081/82.
+
+    The one thing that has to be right is which twelve months to compare. A
+    register fiscal year runs Asar to Jestha; a Nepali accounting year runs
+    Shrawan to Asar, one month later. Re-cutting the monthly rows onto the
+    accounting year moves the median company from 3.6% off its own audited
+    energy-sales line to 0.6% off it, and takes the count agreeing within two
+    per cent from 102 to 192 of 310. So the re-cut is not a refinement; it is
+    the difference between the two sources agreeing and not.
+
+    Every ticker comes back, including the 8 with no plant in the register and
+    the ones whose only filed year is still running. A company that has not
+    generated yet is a fact about the sector, not a row to drop.
+    """
+    try:
+        fin  = pd.read_csv(P("scalper_hydro_combined.csv"))
+        cmap = pd.read_csv(P("scalper_company_map.csv")).fillna("")
+    except FileNotFoundError:
+        return None
+    try:
+        mkt = pd.read_csv(P("scalper_hydro_comparative.csv")).set_index("Ticker")
+    except FileNotFoundError:
+        mkt = None
+    try:
+        pin = pd.read_csv(P("scalper_plf_input.csv"), comment="#",
+                          dtype=str).fillna("").set_index("Ticker")
+    except FileNotFoundError:
+        pin = None
+
+    # Q4 is the year: every line in this series is cumulative year to date.
+    # Where a year was filed twice the audited figure is the one that stands --
+    # 33 of 268 restatements move the top line by more than a per cent.
+    q = fin[fin.Quarter == 4].copy()
+    q["_aud"] = (q.DataSource == "Audited").astype(int)
+    q = q.sort_values("_aud").drop_duplicates(["Ticker", "Year"], keep="last")
+    # and in year order, because the latest complete year is read off the end
+    q = q.sort_values("Year", key=lambda c: c.map(lambda y: int(str(y).split("/")[0])))
+
+    pids = {t.Ticker: [int(x) for x in str(t.PlantIds).split(";") if x]
+            for t in cmap.itertuples() if t.PlantIds}
+    cm = cmap.set_index("Ticker")
+
+    mo = d[~d.IsAnnualFiling].copy()
+    mo["acct"] = np.where(mo.BsMonth >= 4, mo.BsYear, mo.BsYear - 1)
+    ay = (mo.groupby(["PlantId", "acct"], as_index=False)
+            .agg(gen=("Generation_kWh","sum"), rev=("Revenue_NPR","sum"),
+                 roy=("Royalty_NPR","sum"), n=("Period","size")))
+    # the register's own cut, kept only to show what the re-cut is worth
+    rf = (mo.groupby(["PlantId", "FiscalYear"], as_index=False)
+            .agg(rev=("Revenue_NPR","sum"), n=("Period","size")))
+    kw = d.groupby("PlantId").Capacity_kW.first()
+
+    def g(row, col, scale=1.0, nd=2):
+        v = pd.to_numeric(row.get(col), errors="coerce") if hasattr(row, "get") else None
+        return None if v is None or not np.isfinite(v) else r(v*scale, nd)
+
+    hist, fleet, ratios = {}, {}, []
+    for t in q.itertuples():
+        ids = pids.get(t.Ticker)
+        if not ids: continue
+        bs = int(str(t.Year).split("/")[0]) + 57
+        fy = f"{bs-2000:03d}/{(bs+1)-2000:02d}"
+        A = ay[(ay.PlantId.isin(ids)) & (ay.acct == bs)]
+        if len(A) != len(ids) or not (A.n >= 12).all() or A.rev.sum() <= 0: continue
+        cap = float(kw[ids].sum())
+        rep = float(t.EnergySales)/1e3 if np.isfinite(t.EnergySales) and t.EnergySales > 0 else None
+        reg = float(A.rev.sum())/1e6
+        gwh = float(A.gen.sum())/1e6
+        plf = A.gen.sum()/(cap*8760) if cap > 0 else None
+        hist.setdefault(t.Ticker, []).append(
+            [t.Year, r(reg,1), r(rep,1), r(gwh,1), r(plf,3),
+             g(t._asdict(), "ProfitAfterTax", 1e-3, 1), r(A.roy.sum()/1e6, 2)])
+        if rep:
+            f = fleet.setdefault(t.Year, {"ad": t.Year, "fy": fy, "reg": 0.0, "rep": 0.0, "n": 0})
+            f["reg"] += reg; f["rep"] += rep; f["n"] += 1
+            F = rf[(rf.PlantId.isin(ids)) & (rf.FiscalYear == fy)]
+            ratios.append({"tk": t.Ticker, "ad": t.Year, "a": reg/rep,
+                           "f": (F.rev.sum()/1e6/rep) if len(F) == len(ids)
+                                 and (F.n >= 11).all() and F.rev.sum() > 0 else None})
+
+    # ── one row per ticker, latest complete year, everything alongside
+    divs, div_year = _dividends(set(q.Ticker))
+    rows = []
+    for tk in sorted(set(q.Ticker)):
+        h = hist.get(tk, [])
+        last = h[-1] if h else None
+        cr = cm.loc[tk] if tk in cm.index else None
+        mr = mkt.loc[tk] if mkt is not None and tk in mkt.index else None
+        pr = pin.loc[tk] if pin is not None and tk in pin.index else None
+        ids = pids.get(tk, [])
+        mw = float(kw[[i for i in ids if i in kw.index]].sum())/1000 if ids else None
+        if not mw and cr is not None:
+            mw = pd.to_numeric(cr.get("MW"), errors="coerce")
+            mw = None if not np.isfinite(mw) else float(mw)
+        cplf = float(pr.ContractPLF)/100 if pr is not None and pr.ContractPLF else None
+        dplf = float(pr.DesignPLF)/100 if pr is not None and pr.DesignPLF else None
+        mcap = None if mr is None else g(mr, "Market Cap", 1e-6, 0)     # NPR -> million
+        rec = {
+            "tk": tk,
+            "name": (str(cr.Company) if cr is not None else tk)[:46],
+            "reg_co": (str(cr.RegisterCompany) or None) if cr is not None else None,
+            "mw": r(mw, 2), "np": len(ids),
+            "pnames": (str(cr.PlantNames) or None) if cr is not None else None,
+            "dist": (str(cr.District) or None) if cr is not None else None,
+            # register side, latest complete accounting year
+            "fy": last[0] if last else None,
+            "reg_m": last[1] if last else None, "rep_m": last[2] if last else None,
+            "gwh": last[3] if last else None, "plf": last[4] if last else None,
+            "roy_m": last[6] if last else None,
+            "rpm": r(last[1]/mw, 1) if last and last[1] and mw else None,
+            "ratio": r(last[1]/last[2], 3) if last and last[1] and last[2] else None,
+            "nyr": len(h),
+            # what the plant was built or contracted to do
+            "cplf": r(cplf, 4), "dplf": r(dplf, 4),
+            "cost_mw": r(float(pr.CostPerMW), 1) if pr is not None and pr.CostPerMW else None,
+            "psrc": (pr.Source or None) if pr is not None else None,
+            # the company's own books and what the market pays for them
+            "pat_m": last[5] if last else None,
+            "mcap_m": mcap, "mcap_mw": r(mcap/mw, 0) if mcap and mw else None,
+            "roe": None if mr is None else g(mr, "ROE (TTM) %", 1, 4),
+            "pe": None if mr is None else g(mr, "PE (TTM)", 1, 1),
+            "pbv": None if mr is None else g(mr, "PBV", 1, 2),
+            "npm": None if mr is None else g(mr, "Net Profit Margin TTM %", 1, 4),
+            "d2a": None if mr is None else g(mr, "Debt to Asset", 1, 3),
+            "px": None if mr is None else g(mr, "Latest Close", 1, 1),
+            "yr1": None if mr is None else g(mr, "1 Year Price Chg %", 1, 3),
+            "hist": h,
+            # newest first: [BS year, bonus % of par, cash % of par, announced]
+            "div": divs.get(tk, []),
+        }
+        dl = rec["div"][0] if rec["div"] else None
+        rec |= {"div_y": dl[0] if dl else None,
+                "bonus": dl[1] if dl else None, "cash": dl[2] if dl else None,
+                "div_n": len(rec["div"]),
+                # cash on par 100 against the traded price; a bonus issue is not
+                # a yield and is deliberately left out of it
+                "yld": r(dl[2]/rec["px"], 4) if dl and dl[2] and rec.get("px") else None}
+        rec["ach"] = r(rec["plf"]/(cplf or dplf), 3) if rec["plf"] and (cplf or dplf) else None
+        rec["st"] = "ok" if last else ("part" if ids else "off")
+        rows.append(rec)
+
+    if not any(x["st"] == "ok" for x in rows): return None
+
+    # ── how close the two sources land, on each cut of the year
+    def hbin(vals):
+        lo, hi, w = 0.70, 1.30, 0.02
+        out = [{"x": r(lo+w*i+w/2, 3), "n": 0} for i in range(int((hi-lo)/w))]
+        under = over = 0
+        for v in vals:
+            if v is None: continue
+            if v < lo: under += 1
+            elif v >= hi: over += 1
+            else: out[min(len(out)-1, int((v-lo)/w))]["n"] += 1
+        return out, under, over
+    A = [x["a"] for x in ratios]
+    ha, ua, oa = hbin(A)
+    hf, uf, of_ = hbin([x["f"] for x in ratios])
+    both = [(x["a"], x["f"]) for x in ratios if x["f"] is not None]
+    within = lambda v, e: sum(1 for x in v if abs(x-1) <= e)
+    agree = {
+        "acct": ha, "regfy": hf, "under": ua, "over": oa, "under_f": uf, "over_f": of_,
+        "n": len(A), "n_both": len(both), "tickers": len({x["tk"] for x in ratios}),
+        "med": r(float(np.median(A)), 4),
+        "p25": r(float(np.percentile(A, 25)), 3), "p75": r(float(np.percentile(A, 75)), 3),
+        "w2": within(A, .02), "w5": within(A, .05), "w10": within(A, .10),
+        # the same company-years on the register's own cut, so the pair is fair
+        "med_a": r(float(np.median([abs(np.log(a)) for a, f in both])), 4),
+        "med_f": r(float(np.median([abs(np.log(f)) for a, f in both])), 4),
+        "w2_a": within([a for a, f in both], .02), "w2_f": within([f for a, f in both], .02),
+    }
+    order = sorted(fleet, key=lambda y: int(str(y).split("/")[0]))
+    paid = [x for x in rows if x["div_n"]]
+    return {"rows": rows, "agree": agree, "divYear": div_year,
+            "n_div": len(paid),
+            "n_div_now": sum(1 for x in rows if x["div_y"] == (div_year[-1]["y"] if div_year else None)),
+            "fleet": [{"ad": y, "fy": fleet[y]["fy"], "reg_bn": r(fleet[y]["reg"]/1e3, 2),
+                       "rep_bn": r(fleet[y]["rep"]/1e3, 2), "n": fleet[y]["n"]} for y in order],
+            "n_ok": sum(1 for x in rows if x["st"] == "ok"),
+            "n_part": sum(1 for x in rows if x["st"] == "part"),
+            "n_off": sum(1 for x in rows if x["st"] == "off"),
+            "n_plf": sum(1 for x in rows if x["ach"] is not None),
+            "mw_ok": r(sum(x["mw"] or 0 for x in rows if x["st"] == "ok"), 0),
+            "mw_all": r(sum(x["mw"] or 0 for x in rows), 0)}
 
 
 def _recon_payload(d, m):

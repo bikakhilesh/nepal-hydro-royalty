@@ -1,6 +1,7 @@
-name: Sync scalper series
+name: Sync external series
 
-# Copies two CSVs out of the private stock-scalper repo and commits them here.
+# Copies two CSVs out of the private stock-scalper repo, pulls the public NEPSE
+# dividend history, and commits all three here.
 #
 # The point of committing rather than fetching at build time: the dashboard build
 # then reads an ordinary local file and needs no credential of its own, so the
@@ -10,6 +11,10 @@ name: Sync scalper series
 #
 # Runs before the RMS refresh, not after, so the day's rebuild sees the day's
 # series rather than yesterday's.
+#
+# The dividend file is public and needs no credential, so it is fetched and
+# committed whether or not SCALPER_TOKEN is set. A fork with no secret still gets
+# a working dividend column.
 
 on:
   schedule:
@@ -62,6 +67,17 @@ jobs:
             comparative/comparative_hydro_power.csv
           sparse-checkout-cone-mode: false
 
+      # Public repo, plain HTTPS, no token. --fail so a 404 or a 500 is an error
+      # rather than an HTML error page written over the committed CSV.
+      - name: Fetch the public dividend history
+        run: |
+          set -euo pipefail
+          mkdir -p _pub
+          curl -sS --fail --retry 3 --retry-delay 5 -o _pub/dividend_history.csv \
+            https://raw.githubusercontent.com/bikakhilesh/dividend-history/master/dividend_history.csv
+          head -1 _pub/dividend_history.csv | grep -q '^Symbol,Company,' \
+            || { echo 'dividend CSV header is not what the build expects'; exit 1; }
+
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -73,19 +89,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          # src path in the scalper repo -> name it takes here. Source-prefixed, as
-          # rms_* is, so provenance is legible from the filename alone.
-          sync_one () {
-            src="_scalper/$1"; dst="$2"
+          # where it landed -> the name it takes here. Source-prefixed, as rms_* is,
+          # so provenance is legible from the filename alone.
+          sync_file () {
+            src="$1"; dst="$2"
 
             # One check for three failures: token unset, token expired, path renamed
             # upstream. In none of them is going red the right answer -- the repo
             # still holds the last good copy.
             if [ ! -f "$src" ]; then
-              echo "- \`$dst\`: no file at \`$1\` in the scalper repo" >> "$GITHUB_STEP_SUMMARY"
+              echo "- \`$dst\`: nothing arrived at \`$src\`" >> "$GITHUB_STEP_SUMMARY"
               return 0
             fi
-            got=$((got + 1))
 
             # Same principle as guard.py: a sync that arrives short has lost
             # something, and overwriting good data with it is worse than doing
@@ -104,51 +119,65 @@ jobs:
             echo "- \`$dst\`: $new rows" >> "$GITHUB_STEP_SUMMARY"
           }
 
+          # Same thing for the scalper repo, which is the only source that can be
+          # missing wholesale rather than one file at a time -- so it also counts
+          # what arrived, for the diagnostic below.
+          sync_one () {
+            if [ -f "_scalper/$1" ]; then got=$((got + 1)); fi
+            sync_file "_scalper/$1" "$2"
+          }
+
           # Each is attempted whatever the other does, so one bad file cannot hide
           # the state of the other in the summary.
           bad=0; got=0
-          sync_one combined/hydro_power_combined.csv       scalper_hydro_combined.csv   || bad=1
-          sync_one comparative/comparative_hydro_power.csv scalper_hydro_comparative.csv || bad=1
+          sync_one  combined/hydro_power_combined.csv       scalper_hydro_combined.csv    || bad=1
+          sync_one  comparative/comparative_hydro_power.csv scalper_hydro_comparative.csv || bad=1
+          sync_file _pub/dividend_history.csv               nepse_dividends.csv           || bad=1
           if [ "$bad" != 0 ]; then
             echo "Not committing: see the failure above." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
-          # Nothing arrived at all, which is not the same as nothing having changed
-          # and must not be reported in the same words -- a run that compared nothing
-          # should never read as a clean bill of health.
-          if [ "$got" = 0 ]; then
-            echo 'Neither path matched. The checkout itself worked, so this is the paths,' >> "$GITHUB_STEP_SUMMARY"
-            echo 'not the token. What the scalper repo actually holds:' >> "$GITHUB_STEP_SUMMARY"
+          # Nothing arrived from the private repo, which is not the same as nothing
+          # having changed and must not be reported in the same words -- a run that
+          # compared nothing should never read as a clean bill of health. Diagnosed,
+          # but no longer an early exit: the dividend fetch is a separate public
+          # source and may well have something to commit even when this one is
+          # unreachable.
+          if [ "$got" = 0 ] && [ "${HAS_SCALPER:-}" = 'true' ]; then
+            echo '' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Neither scalper path matched. The checkout itself worked, so this is the' >> "$GITHUB_STEP_SUMMARY"
+            echo 'paths, not the token. What the scalper repo actually holds:' >> "$GITHUB_STEP_SUMMARY"
             echo '' >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
             # ls-tree reads the tree object, so it lists the whole repo even though
             # the working copy is a two-file sparse checkout.
             git -C _scalper ls-tree -r --name-only HEAD | head -60 >> "$GITHUB_STEP_SUMMARY" || true
             echo '```' >> "$GITHUB_STEP_SUMMARY"
-            echo 'The committed copies are untouched.' >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+            echo 'The committed scalper copies are untouched.' >> "$GITHUB_STEP_SUMMARY"
           fi
 
           # The map is derived from the series, the register and the overrides, so it
           # is rebuilt here rather than committed by hand and left to rot. Its output
           # goes to the summary because a newly listed ticker it cannot place is the
           # one thing in this job that needs a person, and it must not pass silently.
-          echo '' >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          python hydro.py companies 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          git add scalper_company_map.csv
+          if [ "$got" != 0 ]; then
+            echo '' >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            python hydro.py companies 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            git add scalper_company_map.csv
+          fi
 
           # Staged, then compared. `git diff` alone reports no change for a file that
           # is not tracked yet, so on the first run it would find nothing to do and
           # never commit anything.
           if git diff --cached --quiet; then
-            echo 'Unchanged: both series match the committed copies.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Unchanged: every source matches the committed copy.' >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
           git config user.name  'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m "data: sync scalper series $(date -u +%Y-%m-%d)"
+          git commit -m "data: sync external series $(date -u +%Y-%m-%d)"
           git push

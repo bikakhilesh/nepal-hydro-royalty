@@ -15,3 +15,8 @@ terrain.html
 # own .git, and the commit step runs `git add -A`, which would record it as an
 # embedded-repo gitlink -- a broken pointer for anyone who clones this.
 _scalper/
+
+# Scratch copy of the public dividend history, before the shrink guard copies it
+# to nepse_dividends.csv. `git add -A` in the commit step would otherwise record
+# both.
+_pub/

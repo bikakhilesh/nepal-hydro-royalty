@@ -77,7 +77,7 @@ NGPL,Ngadi Group Power Ltd.,Nyadi Group (P) Ltd. Lamjung,,,,register,researched:
 NHDL,Nepal Hydro Developers Ltd.,Nepal Hydro Developer Ltd.,,,,register,researched: Charnawati khola HP
 NHPC,National Hydro Power,National Hydropower Company Limited Katmandu,,,,register,matched on name
 NYADI,Nyadi Hydropower Limited,Nyadi Hydropower Limited,,,,register,matched on name
-PHCL,Peoples Hydropower Company Limited,Peoples Power Limited,,,,register,matched on name
+PHCL,Peoples Hydropower Company Limited,Peoples Hydropower Co. Ltd.,,,,register,"Super Dordi Kha 54 MW; the auto-match gave this Peoples Power Ltd (Puwa 2, 5 MW) because CO_EXPAND folds power into hydropower and the two names then key alike -- PPL is the real owner of Puwa 2"
 PMHPL,Panchakanya Mai Hydropower,"Panchakanya Mai Hydropwer limited Harihar bhawan, Pulchowk, Lalitpur",,,,register,researched: Upper Mai | Upper Mai -C
 PPCL,Panchthar Power Company Ltd.,"Panchthar Power Company Pvt. Ltd. Hativan 15, Lalitpur",,,,register,matched on name
 PPL,Peoples Power Limited,Peoples Power Limited,,,,register,matched on name
@@ -86,7 +86,7 @@ RAWA,Rawa Energy Development Limited,Rawa Energy Development Pvt Ltd,,,,register
 RFPL,River Falls Power Limited,RIver Falls Power Limited,,,,register,matched on name
 RHGCL,Rapti Hydro And General Construction Limited,Rapti Hydro and General Construction Limited,,,,register,matched on name
 RHPL,Rasuwagadhi Hydropower Company Limited,Rasuwagadhi Hydropower Company Ltd. Maharajgunj,,,,register,matched on name
-RIDI,Ridi Power Company Limited,Ridi Hydro Power Development Company Limited Ridi,,,,register,matched on name
+RIDI,Ridi Power Company Limited,"Ridi Power Company Ltd Trade Tower,Thapathali",,,,register,"Iwa Khola 9.9 MW. Was pointed at Ridi Hydro Power Development Co (Ridi Khola, 2.4 MW), a different company that shares the word Ridi; the register carries this ticker's own name verbatim on Iwa Khola"
 RLEL,Ridge Line Energy Limited,Ridge Line Energy Limited Kupandole,,,,register,matched on name
 RURU,Ru Ru Jalbidhyut Pariyojana Limited,Ruru Jalbidyut Pariyojana Pvt. Ltd,,,,register,researched: Upper Hugdi
 SAHAS,Sahas Urja Limited,Sahas Urja Limited,,,,register,matched on name

@@ -278,6 +278,17 @@ details.tv summary:focus-visible{outline:2px solid var(--accent);outline-offset:
 details.tv .tw{margin-top:12px;max-height:260px;overflow-y:auto}
 details.tv th{cursor:default}
 .stat-good{color:var(--ok)} .stat-crit{color:var(--crit)}
+/* listed-company tab: a status word on a ticker the register cannot fully see,
+   and the two readings of how close its billing lands to its own filing */
+.cotag{font-size:10.5px;color:var(--ink-3);font-style:italic;margin-left:6px}
+.comatch{color:var(--ok)} .comiss{color:var(--warn)}
+#t-co td:nth-child(2){max-width:230px;overflow:hidden;text-overflow:ellipsis}
+/* Squeezed to a phone these two stop being readable rather than just small: the
+   dividend chart is fifteen pairs of bars and the dumbbell is twenty-five rows,
+   and height scales with width on a fixed viewBox. Given a floor they scroll
+   inside .chart, which is what that container's overflow-x is for. */
+#c-div svg{min-width:660px}
+#c-plf svg{min-width:430px}
 
 #tip{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;z-index:50;
   background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:9px 12px;
@@ -584,6 +595,8 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       By fiscal year<span class="tcount" id="tc-years"></span></button>
     <button role="tab" id="tab-project" aria-controls="panel-project" aria-selected="false" tabindex="-1">
       Project<span class="tcount" id="tc-project"></span></button>
+    <button role="tab" id="tab-co" aria-controls="panel-co" aria-selected="false" tabindex="-1">
+      Listed companies<span class="tcount" id="tc-co"></span></button>
   </div>
   <div class="ctl">
     <input type="search" id="q" placeholder="Search plant, company or district…" aria-label="Search">
@@ -639,6 +652,103 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <div class="plist" id="plist" role="listbox" aria-label="Choose a project"></div>
       <div id="pcard"></div>
     </div>
+  </div>
+
+  <div id="panel-co" role="tabpanel" aria-labelledby="tab-co" hidden>
+    <p class="sdek" id="co-lede" style="max-width:80ch;margin:0 0 20px"></p>
+    <div class="grid2">
+      <figure class="card">
+        <figcaption><div class="ctitle">The meter against the accounts</div>
+        <div class="csub">One dot per company-year. Horizontal: what the register billed the
+          company&rsquo;s plants. Vertical: the energy-sales line in its own filing. Both NPR
+          million, both log.</div></figcaption>
+        <div class="chart" id="c-agree"></div>
+        <div class="legend">
+          <span><i style="background:var(--s1)"></i>Company-year</span>
+          <span><i style="background:var(--accent);height:2px;border-radius:0"></i>Parity: the two sources agree</span>
+        </div>
+      </figure>
+      <figure class="card">
+        <figcaption><div class="ctitle">Why the twelve months you pick matter</div>
+        <div class="csub">Register billing over reported sales, same company-years counted
+          twice: once on the register&rsquo;s own Asar&ndash;Jestha year, once re-cut onto the
+          Shrawan&ndash;Asar accounting year.</div></figcaption>
+        <div class="chart" id="c-cut"></div>
+        <div class="legend">
+          <span><i style="background:var(--s1)"></i>Accounting year (Shrawan&ndash;Asar)</span>
+          <span><i style="background:var(--s2)"></i>Register year (Asar&ndash;Jestha)</span>
+        </div>
+      </figure>
+    </div>
+
+    <div class="grid2" style="margin-top:18px">
+      <figure class="card">
+        <figcaption><div class="ctitle">Promised against delivered</div>
+        <div class="csub">Every listed company that has a load factor on file and a complete
+          register year. Open circle is what the PPA contracts for, or failing that what the
+          operator designed to; filled circle is what the meter recorded.</div></figcaption>
+        <div class="chart" id="c-plf"></div>
+        <div class="legend">
+          <span><i style="border:1.6px solid var(--ink-3);background:transparent"></i>Contracted or design</span>
+          <span><i style="background:var(--s1)"></i>Achieved</span>
+        </div>
+      </figure>
+      <figure class="card">
+        <figcaption><div class="ctitle">What the market pays for a megawatt</div>
+        <div class="csub">Market capitalisation per MW against the revenue that MW actually
+          billed. Both log, so the diagonals are constant multiples of sales. Bubble area is
+          installed capacity.</div></figcaption>
+        <div class="chart" id="c-val"></div>
+        <div class="legend">
+          <span><i style="background:var(--s1)"></i>Register sees the whole business</span>
+          <span><i style="border:1.6px solid var(--s2);background:transparent"></i>Register sees only part of it</span>
+        </div>
+      </figure>
+    </div>
+
+    <figure class="card" style="margin-top:18px">
+      <figcaption><div class="ctitle">Cash went out of fashion, paper came in</div>
+      <div class="csub">Median declaration across the hydro companies that declared
+        anything that year, as a percentage of the NPR 100 par value. Bikram Sambat
+        years, which is how dividends are declared.</div></figcaption>
+      <div class="chart" id="c-div"></div>
+      <div class="legend">
+        <span><i style="background:var(--s1)"></i>Bonus shares</span>
+        <span><i style="background:var(--s2)"></i>Cash</span>
+        <span><i style="background:var(--ink-3);height:2px;border-radius:0"></i>Companies declaring</span>
+      </div>
+    </figure>
+
+    <div class="note" id="co-note" style="margin-top:18px"></div>
+    <div class="note warn" id="co-div-note" style="margin-top:14px"></div>
+
+    <div class="tw" style="max-height:600px;overflow-y:auto;margin-top:18px">
+      <table id="t-co"><thead><tr>
+        <th data-c="tk" tabindex="0">Ticker</th>
+        <th data-c="name" tabindex="0">Company</th>
+        <th data-c="mw" class="n" tabindex="0">MW</th>
+        <th data-c="fy" tabindex="0">Year</th>
+        <th data-c="gwh" class="n" tabindex="0">GWh</th>
+        <th data-c="plf" class="n" tabindex="0">Achieved PLF</th>
+        <th data-c="ref" class="n" tabindex="0">PLF on file</th>
+        <th data-c="ach" class="n" tabindex="0">% of it</th>
+        <th data-c="reg_m" class="n" tabindex="0">Register NPR m</th>
+        <th data-c="rep_m" class="n" tabindex="0">Reported NPR m</th>
+        <th data-c="ratio" class="n" tabindex="0">Match</th>
+        <th data-c="rpm" class="n" tabindex="0">NPR m/MW/yr</th>
+        <th data-c="mcap_mw" class="n" tabindex="0">Mkt cap NPR m/MW</th>
+        <th data-c="bonus" class="n" tabindex="0">Bonus %</th>
+        <th data-c="cash" class="n" tabindex="0">Cash %</th>
+        <th data-c="pe" class="n" tabindex="0">P/E</th>
+        <th data-c="roe" class="n" tabindex="0">ROE</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+    <div class="note" style="margin-top:14px"><b>One row per listed ticker, all
+      <span id="co-n"></span> of them.</b> The register columns are the latest accounting year
+      every one of the company&rsquo;s plants filed in full, which is not the same year for every
+      company. Reported energy sales is the fourth-quarter cumulative figure, audited where an
+      audited filing exists. Market capitalisation, P/E and ROE are a current snapshot and do not
+      belong to the fiscal year beside them. <b>+</b> on any row opens its year-by-year history.</div>
   </div>
 </section>
 
@@ -1834,7 +1944,8 @@ function selectProject(id, jump){
 var activeTab = 'plants';
 function showTab(which){
   activeTab = which;
-  ['plants','years','project'].forEach(function(t){
+  ['plants','years','project','co'].forEach(function(t){
+    if(t === 'co' && !document.getElementById('panel-co')) return;
     var btn = document.getElementById('tab-'+t), panel = document.getElementById('panel-'+t);
     var on = (t === which);
     btn.setAttribute('aria-selected', on); btn.tabIndex = on ? 0 : -1;
@@ -1843,12 +1954,20 @@ function showTab(which){
   var qEl = document.getElementById('q');
   qEl.placeholder = which === 'years'
     ? 'Search plant, company or fiscal year\u2026'
-    : 'Search plant, company or district\u2026';
+    : (which === 'co' ? 'Search ticker, company, plant or district\u2026'
+                      : 'Search plant, company or district\u2026');
   refresh();
 }
 function refresh(){
   if(activeTab === 'plants') renderPlants();
   else if(activeTab === 'years') renderYears();
+  // Drawn on entry rather than once at load. Hidden at load the charts would
+  // still be correct -- frame() sizes off a fixed viewBox and never measures the
+  // DOM -- but a theme flip while the tab was shut would leave them on the old
+  // tokens, because drawAll only redraws the tab that is open.
+  else if(activeTab === 'co'){
+    renderCo(); chartAgree(); chartCut(); chartPlf(); chartVal(); chartDiv();
+  }
   else { renderPlist(); renderProject(); }
 }
 
@@ -1885,6 +2004,36 @@ function wireTable(){
     th.addEventListener('click', go);
     th.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
   });
+  document.querySelectorAll('#t-co th').forEach(function(th){
+    function go(){
+      var k = th.dataset.c;
+      if(coSort === k) coDir = -coDir;
+      else { coSort = k; coDir = (k==='tk'||k==='name'||k==='fy') ? 1 : -1; }
+      document.querySelectorAll('#t-co th').forEach(function(o){ o.removeAttribute('aria-sort'); });
+      th.setAttribute('aria-sort', coDir>0?'ascending':'descending');
+      renderCo();
+    }
+    th.addEventListener('click', go);
+    th.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+  });
+  var cob = document.querySelector('#t-co tbody');
+  if(cob){
+    function coToggle(tr){
+      var k = tr.getAttribute('data-tk');
+      if(coOpen[k]) delete coOpen[k]; else coOpen[k] = 1;
+      renderCo();
+      var again = document.querySelector('#t-co tr.corow[data-tk="'+k+'"]');
+      if(again) again.focus();
+    }
+    cob.addEventListener('click', function(e){
+      var tr = e.target.closest('tr.corow'); if(tr) coToggle(tr);
+    });
+    cob.addEventListener('keydown', function(e){
+      if(e.key!=='Enter' && e.key!==' ') return;
+      var tr = e.target.closest('tr.corow'); if(!tr) return;
+      e.preventDefault(); coToggle(tr);
+    });
+  }
   var tl = document.querySelector('.tabs');
   tl.addEventListener('click', function(e){
     var b = e.target.closest('button[role=tab]'); if(!b) return;
@@ -1893,7 +2042,7 @@ function wireTable(){
   tl.addEventListener('keydown', function(e){
     if(e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
     e.preventDefault();
-    var seq = ['plants','years','project'];
+    var seq = D.co ? ['plants','years','project','co'] : ['plants','years','project'];
     var i = seq.indexOf(activeTab) + (e.key === 'ArrowRight' ? 1 : -1);
     showTab(seq[(i + seq.length) % seq.length]);
     document.getElementById('tab-'+activeTab).focus();
@@ -1901,6 +2050,7 @@ function wireTable(){
   document.getElementById('tc-plants').textContent = '('+fmt(D.plants.length)+')';
   document.getElementById('tc-years').textContent = '('+fmt(buildYearRows().length)+')';
   document.getElementById('tc-project').textContent = '';
+  if(D.co) document.getElementById('tc-co').textContent = '('+fmt(D.co.rows.length)+')';
   document.getElementById('plist').addEventListener('click', function(e){
     var b = e.target.closest('button[data-id]'); if(!b) return;
     selectProject(+b.getAttribute('data-id'), false);
@@ -1982,8 +2132,514 @@ function wireTerrain(){
   });
 }
 
+// ---- listed companies: the register's meter against the companies' books ----
+// Everything below is drawn from D.co, which exists only when the scalper sync
+// has run. Without it the whole tab is removed at startup rather than drawn
+// empty, the same way section 06 handles a missing workbook.
+var L10 = Math.log10 || function(v){ return Math.log(v)/Math.LN10; };
+
+function coPct(v, nd){ return v===null||v===undefined ? '—' : (100*v).toFixed(nd===undefined?1:nd)+'%'; }
+function coRef(r){ return r.cplf!==null&&r.cplf!==undefined ? r.cplf
+                        : (r.dplf!==null&&r.dplf!==undefined ? r.dplf : null); }
+
+// log axis: ticks at every power of ten inside the domain, plus its ends
+function logScale(lo, hi, px0, px1){
+  var a = L10(lo), b = L10(hi);
+  return { to: function(v){ return px0 + (L10(v)-a)/(b-a)*(px1-px0); }, lo:lo, hi:hi };
+}
+function logTicks(lo, hi){
+  var out = [lo];
+  for(var e = Math.floor(L10(lo)); e <= Math.ceil(L10(hi)); e++){
+    [1,2,5].forEach(function(k){
+      var v = k*Math.pow(10,e);
+      if(v > lo*1.15 && v < hi/1.15) out.push(v);
+    });
+  }
+  out.push(hi); return out;
+}
+// Snapping a log domain to whole powers of ten throws away most of the canvas
+// when the data spans 8 to 52. These steps land close enough to the extremes to
+// keep the cloud filling the frame, and still read as round numbers on an axis.
+var NICE = [1,1.5,2,3,5,7,10];
+function niceLog(v, up){
+  var e = Math.floor(L10(v)), m = v/Math.pow(10,e);
+  for(var i=0;i<NICE.length;i++){
+    if(up  && NICE[i] >= m*0.999) return NICE[i]*Math.pow(10,e);
+    if(!up && NICE[i] >  m*1.001) return NICE[i-1 < 0 ? 0 : i-1]*Math.pow(10,e);
+  }
+  return Math.pow(10, up ? e+1 : e);
+}
+// greedy: a label is placed only where nothing already sits on top of it
+function placeLabels(f, cands, dx, dy){
+  var kept = [];
+  cands.forEach(function(c){
+    for(var i=0;i<kept.length;i++)
+      if(Math.abs(kept[i].x-c.x) < dx && Math.abs(kept[i].y-c.y) < dy) return;
+    kept.push(c);
+    // clear of the mark, not on top of it: a 15px bubble swallows a label set
+    // seven pixels from its centre
+    var t = el('text',{x:c.x+(c.off||7),y:c.y+3.5,fill:css('--ink-2'),'font-size':10,
+      'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = c.text; f.svg.appendChild(t);
+  });
+  return kept.length;
+}
+function coShort(v){
+  if(v >= 1000) return (v/1000).toFixed(v>=10000?0:1)+'k';
+  return String(v);
+}
+
+// ---- the meter against the accounts -------------------------------------
+function chartAgree(){
+  if(!D.co) return;
+  var pts = [];
+  D.co.rows.forEach(function(r){
+    (r.hist||[]).forEach(function(h){
+      if(h[1] > 0 && h[2] > 0) pts.push({tk:r.tk, name:r.name, ad:h[0], x:h[1], y:h[2], mw:r.mw});
+    });
+  });
+  if(!pts.length) return;
+  var f = frame('c-agree',{w:520,h:400,m:{t:16,r:16,b:42,l:56},
+    label:'Register billing against reported energy sales, one dot per company-year'});
+  if(!f) return;
+  var all = pts.map(function(p){return p.x;}).concat(pts.map(function(p){return p.y;}));
+  var lo = niceLog(Math.min.apply(null, all), false);
+  var hi = niceLog(Math.max.apply(null, all), true);
+  var X = logScale(lo, hi, f.m.l, f.m.l+f.iw), Y = logScale(lo, hi, f.m.t+f.ih, f.m.t);
+
+  logTicks(lo, hi).forEach(function(v){
+    f.svg.appendChild(el('line',{x1:f.m.l,x2:f.m.l+f.iw,y1:Y.to(v),y2:Y.to(v),
+      stroke:css('--grid'),'stroke-width':1}));
+    var t = el('text',{x:f.m.l-7,y:Y.to(v)+3.5,'text-anchor':'end',fill:css('--ink-3'),
+      'font-size':10,'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = coShort(v); f.svg.appendChild(t);
+    xLabel(f, X.to(v), coShort(v));
+  });
+  // Parity only. A five per cent corridor across four decades is a pixel and a
+  // half wide, which would read as a line drawn slightly wrong rather than as a
+  // tolerance; how close the two sources land is the histogram's job.
+  f.svg.appendChild(el('line',{x1:X.to(lo),y1:Y.to(lo),x2:X.to(hi),y2:Y.to(hi),
+    stroke:css('--accent'),'stroke-width':1.4,'stroke-dasharray':'5 4'}));
+
+  pts.forEach(function(p){
+    var c = el('circle',{cx:X.to(p.x),cy:Y.to(p.y),r:3.4,fill:css('--s1'),
+      opacity:.62,stroke:css('--surface'),'stroke-width':1});
+    c.addEventListener('mousemove',function(e){
+      var q = p.x/p.y;
+      showTip(e, p.tk+' · '+p.ad, [
+        p.name,
+        'Register billed <b>'+fmt(p.x,1)+'</b> NPR m',
+        'Company reported <b>'+fmt(p.y,1)+'</b> NPR m',
+        'Register is <b>'+(q>=1?'+':'')+((q-1)*100).toFixed(1)+'%</b> against the filing']);
+    });
+    c.addEventListener('mouseleave', hideTip);
+    f.svg.appendChild(c);
+  });
+  // name the ones that miss badly; sitting on the line is the story, missing it
+  // is the exception, and the exceptions are what a reader wants named
+  var seen = {}, cand = [];
+  pts.filter(function(p){ return Math.abs(p.x/p.y - 1) > 0.30; })
+     .sort(function(a,b){ return Math.abs(L10(b.x/b.y)) - Math.abs(L10(a.x/a.y)); })
+     .forEach(function(p){
+       if(seen[p.tk]) return;                    // its worst year speaks for it
+       seen[p.tk] = 1;
+       if(cand.length < 9) cand.push({x:X.to(p.x), y:Y.to(p.y), text:p.tk});
+     });
+  placeLabels(f, cand, 36, 12);
+  var lx = el('text',{x:f.m.l+f.iw/2,y:f.H-4,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10.5}); lx.textContent = 'Register billing, NPR million'; f.svg.appendChild(lx);
+  var ly = el('text',{x:-(f.m.t+f.ih/2),y:12,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10.5,transform:'rotate(-90)'});
+  ly.textContent = 'Reported energy sales, NPR million'; f.svg.appendChild(ly);
+}
+
+// ---- what the cut of the year is worth ----------------------------------
+function chartCut(){
+  if(!D.co) return;
+  var a = D.co.agree, f = frame('c-cut',{w:520,h:400,m:{t:16,r:16,b:52,l:46},
+    label:'Distribution of register billing over reported sales, on two cuts of the year'});
+  if(!f) return;
+  var max = 0;
+  a.acct.concat(a.regfy).forEach(function(b){ if(b.n > max) max = b.n; });
+  if(!max) return;
+  var step = Math.pow(10, Math.floor(L10(max/4)));
+  [1,2,2.5,5,10].some(function(k){ if(step*k*4 >= max){ step *= k; return true; } });
+  max = step*4;
+  yAxis(f, max, 4);
+  var bw = f.iw/a.acct.length;
+  // the register's own cut sits behind as an outline, the re-cut as solid bars,
+  // so the collapse onto parity reads as a before and an after
+  var d = 'M'+f.m.l+' '+(f.m.t+f.ih);
+  a.regfy.forEach(function(b,i){
+    var y = f.m.t+f.ih-(b.n/max)*f.ih;
+    d += 'L'+(f.m.l+i*bw)+' '+y+'L'+(f.m.l+(i+1)*bw)+' '+y;
+  });
+  d += 'L'+(f.m.l+f.iw)+' '+(f.m.t+f.ih);
+  f.svg.appendChild(el('path',{d:d,fill:css('--s2'),opacity:.16}));
+  f.svg.appendChild(el('path',{d:d,fill:'none',stroke:css('--s2'),'stroke-width':1.6}));
+
+  a.acct.forEach(function(b,i){
+    var h = (b.n/max)*f.ih, x = f.m.l+i*bw;
+    if(b.n > 0) bar(f, x+1, f.m.t+f.ih-h, bw-2, h, css('--s1'));
+    var hit = el('rect',{x:x,y:f.m.t,width:bw,height:f.ih,class:'hit'});
+    hit.addEventListener('mousemove',function(e){
+      showTip(e, 'Register is '+((b.x-1)*100>=0?'+':'')+((b.x-1)*100).toFixed(0)+'% against the filing',
+        ['<b>'+b.n+'</b> company-years on the accounting year',
+         '<b>'+a.regfy[i].n+'</b> on the register year']);
+    });
+    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
+  });
+  // parity
+  var px = f.m.l + ((1.00-0.70)/0.60)*f.iw;
+  f.svg.appendChild(el('line',{x1:px,x2:px,y1:f.m.t,y2:f.m.t+f.ih,
+    stroke:css('--ink-3'),'stroke-width':1,'stroke-dasharray':'3 3'}));
+  [[0.80,'−20%'],[0.90,'−10%'],[1.00,'parity'],[1.10,'+10%'],[1.20,'+20%']]
+    .forEach(function(t){ xLabel(f, f.m.l+((t[0]-0.70)/0.60)*f.iw, t[1]); });
+  var ly = el('text',{x:f.m.l+f.iw/2,y:f.H-6,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10.5}); ly.textContent = 'Company-years, '+a.n_both+' counted on both cuts';
+  f.svg.appendChild(ly);
+}
+
+// ---- promised against delivered -----------------------------------------
+function chartPlf(){
+  if(!D.co) return;
+  var rows = D.co.rows.filter(function(r){ return r.ach !== null && r.ach !== undefined; })
+                      .sort(function(a,b){ return a.ach - b.ach; });
+  if(!rows.length) return;
+  var rh = 19, f = frame('c-plf',{w:520,h:rows.length*rh+56,
+    m:{t:14,r:52,b:34,l:58}, label:'Contracted or design load factor against achieved, by company'});
+  if(!f) return;
+  var hi = 0.90, X = function(v){ return f.m.l + (v/hi)*f.iw; };
+  [0,0.2,0.4,0.6,0.8].forEach(function(v){
+    f.svg.appendChild(el('line',{x1:X(v),x2:X(v),y1:f.m.t,y2:f.m.t+f.ih,
+      stroke:css('--grid'),'stroke-width':1}));
+    xLabel(f, X(v), v.toFixed(1));
+  });
+  rows.forEach(function(r,i){
+    var y = f.m.t + i*rh + rh/2, ref = coRef(r);
+    f.svg.appendChild(el('line',{x1:X(r.plf),x2:X(ref),y1:y,y2:y,
+      stroke:css('--ink-3'),'stroke-width':1.6,opacity:.5,'stroke-linecap':'round'}));
+    f.svg.appendChild(el('circle',{cx:X(ref),cy:y,r:4,fill:css('--surface'),
+      stroke:css('--ink-3'),'stroke-width':1.6}));
+    f.svg.appendChild(el('circle',{cx:X(r.plf),cy:y,r:4.2,fill:css('--s1'),
+      stroke:css('--surface'),'stroke-width':1}));
+    var tk = el('text',{x:f.m.l-8,y:y+3.5,'text-anchor':'end',fill:css('--ink-2'),
+      'font-size':10.5,'font-family':'IBM Plex Mono, monospace'});
+    tk.textContent = r.tk; f.svg.appendChild(tk);
+    var pc = el('text',{x:f.m.l+f.iw+8,y:y+3.5,fill:css('--ink-2'),'font-size':10.5,
+      'font-family':'IBM Plex Mono, monospace'});
+    pc.textContent = Math.round(100*r.ach)+'%'; f.svg.appendChild(pc);
+    var hit = el('rect',{x:f.m.l,y:f.m.t+i*rh,width:f.iw,height:rh,class:'hit'});
+    hit.addEventListener('mousemove',function(e){
+      showTip(e, r.tk+' · '+r.name, [
+        r.pnames || '',
+        (r.cplf!==null&&r.cplf!==undefined ? 'Contracted' : 'Design')+' PLF <b>'+ref.toFixed(3)+'</b>'
+          + (r.psrc ? ' · '+r.psrc : ''),
+        'Achieved <b>'+r.plf.toFixed(3)+'</b> in '+r.fy,
+        'That is <b>'+Math.round(100*r.ach)+'%</b> of what it is meant to run at']);
+    });
+    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
+  });
+  var lx = el('text',{x:f.m.l+f.iw/2,y:f.H-4,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10.5}); lx.textContent = 'Plant load factor'; f.svg.appendChild(lx);
+}
+
+// ---- what the market pays for a megawatt --------------------------------
+function chartVal(){
+  if(!D.co) return;
+  var rows = D.co.rows.filter(function(r){ return r.rpm > 0 && r.mcap_mw > 0; });
+  if(rows.length < 4) return;
+  var f = frame('c-val',{w:520,h:400,m:{t:16,r:16,b:44,l:56},
+    label:'Market capitalisation per MW against register revenue per MW'});
+  if(!f) return;
+  var xs = rows.map(function(r){return r.rpm;}), ys = rows.map(function(r){return r.mcap_mw;});
+  var xlo = niceLog(Math.min.apply(null,xs), false),
+      xhi = niceLog(Math.max.apply(null,xs), true),
+      ylo = niceLog(Math.min.apply(null,ys), false),
+      yhi = niceLog(Math.max.apply(null,ys), true);
+  var X = logScale(xlo,xhi,f.m.l,f.m.l+f.iw), Y = logScale(ylo,yhi,f.m.t+f.ih,f.m.t);
+  logTicks(ylo,yhi).forEach(function(v){
+    f.svg.appendChild(el('line',{x1:f.m.l,x2:f.m.l+f.iw,y1:Y.to(v),y2:Y.to(v),
+      stroke:css('--grid'),'stroke-width':1}));
+    var t = el('text',{x:f.m.l-7,y:Y.to(v)+3.5,'text-anchor':'end',fill:css('--ink-3'),
+      'font-size':10,'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = coShort(v); f.svg.appendChild(t);
+  });
+  logTicks(xlo,xhi).forEach(function(v){ xLabel(f, X.to(v), coShort(v)); });
+  // constant multiples of billed revenue: mcap/MW over revenue/MW is price to sales
+  [5,10,20,40].forEach(function(k){
+    var pts = [], step = (L10(xhi)-L10(xlo))/40;
+    for(var i=0;i<=40;i++){
+      var x = Math.pow(10, L10(xlo)+i*step), y = k*x;
+      if(y >= ylo && y <= yhi) pts.push([X.to(x), Y.to(y)]);
+    }
+    if(pts.length < 2) return;
+    f.svg.appendChild(el('path',{d:pts.map(function(p,i){return (i?'L':'M')+p[0]+' '+p[1];}).join(''),
+      fill:'none',stroke:css('--ink-3'),'stroke-width':1,'stroke-dasharray':'3 4',opacity:.55}));
+    var last = pts[pts.length-1];
+    var t = el('text',{x:last[0]-3,y:last[1]-4,'text-anchor':'end',fill:css('--ink-3'),
+      'font-size':9.5,'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = k+'× sales'; f.svg.appendChild(t);
+  });
+  rows.sort(function(a,b){ return b.mw - a.mw; }).forEach(function(r){
+    // a company whose register billing is far from its own reported sales has a
+    // business the MW denominator does not cover; drawn hollow so it is not read
+    // as cheap or dear on a footing it does not have
+    var part = r.ratio === null || r.ratio === undefined || Math.abs(r.ratio-1) > 0.15;
+    var rad = Math.max(3, Math.min(15, 2 + 1.35*Math.sqrt(r.mw||1)));
+    var c = el('circle',{cx:X.to(r.rpm),cy:Y.to(r.mcap_mw),r:rad,
+      fill: part ? 'none' : css('--s1'),
+      'fill-opacity': part ? 0 : .26,
+      stroke: part ? css('--s2') : css('--s1'), 'stroke-width': part ? 1.6 : 1.2});
+    c.addEventListener('mousemove',function(e){
+      showTip(e, r.tk+' · '+r.name, [
+        fmt(r.mw,1)+' MW · '+(r.pnames||''),
+        'Billed <b>'+fmt(r.rpm,1)+'</b> NPR m per MW in '+r.fy,
+        'Market pays <b>'+fmt(r.mcap_mw,0)+'</b> NPR m per MW',
+        '— that is <b>'+(r.mcap_mw/r.rpm).toFixed(1)+'×</b> billed revenue',
+        part ? '<b>Register covers only part of this company</b>' : '']
+        .filter(function(s){return s;}));
+    });
+    c.addEventListener('mouseleave', hideTip); f.svg.appendChild(c);
+  });
+  // the biggest plants and the dearest megawatts; the middle of the cloud is a
+  // cloud and naming any of it would be arbitrary
+  var mark = function(r){
+    return {x:X.to(r.rpm), y:Y.to(r.mcap_mw), text:r.tk,
+            off: Math.max(3, Math.min(15, 2 + 1.35*Math.sqrt(r.mw||1))) + 5}; };
+  var byMw = rows.slice(0,6).map(mark);
+  var byPx = rows.slice().sort(function(a,b){ return b.mcap_mw/b.rpm - a.mcap_mw/a.rpm; })
+    .slice(0,5).map(mark);
+  placeLabels(f, byMw.concat(byPx), 40, 12);
+  var lx = el('text',{x:f.m.l+f.iw/2,y:f.H-4,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10.5}); lx.textContent = 'Register revenue per MW, NPR million a year';
+  f.svg.appendChild(lx);
+  var ly = el('text',{x:-(f.m.t+f.ih/2),y:12,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10.5,transform:'rotate(-90)'});
+  ly.textContent = 'Market cap per MW, NPR million'; f.svg.appendChild(ly);
+}
+
+// ---- what a hydro company actually hands back ---------------------------
+function chartDiv(){
+  if(!D.co || !D.co.divYear || D.co.divYear.length < 3) return;
+  var d = D.co.divYear;
+  var f = frame('c-div',{w:1060,h:300,m:{t:18,r:16,b:46,l:46},
+    label:'Median cash and bonus declaration by Bikram Sambat year'});
+  if(!f) return;
+  var max = 0;
+  d.forEach(function(y){ max = Math.max(max, y.cash||0, y.bonus||0); });
+  var step = Math.pow(10, Math.floor(L10(max/4)));
+  [1,2,2.5,5,10].some(function(k){ if(step*k*4 >= max){ step *= k; return true; } });
+  max = step*4;
+  yAxis(f, max, 4, function(v){ return v.toFixed(0)+'%'; });
+  var gw = f.iw/d.length, bw = Math.min(17, (gw-8)/2);
+  // The count is a different quantity from a percentage and gets no second y
+  // axis: it is drawn as a thin rule against the frame height, labelled at each
+  // end, so it reads as context behind the bars rather than a series to measure.
+  var nmax = Math.max.apply(null, d.map(function(y){ return y.n; }));
+  var line = d.map(function(y,i){
+    return (i?'L':'M')+(f.m.l+i*gw+gw/2)+' '+(f.m.t+f.ih-(y.n/nmax)*f.ih*0.92); }).join('');
+  f.svg.appendChild(el('path',{d:line,fill:'none',stroke:css('--ink-3'),'stroke-width':1.4,
+    'stroke-dasharray':'4 3',opacity:.75}));
+
+  d.forEach(function(y,i){
+    var x0 = f.m.l + i*gw + (gw - 2*bw - 2)/2;
+    [['bonus','--s1'],['cash','--s2']].forEach(function(p,k){
+      var v = y[p[0]] || 0, hh = (v/max)*f.ih;
+      if(v > 0) bar(f, x0 + k*(bw+2), f.m.t+f.ih-hh, bw, hh, css(p[1]));
+    });
+    xLabel(f, f.m.l+i*gw+gw/2, y.y);
+    var hit = el('rect',{x:f.m.l+i*gw,y:f.m.t,width:gw,height:f.ih,class:'hit'});
+    hit.addEventListener('mousemove',function(e){
+      showTip(e, 'BS '+y.y+' \u2014 '+y.n+(y.n===1?' company declared':' companies declared'), [
+        'Median bonus <b>'+y.bonus.toFixed(2)+'%</b> of par',
+        'Median cash <b>'+y.cash.toFixed(2)+'%</b> of par',
+        '<b>'+y.n_bonus+'</b> issued shares, <b>'+y.n_cash+'</b> paid cash above 1%']);
+    });
+    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
+  });
+  // both ends of the count line, above it -- the flat left-hand stretch runs
+  // straight through anything set beside it
+  [[0, d[0], 'start', 8], [d.length-1, d[d.length-1], 'end', -8]].forEach(function(p){
+    var t = el('text',{x:f.m.l+p[0]*gw+gw/2+p[3],
+      y:f.m.t+f.ih-(p[1].n/nmax)*f.ih*0.92-9,'text-anchor':p[2],
+      fill:css('--ink-3'),'font-size':10,'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = p[1].n; f.svg.appendChild(t);
+  });
+}
+
+// ---- the table -----------------------------------------------------------
+var coSort = 'mw', coDir = -1, coOpen = {};
+function coVal(r, k){
+  if(k === 'ref') return coRef(r);
+  return r[k];
+}
+function coHist(r){
+  if(!r.hist || !r.hist.length) return '';
+  var body = r.hist.map(function(y){
+    var q = (y[1] && y[2]) ? y[1]/y[2] : null;
+    return '<tr>'
+      + '<td class="mono">'+y[0]+'</td>'
+      + '<td class="n">'+num(y[3],1)+'</td>'
+      + '<td class="n">'+(y[4]===null?'—':y[4].toFixed(3))+'</td>'
+      + '<td class="n">'+num(y[1],1)+'</td>'
+      + '<td class="n">'+num(y[2],1)+'</td>'
+      + '<td class="n '+(q!==null&&Math.abs(q-1)<=0.05?'stat-good':'')+'">'
+        + (q===null?'—':q.toFixed(3))+'</td>'
+      + '<td class="n">'+num(y[6],2)+'</td>'
+      + '<td class="n">'+num(y[5],1)+'</td></tr>';
+  }).join('');
+  return '<table class="ytab"><thead><tr><th>Fiscal yr</th><th class="n">GWh</th>'
+    + '<th class="n">PLF</th><th class="n">Register</th><th class="n">Reported</th>'
+    + '<th class="n">Match</th><th class="n">Royalty</th><th class="n">Profit after tax</th>'
+    + '</tr></thead><tbody>'+body+'</tbody></table>';
+}
+function renderCo(){
+  if(!D.co) return;
+  var q = document.getElementById('q').value.trim().toLowerCase();
+  var rows = D.co.rows.filter(function(r){
+    if(!q) return true;
+    return (r.tk+' '+r.name+' '+(r.pnames||'')+' '+(r.dist||'')+' '+(r.reg_co||''))
+             .toLowerCase().indexOf(q) >= 0;
+  });
+  rows = rows.slice().sort(function(a,b){
+    var x = coVal(a, coSort), y = coVal(b, coSort);
+    if(x === null || x === undefined) return 1;
+    if(y === null || y === undefined) return -1;
+    if(typeof x === 'string') return coDir * x.localeCompare(y);
+    return coDir * (x - y);
+  });
+  var body = rows.map(function(r){
+    var ref = coRef(r), open = !!coOpen[r.tk];
+    var mark = r.st === 'ok' ? '' :
+      ' <span class="cotag">'+(r.st === 'part' ? 'no full year yet' : 'not in register')+'</span>';
+    var tds =
+      '<td><span class="chev">'+(open?'›':'+')+'</span> <b>'+r.tk+'</b></td>'
+    + '<td title="'+(r.name+(r.pnames?' — '+r.pnames:'')).replace(/"/g,'&quot;')+'">'
+      + r.name + mark + '</td>'
+    + '<td class="n">'+num(r.mw,1)+'</td>'
+    + '<td>'+(r.fy||'<span style="color:var(--ink-3)">—</span>')+'</td>'
+    + '<td class="n">'+num(r.gwh,1)+'</td>'
+    + '<td class="n">'+(r.plf===null||r.plf===undefined?'<span style="color:var(--ink-3)">—</span>':r.plf.toFixed(3))+'</td>'
+    + '<td class="n">'+(ref===null?'<span style="color:var(--ink-3)">—</span>'
+        :(r.cplf!==null&&r.cplf!==undefined?ref.toFixed(3):'<i>'+ref.toFixed(3)+'</i>'))+'</td>'
+    + '<td class="n">'+(r.ach===null||r.ach===undefined?'<span style="color:var(--ink-3)">—</span>'
+        :Math.round(100*r.ach)+'%')+'</td>'
+    + '<td class="n">'+num(r.reg_m,1)+'</td>'
+    + '<td class="n">'+num(r.rep_m,1)+'</td>'
+    + '<td class="n">'+(r.ratio===null||r.ratio===undefined?'<span style="color:var(--ink-3)">—</span>'
+        :'<span class="'+(Math.abs(r.ratio-1)<=0.05?'comatch':'comiss')+'">'+r.ratio.toFixed(3)+'</span>')+'</td>'
+    + '<td class="n">'+num(r.rpm,1)+'</td>'
+    + '<td class="n">'+num(r.mcap_mw,0)+'</td>'
+    + '<td class="n">'+num(r.bonus,2)+'</td>'
+    + '<td class="n">'+num(r.cash,2)+'</td>'
+    + '<td class="n">'+num(r.pe,1)+'</td>'
+    + '<td class="n">'+(r.roe===null||r.roe===undefined?'<span style="color:var(--ink-3)">—</span>'
+        :coPct(r.roe,1))+'</td>';
+    var out = '<tr class="prow corow" data-tk="'+r.tk+'" tabindex="0" aria-expanded="'
+            + open + '">'+tds+'</tr>';
+    if(open) out += '<tr class="drow"><td colspan="17">'+coDetail(r)+'</td></tr>';
+    return out;
+  }).join('');
+  document.querySelector('#t-co tbody').innerHTML = body;
+  document.getElementById('cnt').textContent = rows.length + ' of ' + D.co.rows.length + ' tickers';
+}
+function coDetail(r){
+  var bits = [];
+  if(r.pnames) bits.push('<b>'+r.pnames+'</b>'+(r.dist?' · '+r.dist:''));
+  if(r.reg_co) bits.push('register files it as <span class="mono">'+r.reg_co+'</span>');
+  if(r.cost_mw) bits.push('built for <b>'+fmt(r.cost_mw,0)+'</b> NPR m per MW'
+                         +(r.psrc?' · '+r.psrc:''));
+  if(r.mcap_m) bits.push('market capitalisation <b>'+fmt(r.mcap_m,0)+'</b> NPR m');
+  if(r.pbv) bits.push('price to book <b>'+r.pbv.toFixed(2)+'</b>');
+  if(r.d2a !== null && r.d2a !== undefined) bits.push('debt to assets <b>'+coPct(r.d2a,0)+'</b>');
+  var head = '<div class="ycap" style="letter-spacing:0;text-transform:none;font-weight:400;'
+           + 'font-size:12.5px;margin-bottom:10px">' + bits.join(' &nbsp;·&nbsp; ') + '</div>';
+  var div = '';
+  if(r.div && r.div.length){
+    div = '<div class="ycap" style="margin-top:14px">Declared dividends, '
+        + r.div.length + (r.div.length===1?' year':' years')
+        + ' \u00b7 per cent of NPR 100 par</div>'
+        + '<table class="ytab"><thead><tr><th>BS year</th><th class="n">Bonus %</th>'
+        + '<th class="n">Cash %</th><th class="n">Cash as share of bonus</th>'
+        + '<th>Announced</th></tr></thead><tbody>'
+        + r.div.map(function(v){
+            // 5/95 of the bonus is the withholding on it grossed up, not a payout
+            var g = (v[1] > 0 && v[2] > 0) ? v[2]/v[1] : null;
+            var tax = g !== null && Math.abs(g - 5/95) < 5/95*0.05;
+            return '<tr><td class="mono">'+v[0]+'</td>'
+              + '<td class="n">'+num(v[1],2)+'</td>'
+              + '<td class="n">'+num(v[2],2)+'</td>'
+              + '<td class="n">'+(g===null?'\u2014':(100*g).toFixed(1)+'%'
+                  +(tax?' <span class="partial">tax</span>':''))+'</td>'
+              + '<td class="mono">'+(v[3]||'\u2014')+'</td></tr>';
+          }).join('')
+        + '</tbody></table>';
+  }
+  var tail = (!r.hist || !r.hist.length)
+    ? '<div class="ycap" style="letter-spacing:0;text-transform:none;font-weight:400;font-size:12.5px">'
+      + 'No accounting year in which every plant this company owns filed a full twelve months, '
+      + 'so there is nothing here to set against its accounts.</div>'
+    : coHist(r)
+      + '<div class="ycap" style="margin-top:10px;letter-spacing:0;text-transform:none;'
+      + 'font-weight:400">Register and reported both NPR million, on the Shrawan–Asar '
+      + 'accounting year. Match is the first over the second.</div>';
+  return '<div class="ywrap">' + head + tail + div + '</div>';
+}
+function coLede(){
+  if(!D.co) return;
+  var a = D.co.agree;
+  document.getElementById('co-lede').innerHTML =
+    'The register is filed per plant and per Bikram Sambat year; the companies file per NEPSE '
+  + 'ticker and per AD year. Joined on <span class="mono">scalper_company_map.csv</span>, '
+  + '<b>' + a.tickers + ' listed companies</b> carrying <b>' + fmt(D.co.mw_ok,0) + ' MW</b> have at '
+  + 'least one accounting year in which every plant they own filed a full twelve months. Across '
+  + '<b>' + a.n + ' such company-years</b> the register’s billing lands at <b>'
+  + a.med.toFixed(4) + '</b> of the energy-sales line those companies reported, and '
+  + '<b>' + a.w2 + '</b> of them agree to within two per cent.';
+  document.getElementById('co-n').textContent = D.co.rows.length;
+  var dy = D.co.divYear || [];
+  if(dy.length){
+    var a0 = dy[0], a1 = dy[dy.length-1], tax = 0;
+    D.co.rows.forEach(function(r){ (r.div||[]).forEach(function(v){
+      if(v[1] > 0 && v[2] > 0 && Math.abs(v[2]/v[1] - 5/95) < 5/95*0.05) tax++; }); });
+    var both = 0;
+    D.co.rows.forEach(function(r){ (r.div||[]).forEach(function(v){
+      if(v[1] > 0 && v[2] > 0) both++; }); });
+    document.getElementById('co-div-note').innerHTML =
+      '<b>Most of what looks like a dividend here is a tax payment.</b> '
+    + D.co.n_div + ' of the ' + D.co.rows.length + ' listed companies have ever declared '
+    + 'anything and ' + D.co.n_div_now + ' declared in BS ' + a1.y + ', up from ' + a0.n
+    + ' in BS ' + a0.y + '. But what they declare has changed shape completely: median cash '
+    + 'has fallen from <b>' + a0.cash.toFixed(0) + '%</b> of par to <b>' + a1.cash.toFixed(2)
+    + '%</b> while median bonus has risen to <b>' + a1.bonus.toFixed(2) + '%</b>. '
+    + 'In BS ' + a1.y + ', <b>' + a1.n_bonus + '</b> of the ' + a1.n + ' declarations issued '
+    + 'shares and only <b>' + a1.n_cash + '</b> paid cash worth more than one per cent of par. '
+    + 'The reason is exact rather than approximate: of the ' + both + ' declarations pairing '
+    + 'a bonus with some cash, <b>' + tax + '</b> put the cash at 5/95 of the bonus to the '
+    + 'nearest five per cent \u2014 the withholding on a bonus issue, grossed up so the '
+    + 'shareholder nets the whole of the stock. That is not a distribution. On this page '
+    + 'bonus and cash are therefore never added together.';
+  }
+  document.getElementById('co-note').innerHTML =
+    '<b>The month you start on is worth more than any other choice here.</b> A register fiscal '
+  + 'year runs Asar to Jestha; a Nepali accounting year runs Shrawan to Asar, one month later. '
+  + 'On the register’s own cut the median company-year sits <b>'
+  + (100*a.med_f).toFixed(1) + '%</b> away from the filing it should match and only <b>'
+  + a.w2_f + '</b> of ' + a.n_both + ' agree within two per cent. Re-cut onto the accounting year '
+  + 'the same company-years sit <b>' + (100*a.med_a).toFixed(1) + '%</b> away and <b>'
+  + a.w2_a + '</b> agree — so the offset is not a rounding detail, it is most of the '
+  + 'apparent disagreement between the two sources. What survives the correction is real: '
+  + D.co.n_part + ' tickers have plants but no complete year yet, ' + D.co.n_off
+  + ' run projects the register does not carry at all, and a handful report energy revenue well '
+  + 'above what their registered plants are billed for — Butwal Power sells distribution as '
+  + 'well as generation. Only <b>' + D.co.n_plf + '</b> of these companies have a contracted or '
+  + 'design load factor on file, which is the binding limit on the third chart, not a fleet median '
+  + 'standing in for the rest.';
+}
 function drawAll(){
   chartEnergy(); chartCap(); chartSeason(); chartRate(); chartGen(); chartRoy(); chartRecon(); chartAge(); chartMap(); chartLic(); chartLead();
+  if(D.co && activeTab === 'co'){ chartAgree(); chartCut(); chartPlf(); chartVal(); chartDiv(); }
 }
 // Section 06 exists only when an operator workbook was supplied at build time
 // (HYDRO_XLSX). CI has no workbook, so D.recon is absent there — drop the whole
@@ -1995,6 +2651,15 @@ if(!D.recon){
     n.textContent = ('0'+(i+1)).slice(-2);
   });
 }
+
+// The listed-company tab needs the scalper sync to have run. A fork without
+// SCALPER_TOKEN has no scalper_hydro_combined.csv, so D.co is absent -- take the
+// tab and its panel out rather than leave a tab that opens onto nothing.
+if(!D.co){
+  ['tab-co','panel-co'].forEach(function(id){
+    var n = document.getElementById(id); if(n) n.parentNode.removeChild(n);
+  });
+} else { coLede(); }
 
 stats(); transTable(); reconTable(); wireTable(); renderPlants(); drawAll(); buildTableViews();
 wireMapExpand('map-exp'); wireMapExpand('ter-exp'); wireTerrain(); wireLayers();
