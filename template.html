@@ -596,6 +596,8 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <th data-k="ppa" class="n" tabindex="0">PPA NPR/kWh</th>
       <th data-k="gwh" class="n" tabindex="0">Lifetime GWh</th>
       <th data-k="cf" class="n" tabindex="0">Median CF</th>
+      <th data-k="cplf" class="n" tabindex="0">Own PLF ref</th>
+      <th data-k="rpm" class="n" tabindex="0">NPR m/MW/yr</th>
       <th data-k="rev_bn" class="n" tabindex="0">Revenue NPR bn</th>
       <th data-k="roy_bn" class="n" tabindex="0">Royalty NPR bn</th>
       <th data-k="yrs" class="n" tabindex="0">Years</th>
@@ -1479,6 +1481,14 @@ function tierPill(t){
   if(t !== 1 && t !== 2) return '<span style="color:var(--ink-3)">\u2014</span>';
   return '<span class="tierpill tier'+t+'">'+t+'</span>';
 }
+// The load factor this plant was contracted or designed to reach, never a fleet
+// figure standing in for one. A contract is set in plain type, a design figure in
+// italic, and a plant with neither says so rather than showing a borrowed number.
+function plfRefCell(p){
+  if(p.cplf!=null) return p.cplf.toFixed(2);
+  if(p.dplf!=null) return '<em style="font-style:italic;color:var(--ink-2)">'+p.dplf.toFixed(2)+'</em>';
+  return '<span style="color:var(--ink-3)">—</span>';
+}
 function ppaCell(p){
   // a USD-denominated PPA is contracted in USD; showing only a reconstructed NPR
   // figure would misstate the tariff, so report the filed USD rate
@@ -1612,10 +1622,12 @@ function renderPlants(){
       '<td><span class="chev">\u25b6</span> '+p.name+'</td><td>'+(p.company||'\u2014')+'</td><td>'+(p.district||'\u2014')+
       '</td><td class="mono">'+(p.cod||'\u2014')+'</td><td class="n">'+fmt(p.mw,1)+
       '</td><td class="n">'+ppaCell(p)+'</td><td class="n">'+fmt(p.gwh)+
-      '</td><td class="n">'+(p.cf!=null?p.cf.toFixed(3):'\u2014')+'</td><td class="n">'+fmt(p.rev_bn,2)+
+      '</td><td class="n">'+(p.cf!=null?p.cf.toFixed(3):'\u2014')+
+      '</td><td class="n">'+plfRefCell(p)+
+      '</td><td class="n">'+(p.rpm!=null?fmt(p.rpm,1):'\u2014')+'</td><td class="n">'+fmt(p.rev_bn,2)+
       '</td><td class="n">'+fmt(p.roy_bn,3)+'</td><td class="n">'+p.yrs+'</td><td class="n">'+balTxt+
       '</td><td class="mono">'+(p.last_fy||'\u2014')+'</td></tr>';
-    if(open) tr += '<tr class="drow"><td colspan="13">'+yearsTable(p.id, p)+'</td></tr>';
+    if(open) tr += '<tr class="drow"><td colspan="15">'+yearsTable(p.id, p)+'</td></tr>';
     return tr;
   }).join('');
   document.querySelector('#t-plants tbody').innerHTML = html;

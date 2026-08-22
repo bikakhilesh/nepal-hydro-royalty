@@ -872,6 +872,66 @@ def resolve_coords():
     print("positions:", df.precision.value_counts().to_dict())
 
 
+# The register writes a company as name plus its registered office --
+# "Upper Tamakoshi Hydropower Limited Gyaneshwor". The office is not the plant's
+# location and is not part of the company's name, so it is cut for display. The
+# CompanyId string itself is left untouched; it is the join key everywhere else.
+# Whitespace is required before the place name, so a company that opens with one
+# -- Butwal Power Company, Ridi Hydropower -- keeps it. Stripping from position
+# zero would erase the whole name; company_name's fallback catches the rest.
+CO_ADDR = re.compile(r"[,;]?\s+(?:P\.?O\.?\s*Box|Kathmandu|Katmandu|Kathmadnu|Baneshwor|"
+    r"Banehswor|Newbaneswor|New\s+Baneshwor|Koteshwor|Maharajgunj|Lalitpur|Pokhara|Pokhra|"
+    r"Bijaypur|Ridi|Butwal|Naxal|Thapathali|Anamnagar|Sanepa|Kupandole|Kupondole|Dillibazar|"
+    r"Putalisadak|Tripureshwor|Jawalakhel|Bhaktapur|Birgunj|Biratnagar|Hetauda|Damak|Itahari|"
+    r"Dharan|Nepalgunj|Galkot|Samakhusi|Sinamangal|Gongabu|Dhobighat|Tokha|Tinkune|Kamaladi|"
+    r"Hativan|Pulchok|Pulchowk|Lakeside|Gyaneshwor?|Dhumbarahi?|Sunrise|Trade\s+Tower|"
+    r"Tusalmarga|Bizz\s+Park|Sanothimi|Chabahil|Battisputali|Harihar|Buddhanagar|Rabibhawan|"
+    r"Minbhawan|Mahalaxmisthan|Baluwatar|Thulo\s+Bharyang|Sano\s+Bharyang|Tinthana)\b.*$", re.I)
+
+
+def company_name(s):
+    """The company, with the registered office cut off the end.
+
+    Falls back to the original whenever the cut leaves nothing useful. A place
+    name inside a company name is not an address, and losing the company is the
+    worse error of the two.
+    """
+    if not isinstance(s, str): return None
+    full = re.sub(r"\s{2,}", " ", s).strip(" ,;-	") or None
+    out = re.sub(r"[-,;\s]+$", "", re.sub(r"\s{2,}", " ", CO_ADDR.sub("", s).strip(" ,;-	")))
+    return out if len(out) >= 4 else full
+
+
+def plf_refs():
+    """plant id -> the load factor that plant was built or contracted to reach.
+
+    Two different claims, kept apart. A contracted PLF comes from an ICRA or CARE
+    rationale and is what the PPA obliges NEA to take; a design PLF is derived
+    from the mean annual energy the operator publishes. They land close, but a
+    plant is judged against whichever it actually has, and a plant with neither
+    is reported as such rather than measured against a fleet average.
+
+    Everything here is hand-entered in scalper_plf_input.csv, keyed by ticker;
+    scalper_company_map.csv turns a ticker into the plants it runs.
+    """
+    try:
+        inp = pd.read_csv(P("scalper_plf_input.csv"), comment="#", dtype=str).fillna("")
+        cmap = pd.read_csv(P("scalper_company_map.csv")).fillna("")
+    except FileNotFoundError:
+        return {}
+    plants = {t.Ticker: [int(x) for x in str(t.PlantIds).split(";") if x]
+              for t in cmap.itertuples() if t.PlantIds}
+    out = {}
+    for t in inp.itertuples():
+        c = float(t.ContractPLF)/100 if getattr(t, "ContractPLF", "") else None
+        d = float(t.DesignPLF)/100 if getattr(t, "DesignPLF", "") else None
+        if c is None and d is None: continue
+        for pid in plants.get(t.Ticker, []):
+            out[pid] = {"cplf": r(c, 4), "dplf": r(d, 4),
+                        "psrc": (t.Source or None) if c is not None else "operator site"}
+    return out
+
+
 # ══════════════════════════════════════════════ listed companies -> plants ══
 # The scalper series is filed per NEPSE ticker; the register is filed per plant,
 # joined by a company name the register frequently misspells -- Panchakanya Mai
@@ -1131,6 +1191,18 @@ def build_payload():
     ry = a[(a.months >= 11) & (a.cap > 0) & (a.rev > 0) & (a.gen > 0)].copy()
     ry["rpm"] = ry.rev / (ry.cap/1000)
     ry["implied"] = ry.rev / ry.gen
+    # A plant-year whose revenue over generation lands outside a plausible tariff
+    # is not a cheap year or a dear one, it is a broken revenue line, and it must
+    # not enter the median. Both ends matter: Khimti reconstructs at 0.54 because
+    # its USD invoices go unread, and Kulekhani-II at 53.81 because one year
+    # carries a settlement rather than a month of energy. Judged per plant-year,
+    # not per plant -- Upper Bhotekoshi is sound in twelve years and wrong in one.
+    # Judge reliability on everything the plant filed, then take the median from
+    # the years that survive. Filtering first would leave nothing out of band to
+    # notice, and the flag below would silently never fire again.
+    implied = ry.groupby("PlantId").implied.median()
+    thin = set(implied[~implied.between(2.5, 15.0)].index)
+    ry = ry[ry.implied.between(2.5, 15.0)]
     rpm  = ry.groupby("PlantId").rpm.median()
     rpm_n = ry.groupby("PlantId").rpm.size()
     # Revenue over generation has to land near the filed PPA rate. Where it comes
@@ -1138,8 +1210,7 @@ def build_payload():
     # files 8.53 NPR/kWh and reconstructs to 0.54, because its invoices are in USD
     # in a shape the cleaner does not read. Flagged rather than dropped: the
     # generation is still good, and a silent hole is worse than a marked one.
-    implied = ry.groupby("PlantId").implied.median()
-    thin = set(implied[implied < 2.5].index)
+
 
     # ── plant table (PPA rates split wet/dry - the tariff is seasonal)
     wet = mo[~mo.BsMonth.isin(DRY_MONTHS)].groupby("PlantId").Rate_NPR_kWh.median()
@@ -1156,6 +1227,7 @@ def build_payload():
                   on="PlantName", how="left").sort_values("gwh", ascending=False)
     s2 = s.copy(); s2["_o"] = s2.FiscalYear.map(FY)
     last = s2.sort_values("_o").groupby("PlantName").tail(1).set_index("PlantName")
+    refs = plf_refs()
     meta = m.set_index("PlantId")
     coord = c.set_index("PlantId") if len(c) else None
     g_ = lambda row, k: None if k not in row.index or pd.isna(row[k]) else str(row[k])
@@ -1168,12 +1240,13 @@ def build_payload():
                "last_fy": last.FiscalYear.get(x.PlantName),
                "ppa": r(allr.get(pid), 2), "ppa_wet": r(wet.get(pid), 2), "ppa_dry": r(dry.get(pid), 2),
                "rpm": r(rpm.get(pid, np.nan)/1e6, 1), "rpm_n": int(rpm_n.get(pid, 0)),
+               "cplf": refs.get(pid, {}).get("cplf"), "dplf": refs.get(pid, {}).get("dplf"),
                "implied": r(implied.get(pid, np.nan), 2), "thin": 1 if pid in thin else 0,
                "ccy": "USD" if usd_plants.get(pid) else "NPR",
                "ppa_usd": r(usd_rate.get(pid), 4), "fx": r(usd_fx.get(pid), 2)}
         if pid in meta.index:
             mr = meta.loc[pid]
-            rec |= {"company": (g_(mr,"CompanyId") or "")[:60] or None,
+            rec |= {"company": (company_name(g_(mr,"CompanyId")) or "")[:60] or None,
                     "district": g_(mr,"DistrictId"), "province": g_(mr,"ProvinceId"),
                     "cod": g_(mr,"MitiofOperation"),
                     "cod_ad": None if pd.isna(mr.CodAdYear) else int(mr.CodAdYear),
