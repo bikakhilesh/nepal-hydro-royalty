@@ -288,6 +288,27 @@ details.tv th{cursor:default}
    and height scales with width on a fixed viewBox. Given a floor they scroll
    inside .chart, which is what that container's overflow-x is for. */
 #c-div svg{min-width:660px}
+#c-gap svg{min-width:700px}
+#c-ret svg,#c-growth svg,#c-payable svg{min-width:400px}
+#c-oneq svg{min-width:700px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden;
+  margin-top:14px}
+.tile{background:var(--surface);padding:13px 15px}
+.tile .tk{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:600}
+.tile .tv{font-size:21px;font-weight:600;letter-spacing:-.02em;margin-top:5px;line-height:1.15;
+  font-variant-numeric:tabular-nums}
+.tile .ts{font-size:11.5px;color:var(--ink-3);margin-top:3px}
+.btnrow{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.pillbtn{font:inherit;font-size:12px;font-family:"IBM Plex Mono",monospace;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:99px;
+  padding:4px 11px;cursor:pointer;color:var(--ink-2)}
+.pillbtn:hover{color:var(--ink);border-color:var(--ink-3)}
+.pillbtn.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.pillbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#t-tech td:nth-child(2),#t-screen td:nth-child(2),#t-ratio td:nth-child(2){
+  max-width:200px;overflow:hidden;text-overflow:ellipsis}
 #c-plf svg{min-width:430px}
 
 #tip{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;z-index:50;
@@ -595,8 +616,6 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       By fiscal year<span class="tcount" id="tc-years"></span></button>
     <button role="tab" id="tab-project" aria-controls="panel-project" aria-selected="false" tabindex="-1">
       Project<span class="tcount" id="tc-project"></span></button>
-    <button role="tab" id="tab-co" aria-controls="panel-co" aria-selected="false" tabindex="-1">
-      Listed companies<span class="tcount" id="tc-co"></span></button>
   </div>
   <div class="ctl">
     <input type="search" id="q" placeholder="Search plant, company or district…" aria-label="Search">
@@ -654,7 +673,31 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     </div>
   </div>
 
-  <div id="panel-co" role="tabpanel" aria-labelledby="tab-co" hidden>
+</section>
+
+<section id="sec-listed">
+  <div class="shead"><span class="snum">08</span><h2>The companies that own them</h2></div>
+  <p class="sdek">One hundred and ten hydropower companies are listed on NEPSE, and
+    between them they own most of the register. This section puts the two side by side:
+    what the meter recorded and what the accounts say, what the market pays for it, and
+    every measure for one company at a time. <b>The search box filters whichever view is
+    open.</b></p>
+  <div class="tabs" role="tablist" aria-label="Company views">
+    <button role="tab" id="ltab-reg" aria-controls="lpanel-reg" aria-selected="true">
+      Register vs accounts</button>
+    <button role="tab" id="ltab-mkt" aria-controls="lpanel-mkt" aria-selected="false" tabindex="-1">
+      Market analysis</button>
+    <button role="tab" id="ltab-val" aria-controls="lpanel-val" aria-selected="false" tabindex="-1">
+      Ratios &amp; value</button>
+    <button role="tab" id="ltab-one" aria-controls="lpanel-one" aria-selected="false" tabindex="-1">
+      By company</button>
+  </div>
+  <div class="ctl">
+    <input type="search" id="cq" placeholder="Search ticker, company, plant or district&hellip;"
+           aria-label="Search companies">
+    <span class="count" id="ccnt"></span>
+  </div>
+  <div id="lpanel-reg" role="tabpanel" aria-labelledby="ltab-reg">
     <p class="sdek" id="co-lede" style="max-width:80ch;margin:0 0 20px"></p>
     <div class="grid2">
       <figure class="card">
@@ -750,10 +793,175 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       audited filing exists. Market capitalisation, P/E and ROE are a current snapshot and do not
       belong to the fiscal year beside them. <b>+</b> on any row opens its year-by-year history.</div>
   </div>
+
+  <div id="lpanel-mkt" role="tabpanel" aria-labelledby="ltab-mkt" hidden>
+    <div class="card">
+      <div class="ctitle">The sector at a glance</div>
+      <div class="csub">Medians across the listed hydro companies, with the
+        capitalisation-weighted figure beside each where the two say different things.</div>
+      <div class="tiles" id="mkTiles"></div>
+    </div>
+
+    <div class="grid2" style="margin-top:18px">
+      <figure class="card">
+        <figcaption><div class="ctitle">Price change, ranked</div>
+        <div class="csub">One horizon at a time. The hairline is the sector median.</div></figcaption>
+        <div class="btnrow" id="mkHzn"></div>
+        <div class="chart" id="c-ret"></div>
+      </figure>
+      <figure class="card">
+        <figcaption><div class="ctitle">Return against risk</div>
+        <div class="csub">Mean weekly return against the standard deviation of weekly
+          returns over a year. Up is better, right is choppier; the ray is the sector's
+          own return per unit of risk, so a name above it is beating the sector on that
+          trade.</div></figcaption>
+        <div class="chart" id="c-risk"></div>
+      </figure>
+    </div>
+
+    <figure class="card" style="margin-top:18px">
+      <figcaption><div class="ctitle">Where each name is trading</div>
+      <div class="csub">RSI, distance from the 52-week high, and the 50-day against the
+        200-day moving average. A position, not a verdict &mdash; RSI 70 is not better
+        than RSI 30 but overbought, and a price at its 52-week high is momentum to one
+        reader and an expensive entry to another. Uncoloured for that reason.</div></figcaption>
+      <div class="tw" style="max-height:420px;overflow-y:auto">
+        <table id="t-tech"><thead><tr>
+          <th data-m="tk">Ticker</th><th data-m="name">Company</th>
+          <th data-m="px" class="n">Price</th>
+          <th data-m="rsi" class="n">RSI</th>
+          <th data-m="vs52" class="n">From 52wk high</th>
+          <th data-m="ma" class="n">50d vs 200d</th>
+          <th data-m="rstr" class="n">Relative strength</th>
+          <th data-m="macd" class="n">MACD</th>
+          <th data-m="beta" class="n">Beta</th>
+          <th data-m="var1m" class="n">VaR 1mo @5%</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </figure>
+
+    <figure class="card" style="margin-top:18px">
+      <figcaption><div class="ctitle">Everything the screen carries</div>
+      <div class="csub">The full price and fundamentals screen, one row per ticker.
+        Click a heading to sort.</div></figcaption>
+      <div class="tw" style="max-height:520px;overflow-y:auto">
+        <table id="t-screen"><thead><tr>
+          <th data-s="tk">Ticker</th><th data-s="name">Company</th>
+          <th data-s="mw" class="n">MW</th>
+          <th data-s="px" class="n">Price</th>
+          <th data-s="mcap" class="n">Mkt cap NPR m</th>
+          <th data-s="pe" class="n">P/E</th>
+          <th data-s="pbv" class="n">P/B</th>
+          <th data-s="eps" class="n">EPS</th>
+          <th data-s="bv" class="n">Book</th>
+          <th data-s="roe" class="n">ROE</th>
+          <th data-s="roa" class="n">ROA</th>
+          <th data-s="npm" class="n">Net margin</th>
+          <th data-s="d2a" class="n">Debt/assets</th>
+          <th data-s="cr" class="n">Current</th>
+          <th data-s="chg4w" class="n">4wk</th>
+          <th data-s="chg1y" class="n">1yr</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </figure>
+  </div>
+
+  <div id="lpanel-val" role="tabpanel" aria-labelledby="ltab-val" hidden>
+    <div class="grid2">
+      <figure class="card">
+        <figcaption><div class="ctitle">What the market pays for a megawatt</div>
+        <div class="csub" id="capSub"></div></figcaption>
+        <div class="chart" id="c-capfit"></div>
+        <div class="legend">
+          <span><i style="background:var(--s1)"></i>Company</span>
+          <span><i style="background:var(--accent);height:2px;border-radius:0"></i>Fitted line</span>
+        </div>
+      </figure>
+      <figure class="card">
+        <figcaption><div class="ctitle">Price to book against return on equity</div>
+        <div class="csub" id="pbSub"></div></figcaption>
+        <div class="chart" id="c-pbroe"></div>
+      </figure>
+    </div>
+
+    <figure class="card" style="margin-top:18px">
+      <figcaption><div class="ctitle">Furthest from the capacity line</div>
+      <div class="csub">Market capitalisation over what the fitted line says a company
+        of that size is worth. Above zero the market pays more than capacity alone
+        explains, below it less. A ranking against peers, never a target price
+        &mdash; the line moves whenever the sector reprices.</div></figcaption>
+      <div class="chart" id="c-gap"></div>
+    </figure>
+
+    <div class="grid2" style="margin-top:18px">
+      <figure class="card">
+        <figcaption><div class="ctitle">Growth, against a year ago</div>
+        <div class="csub">The latest filed quarter against the same quarter a year
+          earlier, so the seasonality of a cumulative filing cancels rather than
+          distorting the number.</div></figcaption>
+        <div class="btnrow" id="grBtns"></div>
+        <div class="chart" id="c-growth"></div>
+      </figure>
+      <figure class="card">
+        <figcaption><div class="ctitle">What could be paid out</div>
+        <div class="csub">Retained earnings against paid-up capital &mdash; the dividend
+          a company could declare from what has actually accumulated. <b>Not
+          annualised:</b> retained earnings is a balance, not a quarter's earning. Nepal
+          quotes a dividend as a percentage of paid-up at NPR 100 par, so the percentage
+          and the rupee figure are the same statement. <b>A negative bar is an
+          accumulated loss</b> and means nothing can be paid from this line however
+          profitable the quarter was.</div></figcaption>
+        <div class="chart" id="c-payable"></div>
+      </figure>
+    </div>
+
+    <figure class="card" style="margin-top:18px">
+      <figcaption><div class="ctitle">Every ratio</div>
+      <div class="csub">One row per ticker, sortable. Money in NPR million.</div></figcaption>
+      <div class="tw" style="max-height:520px;overflow-y:auto">
+        <table id="t-ratio"><thead><tr>
+          <th data-r="tk">Ticker</th><th data-r="name">Company</th>
+          <th data-r="mw" class="n">MW</th>
+          <th data-r="mcap_mw" class="n">Mkt cap/MW</th>
+          <th data-r="cap_gap" class="n">vs capacity line</th>
+          <th data-r="pe" class="n">P/E</th>
+          <th data-r="pbv" class="n">P/B</th>
+          <th data-r="roe" class="n">ROE</th>
+          <th data-r="roa" class="n">ROA</th>
+          <th data-r="gm" class="n">Gross margin</th>
+          <th data-r="em_" class="n">EBITDA margin</th>
+          <th data-r="npm" class="n">Net margin</th>
+          <th data-r="d2a" class="n">Debt/assets</th>
+          <th data-r="eqm" class="n">Equity mult.</th>
+          <th data-r="payable" class="n">Reserves/paid-up</th>
+          <th data-r="yoy_rev" class="n">Revenue YoY</th>
+          <th data-r="yoy_pat" class="n">Profit YoY</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </figure>
+  </div>
+
+  <div id="lpanel-one" role="tabpanel" aria-labelledby="ltab-one" hidden>
+    <div class="card">
+      <div class="ctitle">Pick a company</div>
+      <div class="csub">Everything below is that one ticker, drawn from the same sources
+        the other tabs use and never recomputed &mdash; a figure here is the same object
+        rendered there. What is new is the comparison: each number sits beside the
+        cohort median, and the register side sits beside the accounts.</div>
+      <div class="ctl" style="margin-top:14px">
+        <input id="onePick" list="oneList" placeholder="ticker or company&hellip;"
+               autocomplete="off" aria-label="Choose a company">
+        <datalist id="oneList"></datalist>
+        <div class="btnrow" id="oneNav" style="margin:0"></div>
+        <span class="count" id="oneCount"></span>
+      </div>
+    </div>
+    <div id="oneBody"></div>
+  </div>
 </section>
 
 <section style="border-bottom:0">
-  <div class="shead"><span class="snum">08</span><h2>Method and caveats</h2></div>
+  <div class="shead"><span class="snum">09</span><h2>Method and caveats</h2></div>
   <div class="grid2">
     <div class="card">
       <div class="ctitle" style="margin-bottom:12px">How this was collected</div>
@@ -1944,8 +2152,7 @@ function selectProject(id, jump){
 var activeTab = 'plants';
 function showTab(which){
   activeTab = which;
-  ['plants','years','project','co'].forEach(function(t){
-    if(t === 'co' && !document.getElementById('panel-co')) return;
+  ['plants','years','project'].forEach(function(t){
     var btn = document.getElementById('tab-'+t), panel = document.getElementById('panel-'+t);
     var on = (t === which);
     btn.setAttribute('aria-selected', on); btn.tabIndex = on ? 0 : -1;
@@ -1954,20 +2161,12 @@ function showTab(which){
   var qEl = document.getElementById('q');
   qEl.placeholder = which === 'years'
     ? 'Search plant, company or fiscal year\u2026'
-    : (which === 'co' ? 'Search ticker, company, plant or district\u2026'
-                      : 'Search plant, company or district\u2026');
+    : 'Search plant, company or district\u2026';
   refresh();
 }
 function refresh(){
   if(activeTab === 'plants') renderPlants();
   else if(activeTab === 'years') renderYears();
-  // Drawn on entry rather than once at load. Hidden at load the charts would
-  // still be correct -- frame() sizes off a fixed viewBox and never measures the
-  // DOM -- but a theme flip while the tab was shut would leave them on the old
-  // tokens, because drawAll only redraws the tab that is open.
-  else if(activeTab === 'co'){
-    renderCo(); chartAgree(); chartCut(); chartPlf(); chartVal(); chartDiv();
-  }
   else { renderPlist(); renderProject(); }
 }
 
@@ -2042,7 +2241,7 @@ function wireTable(){
   tl.addEventListener('keydown', function(e){
     if(e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
     e.preventDefault();
-    var seq = D.co ? ['plants','years','project','co'] : ['plants','years','project'];
+    var seq = ['plants','years','project'];
     var i = seq.indexOf(activeTab) + (e.key === 'ArrowRight' ? 1 : -1);
     showTab(seq[(i + seq.length) % seq.length]);
     document.getElementById('tab-'+activeTab).focus();
@@ -2050,7 +2249,6 @@ function wireTable(){
   document.getElementById('tc-plants').textContent = '('+fmt(D.plants.length)+')';
   document.getElementById('tc-years').textContent = '('+fmt(buildYearRows().length)+')';
   document.getElementById('tc-project').textContent = '';
-  if(D.co) document.getElementById('tc-co').textContent = '('+fmt(D.co.rows.length)+')';
   document.getElementById('plist').addEventListener('click', function(e){
     var b = e.target.closest('button[data-id]'); if(!b) return;
     selectProject(+b.getAttribute('data-id'), false);
@@ -2152,7 +2350,9 @@ function logTicks(lo, hi){
   for(var e = Math.floor(L10(lo)); e <= Math.ceil(L10(hi)); e++){
     [1,2,5].forEach(function(k){
       var v = k*Math.pow(10,e);
-      if(v > lo*1.15 && v < hi/1.15) out.push(v);
+      // 1.4x apart is roughly a label's width on these axes; closer than that
+      // and the end tick and its neighbour print on top of each other
+      if(v > lo*1.4 && v < hi/1.4) out.push(v);
     });
   }
   out.push(hi); return out;
@@ -2163,11 +2363,14 @@ function logTicks(lo, hi){
 var NICE = [1,1.5,2,3,5,7,10];
 function niceLog(v, up){
   var e = Math.floor(L10(v)), m = v/Math.pow(10,e);
+  // rounded, because 7 x 10^-1 in binary floating point is 0.7000000000000001
+  // and coShort prints a tick label verbatim
+  var snap = function(k){ return Number((k*Math.pow(10,e)).toPrecision(12)); };
   for(var i=0;i<NICE.length;i++){
-    if(up  && NICE[i] >= m*0.999) return NICE[i]*Math.pow(10,e);
-    if(!up && NICE[i] >  m*1.001) return NICE[i-1 < 0 ? 0 : i-1]*Math.pow(10,e);
+    if(up  && NICE[i] >= m*0.999) return snap(NICE[i]);
+    if(!up && NICE[i] >  m*1.001) return snap(NICE[i-1 < 0 ? 0 : i-1]);
   }
-  return Math.pow(10, up ? e+1 : e);
+  return Number(Math.pow(10, up ? e+1 : e).toPrecision(12));
 }
 // greedy: a label is placed only where nothing already sits on top of it
 function placeLabels(f, cands, dx, dy){
@@ -2177,16 +2380,22 @@ function placeLabels(f, cands, dx, dy){
       if(Math.abs(kept[i].x-c.x) < dx && Math.abs(kept[i].y-c.y) < dy) return;
     kept.push(c);
     // clear of the mark, not on top of it: a 15px bubble swallows a label set
-    // seven pixels from its centre
-    var t = el('text',{x:c.x+(c.off||7),y:c.y+3.5,fill:css('--ink-2'),'font-size':10,
-      'font-family':'IBM Plex Mono, monospace'});
+    // seven pixels from its centre. Near the right edge it goes on the left
+    // instead, or it is written off the canvas.
+    var off = c.off || 7, wide = c.x + off + 7.2*String(c.text).length;
+    var flip = wide > f.m.l + f.iw;
+    var t = el('text',{x: flip ? c.x-off : c.x+off, y:c.y+3.5,
+      'text-anchor': flip ? 'end' : 'start',
+      fill:css('--ink-2'),'font-size':10,'font-family':'IBM Plex Mono, monospace'});
     t.textContent = c.text; f.svg.appendChild(t);
   });
   return kept.length;
 }
 function coShort(v){
   if(v >= 1000) return (v/1000).toFixed(v>=10000?0:1)+'k';
-  return String(v);
+  if(v >= 10) return String(Math.round(v));
+  if(v >= 1) return String(Number(v.toFixed(1)));
+  return String(Number(v.toFixed(2)));
 }
 
 // ---- the meter against the accounts -------------------------------------
@@ -2496,12 +2705,7 @@ function coHist(r){
 }
 function renderCo(){
   if(!D.co) return;
-  var q = document.getElementById('q').value.trim().toLowerCase();
-  var rows = D.co.rows.filter(function(r){
-    if(!q) return true;
-    return (r.tk+' '+r.name+' '+(r.pnames||'')+' '+(r.dist||'')+' '+(r.reg_co||''))
-             .toLowerCase().indexOf(q) >= 0;
-  });
+  var rows = coFiltered();
   rows = rows.slice().sort(function(a,b){
     var x = coVal(a, coSort), y = coVal(b, coSort);
     if(x === null || x === undefined) return 1;
@@ -2542,49 +2746,53 @@ function renderCo(){
     return out;
   }).join('');
   document.querySelector('#t-co tbody').innerHTML = body;
-  document.getElementById('cnt').textContent = rows.length + ' of ' + D.co.rows.length + ' tickers';
+  var c = document.getElementById('ccnt');
+  if(c) c.textContent = rows.length + ' of ' + D.co.rows.length + ' tickers';
 }
 function coDetail(r){
   var bits = [];
-  if(r.pnames) bits.push('<b>'+r.pnames+'</b>'+(r.dist?' · '+r.dist:''));
+  if(r.pnames) bits.push('<b>'+r.pnames+'</b>'+(r.dist?' \u00b7 '+r.dist:''));
   if(r.reg_co) bits.push('register files it as <span class="mono">'+r.reg_co+'</span>');
   if(r.cost_mw) bits.push('built for <b>'+fmt(r.cost_mw,0)+'</b> NPR m per MW'
-                         +(r.psrc?' · '+r.psrc:''));
+                         +(r.psrc?' \u00b7 '+r.psrc:''));
   if(r.mcap_m) bits.push('market capitalisation <b>'+fmt(r.mcap_m,0)+'</b> NPR m');
   if(r.pbv) bits.push('price to book <b>'+r.pbv.toFixed(2)+'</b>');
   if(r.d2a !== null && r.d2a !== undefined) bits.push('debt to assets <b>'+coPct(r.d2a,0)+'</b>');
   var head = '<div class="ycap" style="letter-spacing:0;text-transform:none;font-weight:400;'
-           + 'font-size:12.5px;margin-bottom:10px">' + bits.join(' &nbsp;·&nbsp; ') + '</div>';
-  var div = '';
-  if(r.div && r.div.length){
-    div = '<div class="ycap" style="margin-top:14px">Declared dividends, '
-        + r.div.length + (r.div.length===1?' year':' years')
-        + ' \u00b7 per cent of NPR 100 par</div>'
-        + '<table class="ytab"><thead><tr><th>BS year</th><th class="n">Bonus %</th>'
-        + '<th class="n">Cash %</th><th class="n">Cash as share of bonus</th>'
-        + '<th>Announced</th></tr></thead><tbody>'
-        + r.div.map(function(v){
-            // 5/95 of the bonus is the withholding on it grossed up, not a payout
-            var g = (v[1] > 0 && v[2] > 0) ? v[2]/v[1] : null;
-            var tax = g !== null && Math.abs(g - 5/95) < 5/95*0.05;
-            return '<tr><td class="mono">'+v[0]+'</td>'
-              + '<td class="n">'+num(v[1],2)+'</td>'
-              + '<td class="n">'+num(v[2],2)+'</td>'
-              + '<td class="n">'+(g===null?'\u2014':(100*g).toFixed(1)+'%'
-                  +(tax?' <span class="partial">tax</span>':''))+'</td>'
-              + '<td class="mono">'+(v[3]||'\u2014')+'</td></tr>';
-          }).join('')
-        + '</tbody></table>';
-  }
+           + 'font-size:12.5px;margin-bottom:10px">' + bits.join(' &nbsp;\u00b7&nbsp; ') + '</div>';
+  var div = (r.div && r.div.length)
+    ? '<div class="ycap" style="margin-top:14px">Declared dividends, '
+      + r.div.length + (r.div.length===1?' year':' years')
+      + ' \u00b7 per cent of NPR 100 par</div>' + coDivTable(r)
+    : '';
   var tail = (!r.hist || !r.hist.length)
-    ? '<div class="ycap" style="letter-spacing:0;text-transform:none;font-weight:400;font-size:12.5px">'
-      + 'No accounting year in which every plant this company owns filed a full twelve months, '
-      + 'so there is nothing here to set against its accounts.</div>'
+    ? '<div class="ycap" style="letter-spacing:0;text-transform:none;font-weight:400;'
+      + 'font-size:12.5px">No accounting year in which every plant this company owns '
+      + 'filed a full twelve months, so there is nothing here to set against its '
+      + 'accounts.</div>'
     : coHist(r)
       + '<div class="ycap" style="margin-top:10px;letter-spacing:0;text-transform:none;'
-      + 'font-weight:400">Register and reported both NPR million, on the Shrawan–Asar '
-      + 'accounting year. Match is the first over the second.</div>';
+      + 'font-weight:400">Register and reported both NPR million, on the '
+      + 'Shrawan\u2013Asar accounting year. Match is the first over the second.</div>';
   return '<div class="ywrap">' + head + tail + div + '</div>';
+}
+
+function coDivTable(r){
+  return '<table class="ytab"><thead><tr><th>BS year</th><th class="n">Bonus %</th>'
+    + '<th class="n">Cash %</th><th class="n">Cash as share of bonus</th>'
+    + '<th>Announced</th></tr></thead><tbody>'
+    + r.div.map(function(v){
+        // 5/95 of the bonus is the withholding on it grossed up, not a payout
+        var g = (v[1] > 0 && v[2] > 0) ? v[2]/v[1] : null;
+        var tax = g !== null && Math.abs(g - 5/95) < 5/95*0.05;
+        return '<tr><td class="mono">'+v[0]+'</td>'
+          + '<td class="n">'+num(v[1],2)+'</td>'
+          + '<td class="n">'+num(v[2],2)+'</td>'
+          + '<td class="n">'+(g===null?'\u2014':(100*g).toFixed(1)+'%'
+              +(tax?' <span class="partial">tax</span>':''))+'</td>'
+          + '<td class="mono">'+(v[3]||'\u2014')+'</td></tr>';
+      }).join('')
+    + '</tbody></table>';
 }
 function coLede(){
   if(!D.co) return;
@@ -2637,9 +2845,872 @@ function coLede(){
   + 'design load factor on file, which is the binding limit on the third chart, not a fleet median '
   + 'standing in for the rest.';
 }
+// ---- market analysis, ratios and value, one company ----------------------
+// All three read D.co.mkt, which the comparative screen fills, and D.co.q, which
+// carries eight discrete quarters per ticker. Absent either, the tab that needs
+// it is removed at startup rather than drawn empty.
+var MK = function(){ return (D.co && D.co.mkt) || null; };
+var MED = function(k){ var m = MK(); return m && m.med ? m.med[k] : null; };
+
+function pct(v, nd){ return v===null||v===undefined ? '—'
+  : ((v>=0?'':'') + (100*v).toFixed(nd===undefined?1:nd) + '%'); }
+function signCls(v){ return v===null||v===undefined ? ''
+  : (v > 0 ? 'stat-good' : (v < 0 ? 'stat-crit' : '')); }
+function coName(tk){ var r = coRow(tk); return r ? r.name : tk; }
+function coRow(tk){
+  if(!D.co) return null;
+  for(var i=0;i<D.co.rows.length;i++) if(D.co.rows[i].tk === tk) return D.co.rows[i];
+  return null;
+}
+// a row of buttons that pick one of a set; returns the chosen key
+function btnRow(mount, opts, cur, onPick){
+  var host = document.getElementById(mount); if(!host) return;
+  host.innerHTML = '';
+  opts.forEach(function(o){
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'pillbtn' + (o[0] === cur ? ' on' : '');
+    b.textContent = o[1];
+    b.addEventListener('click', function(){ onPick(o[0]); });
+    host.appendChild(b);
+  });
+}
+function tile(k, v, sub){
+  return '<div class="tile"><div class="tk">'+k+'</div><div class="tv">'+v+'</div>'
+       + (sub ? '<div class="ts">'+sub+'</div>' : '') + '</div>';
+}
+
+// ---- sector at a glance --------------------------------------------------
+function mkTiles(){
+  var m = MK(); if(!m) return;
+  var host = document.getElementById('mkTiles'); if(!host) return;
+  var rows = D.co.rows, sum = function(k){
+    return rows.reduce(function(a,r){ return a + (r[k]||0); }, 0); };
+  // capitalisation-weighted, which parts company with the median exactly when
+  // the large names trade differently from the small ones
+  var w = function(k){
+    var n = 0, d = 0;
+    rows.forEach(function(r){ if(r[k]!=null && r.mcap){ n += r[k]*r.mcap; d += r.mcap; } });
+    return d ? n/d : null;
+  };
+  host.innerHTML =
+    tile('Companies', fmt(rows.length), fmt(sum('mw'),0)+' MW listed')
+  + tile('Market capitalisation', fmt(sum('mcap')/1000,0)+' bn', 'NPR, at the latest close')
+  + tile('P/E', fmt(MED('pe'),1), 'weighted '+fmt(w('pe'),1))
+  + tile('Price to book', fmt(MED('pbv'),2), 'weighted '+fmt(w('pbv'),2))
+  + tile('Return on equity', pct(MED('roe'),1), 'weighted '+pct(w('roe'),1))
+  + tile('Net margin', pct(MED('npm'),1), 'weighted '+pct(w('npm'),1))
+  + tile('Debt to assets', pct(MED('d2a'),0), 'weighted '+pct(w('d2a'),0))
+  + tile('Price, one year', pct(MED('chg1y'),1),
+         rows.filter(function(r){ return r.chg1y > 0; }).length+' of '+rows.length+' up');
+}
+
+// ---- price change, ranked ------------------------------------------------
+var retHzn = 'chg1y';
+function chartRet(){
+  if(!MK()) return;
+  var HZ = [['chg1w','1 week'],['chg4w','4 weeks'],['chg12w','12 weeks'],
+            ['chgytd','Year to date'],['chg1y','1 year']];
+  btnRow('mkHzn', HZ, retHzn, function(k){ retHzn = k; chartRet(); });
+  var d = D.co.rows.filter(function(r){ return r[retHzn] != null; })
+                   .sort(function(a,b){ return b[retHzn] - a[retHzn]; });
+  if(!d.length) return;
+  var f = frame('c-ret',{w:520,h:Math.max(220, d.length*4.4+56),
+    m:{t:14,r:52,b:34,l:52}, label:'Price change by company, ranked'});
+  if(!f) return;
+  var lo = Math.min(0, d[d.length-1][retHzn]), hi = Math.max(0, d[0][retHzn]);
+  var X = function(v){ return f.m.l + (v-lo)/(hi-lo)*f.iw; };
+  var med = MED(retHzn), bh = f.ih/d.length;
+  [lo, 0, hi].concat(med!=null?[med]:[]).forEach(function(v){
+    f.svg.appendChild(el('line',{x1:X(v),x2:X(v),y1:f.m.t,y2:f.m.t+f.ih,
+      stroke: v===0 ? css('--ink-3') : css('--grid'),
+      'stroke-width': v===0 ? 1.2 : 1,
+      'stroke-dasharray': (med!=null && v===med && v!==0) ? '3 3' : null}));
+  });
+  [lo, hi].forEach(function(v){ xLabel(f, X(v), (100*v).toFixed(0)+'%'); });
+  d.forEach(function(r,i){
+    var v = r[retHzn], y = f.m.t + i*bh;
+    f.svg.appendChild(el('rect',{x:Math.min(X(0),X(v)), y:y+0.6,
+      width:Math.max(1, Math.abs(X(v)-X(0))), height:Math.max(1, bh-1.2),
+      fill: v>=0 ? css('--s3') : css('--s2'), rx:1}));
+    var hit = el('rect',{x:f.m.l,y:y,width:f.iw,height:bh,class:'hit'});
+    hit.addEventListener('mousemove',function(e){
+      showTip(e, r.tk+' · '+r.name,
+        [pct(v,1)+' over '+HZ.filter(function(h){return h[0]===retHzn;})[0][1].toLowerCase(),
+         'Sector median '+pct(med,1),
+         fmt(r.mw,1)+' MW · '+fmt(r.mcap,0)+' NPR m']);
+    });
+    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
+  });
+  // only the ends get a name; a label on every one of a hundred rows is a wall
+  [[0,d[0]],[1,d[1]],[d.length-2,d[d.length-2]],[d.length-1,d[d.length-1]]]
+    .forEach(function(p){
+      if(!p[1]) return;
+      var y = f.m.t + p[0]*bh + bh/2 + 3, v = p[1][retHzn];
+      var t = el('text',{x: v>=0 ? X(v)+5 : X(v)-5, y:y,
+        'text-anchor': v>=0 ? 'start' : 'end',
+        fill:css('--ink-2'),'font-size':9.5,'font-family':'IBM Plex Mono, monospace'});
+      t.textContent = p[1].tk; f.svg.appendChild(t);
+    });
+}
+
+// ---- return against risk -------------------------------------------------
+function chartRisk(){
+  if(!MK()) return;
+  var d = D.co.rows.filter(function(r){ return r.sd > 0 && r.mret != null; });
+  if(d.length < 5) return;
+  var f = frame('c-risk',{w:520,h:380,m:{t:16,r:16,b:46,l:56},
+    label:'Mean weekly return against the standard deviation of weekly returns'});
+  if(!f) return;
+  var xs = d.map(function(r){return r.sd;}), ys = d.map(function(r){return r.mret;});
+  var xhi = Math.max.apply(null,xs)*1.05;
+  var ylo = Math.min.apply(null,ys), yhi = Math.max.apply(null,ys);
+  var pad = (yhi-ylo)*0.08; ylo -= pad; yhi += pad;
+  var X = function(v){ return f.m.l + v/xhi*f.iw; };
+  var Y = function(v){ return f.m.t + f.ih - (v-ylo)/(yhi-ylo)*f.ih; };
+  for(var i=0;i<=4;i++){
+    var v = ylo + (yhi-ylo)*i/4;
+    f.svg.appendChild(el('line',{x1:f.m.l,x2:f.m.l+f.iw,y1:Y(v),y2:Y(v),
+      stroke: Math.abs(v)<(yhi-ylo)/200 ? css('--ink-3') : css('--grid'),'stroke-width':1}));
+    var t = el('text',{x:f.m.l-7,y:Y(v)+3.5,'text-anchor':'end',fill:css('--ink-3'),
+      'font-size':10,'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = (100*v).toFixed(2)+'%'; f.svg.appendChild(t);
+  }
+  [0, xhi/2, xhi].forEach(function(v){ xLabel(f, X(v), (100*v).toFixed(1)+'%'); });
+  f.svg.appendChild(el('line',{x1:f.m.l,x2:f.m.l+f.iw,y1:Y(0),y2:Y(0),
+    stroke:css('--ink-3'),'stroke-width':1,'stroke-dasharray':'3 3'}));
+  // the sector's own return per unit of risk, as a ray from the origin
+  var msd = MED('sd'), mret = MED('mret');
+  if(msd > 0 && mret != null){
+    var k = mret/msd;
+    f.svg.appendChild(el('line',{x1:X(0),y1:Y(0),x2:X(xhi),y2:Y(k*xhi),
+      stroke:css('--accent'),'stroke-width':1.3,'stroke-dasharray':'5 4'}));
+  }
+  d.forEach(function(r){
+    var rad = Math.max(3, Math.min(13, 2 + 1.2*Math.sqrt(r.mw||1)));
+    var c = el('circle',{cx:X(r.sd),cy:Y(r.mret),r:rad,fill:css('--s1'),
+      'fill-opacity':.26,stroke:css('--s1'),'stroke-width':1.2});
+    c.addEventListener('mousemove',function(e){
+      showTip(e, r.tk+' · '+r.name, [
+        'Mean weekly return <b>'+(100*r.mret).toFixed(3)+'%</b>',
+        'Weekly volatility <b>'+(100*r.sd).toFixed(2)+'%</b>',
+        'Return per unit of risk <b>'+(r.mret/r.sd).toFixed(3)+'</b>',
+        'Beta '+fmt(r.beta,2)+' · '+fmt(r.mw,1)+' MW']);
+    });
+    c.addEventListener('mouseleave', hideTip); f.svg.appendChild(c);
+  });
+  placeLabels(f, d.slice().sort(function(a,b){ return b.mret/b.sd - a.mret/a.sd; })
+    .slice(0,4).concat(d.slice().sort(function(a,b){ return a.mret/a.sd - b.mret/b.sd; })
+    .slice(0,3)).map(function(r){
+      return {x:X(r.sd), y:Y(r.mret), text:r.tk,
+              off: Math.max(3, Math.min(13, 2 + 1.2*Math.sqrt(r.mw||1))) + 5}; }), 40, 12);
+  var lx = el('text',{x:f.m.l+f.iw/2,y:f.H-4,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10.5}); lx.textContent = 'Weekly standard deviation over a year';
+  f.svg.appendChild(lx);
+  var ly = el('text',{x:-(f.m.t+f.ih/2),y:12,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10.5,transform:'rotate(-90)'});
+  ly.textContent = 'Mean weekly return'; f.svg.appendChild(ly);
+}
+
+// ---- what the market pays for a megawatt ---------------------------------
+function chartCapFit(){
+  var m = MK(); if(!m || !m.cap) return;
+  var d = D.co.rows.filter(function(r){ return r.mw > 0 && r.mcap > 0; });
+  var f = frame('c-capfit',{w:520,h:380,m:{t:16,r:16,b:44,l:58},
+    label:'Market capitalisation against installed capacity, log on log'});
+  if(!f) return;
+  var xs = d.map(function(r){return r.mw;}), ys = d.map(function(r){return r.mcap;});
+  var xlo = niceLog(Math.min.apply(null,xs),false), xhi = niceLog(Math.max.apply(null,xs),true);
+  var ylo = niceLog(Math.min.apply(null,ys),false), yhi = niceLog(Math.max.apply(null,ys),true);
+  var X = logScale(xlo,xhi,f.m.l,f.m.l+f.iw), Y = logScale(ylo,yhi,f.m.t+f.ih,f.m.t);
+  logTicks(ylo,yhi).forEach(function(v){
+    f.svg.appendChild(el('line',{x1:f.m.l,x2:f.m.l+f.iw,y1:Y.to(v),y2:Y.to(v),
+      stroke:css('--grid'),'stroke-width':1}));
+    var t = el('text',{x:f.m.l-7,y:Y.to(v)+3.5,'text-anchor':'end',fill:css('--ink-3'),
+      'font-size':10,'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = coShort(v); f.svg.appendChild(t);
+  });
+  logTicks(xlo,xhi).forEach(function(v){ xLabel(f, X.to(v), coShort(v)); });
+  var fitAt = function(mw){ return Math.pow(10, m.cap.icept + m.cap.slope*L10(mw)); };
+  f.svg.appendChild(el('line',{x1:X.to(xlo),y1:Y.to(fitAt(xlo)),
+    x2:X.to(xhi),y2:Y.to(fitAt(xhi)),stroke:css('--accent'),'stroke-width':1.6,
+    'stroke-dasharray':'5 4'}));
+  d.forEach(function(r){
+    var c = el('circle',{cx:X.to(r.mw),cy:Y.to(r.mcap),r:3.8,fill:css('--s1'),
+      'fill-opacity':.55,stroke:css('--surface'),'stroke-width':1});
+    c.addEventListener('mousemove',function(e){
+      showTip(e, r.tk+' · '+r.name, [
+        fmt(r.mw,1)+' MW · '+(r.pnames||''),
+        'Market cap <b>'+fmt(r.mcap,0)+'</b> NPR m',
+        'The line says <b>'+fmt(r.cap_fit,0)+'</b> for that size',
+        (r.cap_gap>=0?'+':'')+(100*r.cap_gap).toFixed(0)+'% against it']);
+    });
+    c.addEventListener('mouseleave', hideTip); f.svg.appendChild(c);
+  });
+  placeLabels(f, d.slice().sort(function(a,b){ return Math.abs(b.cap_gap)-Math.abs(a.cap_gap); })
+    .slice(0,8).map(function(r){ return {x:X.to(r.mw),y:Y.to(r.mcap),text:r.tk}; }), 38, 12);
+  var lx = el('text',{x:f.m.l+f.iw/2,y:f.H-4,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10.5}); lx.textContent = 'Installed capacity, MW'; f.svg.appendChild(lx);
+  var ly = el('text',{x:-(f.m.t+f.ih/2),y:12,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10.5,transform:'rotate(-90)'});
+  ly.textContent = 'Market capitalisation, NPR million'; f.svg.appendChild(ly);
+
+  var s = document.getElementById('capSub');
+  if(s) s.innerHTML =
+    'Log on log, so the fitted line is a power law. Capacity alone explains <b>'
+  + (100*m.cap.r2).toFixed(0) + '%</b> of the variance across ' + m.cap.n
+  + ' companies, and the exponent is <b>' + m.cap.slope.toFixed(2)
+  + '</b> — markedly under one, so doubling a plant multiplies what the market '
+  + 'pays for it by <b>' + m.cap.doubling.toFixed(2) + '</b>, not by two. Leaving any '
+  + 'single company out moves that exponent only between ' + m.cap.loo_lo.toFixed(2)
+  + ' and ' + m.cap.loo_hi.toFixed(2) + ', so no one name is carrying it.';
+}
+
+// ---- price to book against return on equity ------------------------------
+function chartPbRoe(){
+  var m = MK(); if(!m || !m.pbroe) return;
+  var d = D.co.rows.filter(function(r){ return r.pbv != null && r.roe != null; });
+  var f = frame('c-pbroe',{w:520,h:380,m:{t:16,r:16,b:44,l:50},
+    label:'Price to book against return on equity'});
+  if(!f) return;
+  // Two companies span more of this axis than the other hundred and eight put
+  // together, and drawn to full extent the cloud collapses to a band. The frame
+  // covers the bulk; anything outside is pinned to the boundary as an open ring,
+  // so it is still counted and named rather than quietly dropped.
+  var qtile = function(a, p){
+    var s = a.slice().sort(function(x,y){ return x-y; });
+    return s[Math.min(s.length-1, Math.max(0, Math.round(p*(s.length-1))))];
+  };
+  var xs = d.map(function(r){return r.roe;}), ys = d.map(function(r){return r.pbv;});
+  var xlo = Math.min(0, qtile(xs,0.01)), xhi = qtile(xs,0.99);
+  var ylo = Math.min(0, qtile(ys,0.01)), yhi = qtile(ys,0.98);
+  if(xhi <= xlo || yhi <= ylo) return;
+  var X = function(v){ return f.m.l + (v-xlo)/(xhi-xlo)*f.iw; };
+  var Y = function(v){ return f.m.t + f.ih - (v-ylo)/(yhi-ylo)*f.ih; };
+  var cx = function(v){ return X(Math.max(xlo, Math.min(xhi, v))); };
+  var cy = function(v){ return Y(Math.max(ylo, Math.min(yhi, v))); };
+  for(var i=0;i<=4;i++){
+    var gv = ylo + (yhi-ylo)*i/4;
+    f.svg.appendChild(el('line',{x1:f.m.l,x2:f.m.l+f.iw,y1:Y(gv),y2:Y(gv),
+      stroke:css('--grid'),'stroke-width':1}));
+    var t = el('text',{x:f.m.l-7,y:Y(gv)+3.5,'text-anchor':'end',fill:css('--ink-3'),
+      'font-size':10,'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = gv.toFixed(1)+'x'; f.svg.appendChild(t);
+  }
+  [xlo, 0, xhi].forEach(function(v){
+    if(v > xlo && v < xhi)
+      f.svg.appendChild(el('line',{x1:X(v),x2:X(v),y1:f.m.t,y2:f.m.t+f.ih,
+        stroke:css('--ink-3'),'stroke-width':1,'stroke-dasharray':'3 3'}));
+    xLabel(f, X(v), (100*v).toFixed(0)+'%');
+  });
+  // No line is drawn. See the note under the chart: the fit exists only while one
+  // company is in it, and a line through this cloud would assert a relationship
+  // the data does not carry.
+  var outside = [];
+  d.forEach(function(r){
+    var out = r.pbv > yhi || r.pbv < ylo || r.roe > xhi || r.roe < xlo;
+    if(out) outside.push(r);
+    var c = el('circle',{cx:cx(r.roe),cy:cy(r.pbv),r:out?5:3.8,
+      fill: out ? 'none' : css('--s1'), 'fill-opacity': out ? 0 : .5,
+      stroke: out ? css('--s2') : css('--surface'), 'stroke-width': out ? 1.6 : 1});
+    c.addEventListener('mousemove',function(e){
+      showTip(e, r.tk+' · '+r.name,
+        ['Price to book <b>'+r.pbv.toFixed(2)+'x</b>',
+         'Return on equity <b>'+pct(r.roe,1)+'</b>',
+         'Book value '+fmt(r.bv,1)+' · price '+fmt(r.px,1),
+         out ? '<b>Outside the frame, drawn on its edge</b>' : '']
+        .filter(function(z){ return z; }));
+    });
+    c.addEventListener('mouseleave', hideTip); f.svg.appendChild(c);
+  });
+  placeLabels(f, outside
+    .concat(d.slice().sort(function(a,b){ return b.pbv-a.pbv; }).slice(0,4))
+    .map(function(r){ return {x:cx(r.roe), y:cy(r.pbv), text:r.tk, off:6}; }), 38, 12);
+  var lx = el('text',{x:f.m.l+f.iw/2,y:f.H-4,'text-anchor':'middle',fill:css('--ink-3'),
+    'font-size':10.5}); lx.textContent = 'Return on equity, trailing twelve months';
+  f.svg.appendChild(lx);
+
+  var s = document.getElementById('pbSub');
+  if(s) s.innerHTML =
+    'For a bank this is the relationship that prices the sector, and a line through it '
+  + 'is the standard reading. <b>It does not hold here, and no line is drawn.</b> '
+  + 'Fitted across all ' + m.pbroe.n + ' companies it returns an R\u00b2 of '
+  + m.pbroe.r2.toFixed(2) + ', but taking out one company at a time moves the slope '
+  + 'anywhere between ' + m.pbroe.loo_lo.toFixed(1) + ' and ' + m.pbroe.loo_hi.toFixed(1)
+  + ' \u2014 it changes sign. Excluding the two names beyond 0\u201325\u00d7 book the '
+  + 'R\u00b2 is ' + m.pbroe_trim.r2.toFixed(2) + '. A hydro company is not priced on '
+  + 'what it earns on its book; it is priced on the megawatts beside it. The frame '
+  + 'covers the bulk of the cohort and <b>' + outside.length + '</b> compan'
+  + (outside.length === 1 ? 'y sits' : 'ies sit') + ' outside it, drawn as open rings '
+  + 'on the boundary rather than dropped.';
+}
+
+// ---- distance from the capacity line, ranked -----------------------------
+function chartGap(){
+  var m = MK(); if(!m || !m.cap) return;
+  var d = D.co.rows.filter(function(r){ return r.cap_gap != null; })
+                   .sort(function(a,b){ return b.cap_gap - a.cap_gap; });
+  if(!d.length) return;
+  var f = frame('c-gap',{w:1060,h:Math.max(240, d.length*4.6+58),
+    m:{t:14,r:20,b:36,l:20}, label:'Market capitalisation against the fitted capacity line'});
+  if(!f) return;
+  var lo = d[d.length-1].cap_gap, hi = d[0].cap_gap;
+  var X = function(v){ return f.m.l + (v-lo)/(hi-lo)*f.iw; };
+  var bh = f.ih/d.length;
+  f.svg.appendChild(el('line',{x1:X(0),x2:X(0),y1:f.m.t,y2:f.m.t+f.ih,
+    stroke:css('--ink-3'),'stroke-width':1.2}));
+  [lo, 0, hi].forEach(function(v){ xLabel(f, X(v), (v>0?'+':'')+(100*v).toFixed(0)+'%'); });
+  d.forEach(function(r,i){
+    var y = f.m.t + i*bh;
+    f.svg.appendChild(el('rect',{x:Math.min(X(0),X(r.cap_gap)),y:y+0.5,
+      width:Math.max(1,Math.abs(X(r.cap_gap)-X(0))),height:Math.max(1,bh-1),
+      fill: r.cap_gap>=0 ? css('--s2') : css('--s1'), rx:1}));
+    var hit = el('rect',{x:f.m.l,y:y,width:f.iw,height:bh,class:'hit'});
+    hit.addEventListener('mousemove',function(e){
+      showTip(e, r.tk+' · '+r.name, [
+        fmt(r.mw,1)+' MW',
+        'Market pays <b>'+fmt(r.mcap,0)+'</b> NPR m',
+        'The line says <b>'+fmt(r.cap_fit,0)+'</b>',
+        (r.cap_gap>=0?'+':'')+(100*r.cap_gap).toFixed(0)+'% against capacity alone']);
+    });
+    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
+  });
+  d.forEach(function(r,i){
+    if(i > 5 && i < d.length-6) return;
+    var y = f.m.t + i*bh + bh/2 + 3.2, v = r.cap_gap;
+    var t = el('text',{x: v>=0 ? X(v)+5 : X(v)-5, y:y,
+      'text-anchor': v>=0 ? 'start' : 'end', fill:css('--ink-2'),'font-size':9.5,
+      'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = r.tk; f.svg.appendChild(t);
+  });
+}
+
+// ---- growth and payout ----------------------------------------------------
+var grKey = 'yoy_rev';
+function chartGrowth(){
+  if(!MK()) return;
+  btnRow('grBtns', [['yoy_rev','Energy sales'],['yoy_pat','Profit after tax']], grKey,
+         function(k){ grKey = k; chartGrowth(); });
+  rankBars('c-growth', grKey, function(v){ return (100*v).toFixed(0)+'%'; },
+           'Year on year, latest filed quarter');
+}
+function chartPayable(){
+  if(!MK()) return;
+  rankBars('c-payable', 'payable', function(v){ return v.toFixed(0)+'%'; },
+           'Retained earnings as a percentage of paid-up capital');
+}
+// one shape, used by both: every company that has the measure, ranked, zero ruled
+function rankBars(mount, key, lab, aria){
+  var d = D.co.rows.filter(function(r){ return r[key] != null && isFinite(r[key]); })
+                   .sort(function(a,b){ return b[key] - a[key]; });
+  if(d.length < 3){
+    var host = document.getElementById(mount);
+    if(host) host.innerHTML = '<p class="csub" style="margin:0">Not enough companies '
+      + 'report this to rank them.</p>';
+    return;
+  }
+  var f = frame(mount,{w:520,h:Math.max(220,d.length*4.4+52),
+    m:{t:12,r:46,b:32,l:46}, label:aria});
+  if(!f) return;
+  var lo = Math.min(0, d[d.length-1][key]), hi = Math.max(0, d[0][key]);
+  var X = function(v){ return f.m.l + (v-lo)/(hi-lo)*f.iw; };
+  var bh = f.ih/d.length;
+  f.svg.appendChild(el('line',{x1:X(0),x2:X(0),y1:f.m.t,y2:f.m.t+f.ih,
+    stroke:css('--ink-3'),'stroke-width':1.2}));
+  [lo, hi].forEach(function(v){ xLabel(f, X(v), lab(v)); });
+  d.forEach(function(r,i){
+    var v = r[key], y = f.m.t + i*bh;
+    f.svg.appendChild(el('rect',{x:Math.min(X(0),X(v)),y:y+0.5,
+      width:Math.max(1,Math.abs(X(v)-X(0))),height:Math.max(1,bh-1),
+      fill: v>=0 ? css('--s3') : css('--s2'), rx:1}));
+    var hit = el('rect',{x:f.m.l,y:y,width:f.iw,height:bh,class:'hit'});
+    hit.addEventListener('mousemove',function(e){
+      showTip(e, r.tk+' · '+r.name,
+        [lab(v), 'Sector median '+lab(MED(key)||0),
+         (r.lastq ? 'Latest filing '+r.lastq : '')].filter(function(z){return z;}));
+    });
+    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
+  });
+  [0,1,d.length-2,d.length-1].forEach(function(i){
+    var r = d[i]; if(!r) return;
+    var v = r[key], y = f.m.t + i*bh + bh/2 + 3.2;
+    var t = el('text',{x: v>=0 ? X(v)+5 : X(v)-5, y:y,
+      'text-anchor': v>=0 ? 'start':'end', fill:css('--ink-2'),'font-size':9.5,
+      'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = r.tk; f.svg.appendChild(t);
+  });
+}
+
+// ---- the three screen tables ---------------------------------------------
+function coSearch(){ var q = document.getElementById('cq');
+  return q ? q.value.trim().toLowerCase() : ''; }
+function coFiltered(){
+  var q = coSearch();
+  return D.co.rows.filter(function(r){
+    return !q || (r.tk+' '+r.name+' '+(r.pnames||'')+' '+(r.dist||'')).toLowerCase().indexOf(q) >= 0;
+  });
+}
+function sortRows(rows, key, dir){
+  return rows.slice().sort(function(a,b){
+    var x = a[key], y = b[key];
+    if(x === null || x === undefined) return 1;
+    if(y === null || y === undefined) return -1;
+    if(typeof x === 'string') return dir * x.localeCompare(y);
+    return dir * (x - y);
+  });
+}
+var techSort = 'rsi', techDir = -1, scrSort = 'mcap', scrDir = -1,
+    ratSort = 'mw', ratDir = -1;
+
+function renderTech(){
+  var t = document.querySelector('#t-tech tbody'); if(!t) return;
+  t.innerHTML = sortRows(coFiltered(), techSort, techDir).map(function(r){
+    return '<tr><td><b>'+r.tk+'</b></td><td title="'+r.name.replace(/"/g,'&quot;')+'">'+r.name+'</td>'
+      + '<td class="n">'+num(r.px,1)+'</td>'
+      + '<td class="n">'+num(r.rsi,1)+'</td>'
+      + '<td class="n">'+(r.vs52==null?'—':pct(r.vs52,1))+'</td>'
+      + '<td class="n">'+(r.ma==null?'—':pct(r.ma,1))+'</td>'
+      + '<td class="n">'+(r.rstr==null?'—':pct(r.rstr,1))+'</td>'
+      + '<td class="n">'+num(r.macd,2)+'</td>'
+      + '<td class="n">'+num(r.beta,2)+'</td>'
+      + '<td class="n">'+(r.var1m==null?'—':pct(r.var1m,1))+'</td></tr>';
+  }).join('');
+}
+function renderScreen(){
+  var t = document.querySelector('#t-screen tbody'); if(!t) return;
+  t.innerHTML = sortRows(coFiltered(), scrSort, scrDir).map(function(r){
+    return '<tr><td><b>'+r.tk+'</b></td><td title="'+r.name.replace(/"/g,'&quot;')+'">'+r.name+'</td>'
+      + '<td class="n">'+num(r.mw,1)+'</td><td class="n">'+num(r.px,1)+'</td>'
+      + '<td class="n">'+num(r.mcap,0)+'</td><td class="n">'+num(r.pe,1)+'</td>'
+      + '<td class="n">'+num(r.pbv,2)+'</td><td class="n">'+num(r.eps,2)+'</td>'
+      + '<td class="n">'+num(r.bv,1)+'</td>'
+      + '<td class="n '+signCls(r.roe)+'">'+(r.roe==null?'—':pct(r.roe,1))+'</td>'
+      + '<td class="n '+signCls(r.roa)+'">'+(r.roa==null?'—':pct(r.roa,1))+'</td>'
+      + '<td class="n '+signCls(r.npm)+'">'+(r.npm==null?'—':pct(r.npm,1))+'</td>'
+      + '<td class="n">'+(r.d2a==null?'—':pct(r.d2a,0))+'</td>'
+      + '<td class="n">'+num(r.cr,2)+'</td>'
+      + '<td class="n '+signCls(r.chg4w)+'">'+(r.chg4w==null?'—':pct(r.chg4w,1))+'</td>'
+      + '<td class="n '+signCls(r.chg1y)+'">'+(r.chg1y==null?'—':pct(r.chg1y,1))+'</td></tr>';
+  }).join('');
+  var c = document.getElementById('ccnt');
+  if(c) c.textContent = coFiltered().length + ' of ' + D.co.rows.length + ' tickers';
+}
+function renderRatio(){
+  var t = document.querySelector('#t-ratio tbody'); if(!t) return;
+  t.innerHTML = sortRows(coFiltered(), ratSort, ratDir).map(function(r){
+    return '<tr><td><b>'+r.tk+'</b></td><td title="'+r.name.replace(/"/g,'&quot;')+'">'+r.name+'</td>'
+      + '<td class="n">'+num(r.mw,1)+'</td><td class="n">'+num(r.mcap_mw,0)+'</td>'
+      + '<td class="n '+(r.cap_gap==null?'':(r.cap_gap>0?'stat-crit':'stat-good'))+'">'
+        + (r.cap_gap==null?'—':(r.cap_gap>0?'+':'')+(100*r.cap_gap).toFixed(0)+'%')+'</td>'
+      + '<td class="n">'+num(r.pe,1)+'</td><td class="n">'+num(r.pbv,2)+'</td>'
+      + '<td class="n '+signCls(r.roe)+'">'+(r.roe==null?'—':pct(r.roe,1))+'</td>'
+      + '<td class="n '+signCls(r.roa)+'">'+(r.roa==null?'—':pct(r.roa,1))+'</td>'
+      + '<td class="n">'+(r.gm==null?'—':pct(r.gm,0))+'</td>'
+      + '<td class="n">'+(r.em_==null?'—':pct(r.em_,0))+'</td>'
+      + '<td class="n '+signCls(r.npm)+'">'+(r.npm==null?'—':pct(r.npm,0))+'</td>'
+      + '<td class="n">'+(r.d2a==null?'—':pct(r.d2a,0))+'</td>'
+      + '<td class="n">'+num(r.eqm,2)+'</td>'
+      + '<td class="n '+signCls(r.payable)+'">'+(r.payable==null?'—':r.payable.toFixed(0)+'%')+'</td>'
+      + '<td class="n '+signCls(r.yoy_rev)+'">'+(r.yoy_rev==null?'—':pct(r.yoy_rev,0))+'</td>'
+      + '<td class="n '+signCls(r.yoy_pat)+'">'+(r.yoy_pat==null?'—':pct(r.yoy_pat,0))+'</td></tr>';
+  }).join('');
+}
+
+// ---- one company ----------------------------------------------------------
+var oneTk = null;
+
+function oneList(){
+  var dl = document.getElementById('oneList'); if(!dl) return;
+  dl.innerHTML = D.co.rows.map(function(r){
+    return '<option value="'+r.tk+'">'+r.name+'</option>'; }).join('');
+}
+function selectOne(tk){
+  var r = coRow(tk); if(!r) return;
+  oneTk = tk;
+  var p = document.getElementById('onePick'); if(p && p.value !== tk) p.value = tk;
+  renderOne();
+}
+function oneNav(){
+  var host = document.getElementById('oneNav'); if(!host) return;
+  host.innerHTML = '';
+  [['‹','prev'],['›','next']].forEach(function(o){
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'pillbtn'; b.textContent = o[0];
+    b.setAttribute('aria-label', o[1] === 'prev' ? 'Previous company' : 'Next company');
+    b.addEventListener('click', function(){
+      var ix = D.co.rows.map(function(r){return r.tk;}).indexOf(oneTk);
+      var n = D.co.rows.length;
+      selectOne(D.co.rows[((o[1]==='prev'?ix-1:ix+1)+n)%n].tk);
+    });
+    host.appendChild(b);
+  });
+}
+
+// value beside the cohort median and this company's rank on it
+function vsMed(r, key, fmtf, better){
+  var v = r[key], med = MED(key);
+  if(v === null || v === undefined)
+    return '<td class="n">—</td><td class="n">'+(med==null?'—':fmtf(med))+'</td><td class="n">—</td>';
+  var all = D.co.rows.filter(function(x){ return x[key] != null; })
+                     .sort(function(a,b){ return better < 0 ? a[key]-b[key] : b[key]-a[key]; });
+  var rank = all.map(function(x){return x.tk;}).indexOf(r.tk) + 1;
+  var gap = med == null ? null : v - med;
+  var cls = (better === 0 || gap === null) ? ''
+          : ((gap > 0) === (better > 0) ? 'stat-good' : 'stat-crit');
+  return '<td class="n"><b>'+fmtf(v)+'</b></td>'
+       + '<td class="n">'+(med==null?'—':fmtf(med))+'</td>'
+       + '<td class="n '+cls+'">'+rank+' of '+all.length+'</td>';
+}
+
+function oneCascade(r, q){
+  if(!q || !D.co.cascade) return '';
+  var lines = D.co.cascade.filter(function(c){ return q[c[0]] != null; });
+  if(lines.length < 4) return '';
+  var W = 1020, H = 300, m = {t:16,r:16,b:64,l:56};
+  var iw = W-m.l-m.r, ih = H-m.t-m.b;
+  // The running total is rebuilt from the signed lines, but every subtotal is
+  // drawn at its own filed value rather than at the accumulation -- and where the
+  // two disagree the difference is its own bar rather than absorbed quietly.
+  var run = 0, bars = [];
+  lines.forEach(function(c){
+    var name = c[0], sign = c[1], lab = c[2], v = q[name];
+    if(sign === 0){
+      if(Math.abs(run - v) > 0.05 && bars.length)
+        bars.push({lab:'unreconciled', from:run, to:v, v:v-run, kind:'gap'});
+      bars.push({lab:lab, from:0, to:v, v:v, kind:'total'});
+      run = v;
+    } else {
+      var to = run + sign*v;
+      bars.push({lab:lab, from:run, to:to, v:sign*v, kind:'step'});
+      run = to;
+    }
+  });
+  var lo = 0, hi = 0;
+  bars.forEach(function(b){ lo = Math.min(lo,b.from,b.to); hi = Math.max(hi,b.from,b.to); });
+  var pad = (hi-lo)*0.06; hi += pad; lo -= pad;
+  var Y = function(v){ return m.t + ih - (v-lo)/(hi-lo)*ih; };
+  var bw = iw/bars.length;
+  var out = ['<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="'
+    + 'Income statement as a cascade for '+r.tk+'">'];
+  for(var i=0;i<=4;i++){
+    var gv = lo + (hi-lo)*i/4;
+    out.push('<line x1="'+m.l+'" x2="'+(m.l+iw)+'" y1="'+Y(gv)+'" y2="'+Y(gv)
+      + '" stroke="'+css(Math.abs(gv)<(hi-lo)/200?'--ink-3':'--grid')+'" stroke-width="1"/>');
+    out.push('<text x="'+(m.l-7)+'" y="'+(Y(gv)+3.5)+'" text-anchor="end" fill="'
+      + css('--ink-3')+'" font-size="10" font-family="IBM Plex Mono, monospace">'
+      + fmt(gv,0)+'</text>');
+  }
+  bars.forEach(function(b,i){
+    var x = m.l + i*bw + bw*0.16, w = bw*0.68;
+    var y0 = Y(b.from), y1 = Y(b.to);
+    var col = b.kind === 'total' ? css('--accent')
+            : (b.kind === 'gap' ? css('--warn') : (b.v >= 0 ? css('--s3') : css('--s2')));
+    if(b.kind === 'total'){ y0 = Y(0); y1 = Y(b.to); }
+    out.push('<rect x="'+x+'" y="'+Math.min(y0,y1)+'" width="'+w+'" height="'
+      + Math.max(1.5,Math.abs(y1-y0))+'" fill="'+col+'" opacity="'
+      + (b.kind==='total'?0.85:0.9)+'" rx="2"/>');
+    out.push('<text x="'+(x+w/2)+'" y="'+(m.t+ih+13)+'" text-anchor="end" fill="'
+      + css('--ink-3')+'" font-size="9.5" font-family="IBM Plex Mono, monospace" '
+      + 'transform="rotate(-40 '+(x+w/2)+' '+(m.t+ih+13)+')">'+b.lab+'</text>');
+    out.push('<text x="'+(x+w/2)+'" y="'+(Math.min(y0,y1)-4)+'" text-anchor="middle" fill="'
+      + css('--ink-2')+'" font-size="9.5" font-family="IBM Plex Mono, monospace">'
+      + fmt(b.v,0)+'</text>');
+  });
+  out.push('</svg>');
+  return out.join('');
+}
+
+function oneQuarterTable(qs, lines, label, nd){
+  if(!qs.length) return '';
+  var cols = qs.slice(-5);
+  var body = lines.filter(function(L){
+    return cols.some(function(q){ return q[L[0]] != null; });
+  }).map(function(L){
+    return '<tr><td>'+L[1]+'</td>'
+      + cols.map(function(q){ return '<td class="n">'+num(q[L[0]], nd)+'</td>'; }).join('')
+      + '</tr>';
+  }).join('');
+  if(!body) return '';
+  return '<div class="ycap">'+label+'</div><table class="ytab"><thead><tr><th>Line</th>'
+    + cols.map(function(q){ return '<th class="n">'+q.y+' Q'+q.q+'</th>'; }).join('')
+    + '</tr></thead><tbody>'+body+'</tbody></table>';
+}
+
+var oneFallIx = null;
+function renderOne(){
+  var host = document.getElementById('oneBody'); if(!host) return;
+  if(!oneTk){ host.innerHTML = ''; return; }
+  var r = coRow(oneTk); if(!r){ host.innerHTML = ''; return; }
+  var qs = (D.co.q && D.co.q[oneTk]) || [];
+  var ix = oneFallIx == null ? qs.length-1 : Math.min(oneFallIx, qs.length-1);
+  var out = [];
+
+  // ── header and tiles
+  out.push('<div class="card" style="margin-top:18px">'
+    + '<div class="ctitle" style="font-size:19px">'+r.tk+' &nbsp;<span style="'
+    + 'font-weight:400;color:var(--ink-2);font-size:15px">'+r.name+'</span></div>'
+    + '<div class="csub">'+[r.pnames, r.dist, r.mw ? fmt(r.mw,1)+' MW' : null,
+        r.np ? r.np+(r.np===1?' plant':' plants')+' in the register' : 'not in the register',
+        r.lastq ? 'latest filing '+r.lastq : null]
+        .filter(function(z){return z;}).join(' &nbsp;·&nbsp; ')+'</div>'
+    + '<div class="tiles">'
+    + tile('Price', fmt(r.px,1), r.chg1y==null?'':'a year ago '+pct(r.chg1y,1))
+    + tile('Market cap', fmt(r.mcap,0), 'NPR m'+(r.mcap_mw?' · '+fmt(r.mcap_mw,0)+' per MW':''))
+    + tile('P/E', fmt(r.pe,1), 'sector '+fmt(MED('pe'),1))
+    + tile('Price to book', fmt(r.pbv,2), 'sector '+fmt(MED('pbv'),2))
+    + tile('Return on equity', pct(r.roe,1), 'sector '+pct(MED('roe'),1))
+    + tile('Achieved PLF', r.plf==null?'—':r.plf.toFixed(3),
+           r.ach==null ? 'no reference on file'
+             : Math.round(100*r.ach)+'% of its '+(r.cplf!=null?'contracted':'design')+' figure')
+    + '</div></div>');
+
+  // ── the register beside the accounts
+  if(r.reg_m != null){
+    out.push('<div class="card" style="margin-top:18px">'
+      + '<div class="ctitle">The meter beside the accounts</div>'
+      + '<div class="csub">What the royalty register billed this company&rsquo;s plants '
+      + 'against the energy-sales line in its own filing, on the Shrawan&ndash;Asar '
+      + 'accounting year. NPR million.</div>'
+      + '<div class="ywrap" style="padding-left:0">' + coHist(r) + '</div></div>');
+  }
+
+  // ── eight quarters of its own
+  if(qs.length >= 3){
+    out.push('<figure class="card" style="margin-top:18px">'
+      + '<figcaption><div class="ctitle">Eight quarters of its own</div>'
+      + '<div class="csub">Discrete quarters, not the cumulative figures as filed. '
+      + 'NPR million.</div></figcaption>'
+      + '<div class="chart" id="c-oneq"></div>'
+      + '<div class="legend"><span><i style="background:var(--s1)"></i>Energy sales</span>'
+      + '<span><i style="background:var(--s3)"></i>Operating profit</span>'
+      + '<span><i style="background:var(--s2)"></i>Profit after tax</span></div></figure>');
+  }
+
+  // ── the cascade
+  if(qs.length){
+    out.push('<figure class="card" style="margin-top:18px">'
+      + '<figcaption><div class="ctitle">How one quarter&rsquo;s income becomes profit</div>'
+      + '<div class="csub">Each bar starts where the last ended; green adds, red '
+      + 'subtracts, and the wider bars are the subtotals the statement itself reports. '
+      + '<b>Every subtotal is checked against its own filed column</b> rather than '
+      + 'accumulated and trusted &mdash; where the chain does not close the difference '
+      + 'is drawn as its own bar marked <i>unreconciled</i> rather than absorbed. One '
+      + 'discrete quarter, NPR million, never a year to date.</div></figcaption>'
+      + '<div class="btnrow" id="oneFallBtns"></div>'
+      + '<div class="chart">'+oneCascade(r, qs[ix])+'</div></figure>');
+  }
+
+  // ── statements
+  var inc = oneQuarterTable(qs, D.co.cascade.map(function(c){ return [c[0], c[2]]; }),
+                            'Income statement, discrete quarters, NPR million', 1);
+  var bs  = oneQuarterTable(qs, D.co.bs, 'Balance sheet as filed, NPR million', 0);
+  if(inc || bs)
+    out.push('<div class="card" style="margin-top:18px">'
+      + '<div class="ctitle">Five quarters, as filed and as differenced</div>'
+      + '<div class="csub">Balance-sheet lines are point in time and shown as filed. '
+      + 'Income lines are differenced to discrete quarters: the filings are cumulative '
+      + 'year to date and reset at Q1, so printing them as filed would show energy sales '
+      + 'collapsing between Q4 and Q1, which is the fiscal year restarting and nothing '
+      + 'else. Where the preceding quarter is missing the cell is blank rather than the '
+      + 'cumulative figure.</div>'
+      + '<div class="ywrap" style="padding-left:0">'+inc+'<div style="height:16px"></div>'
+      + bs+'</div></div>');
+
+  // ── ratios against the cohort
+  var RAT = [['mcap_mw','Market cap per MW', function(v){return fmt(v,0);}, -1],
+             ['cap_gap','Against the capacity line', function(v){return pct(v,0);}, 0],
+             ['pe','P/E', function(v){return fmt(v,1);}, -1],
+             ['pbv','Price to book', function(v){return v.toFixed(2)+'x';}, -1],
+             ['roe','Return on equity', function(v){return pct(v,1);}, 1],
+             ['roa','Return on assets', function(v){return pct(v,1);}, 1],
+             ['gm','Gross margin', function(v){return pct(v,0);}, 1],
+             ['em_','EBITDA margin', function(v){return pct(v,0);}, 1],
+             ['npm','Net margin', function(v){return pct(v,0);}, 1],
+             ['d2a','Debt to assets', function(v){return pct(v,0);}, -1],
+             ['cr','Current ratio', function(v){return v.toFixed(2);}, 1],
+             ['payable','Reserves over paid-up', function(v){return v.toFixed(0)+'%';}, 1],
+             ['plf','Achieved load factor', function(v){return v.toFixed(3);}, 1],
+             ['rpm','Register revenue per MW', function(v){return fmt(v,1);}, 1],
+             ['yoy_rev','Energy sales, year on year', function(v){return pct(v,0);}, 1],
+             ['yoy_pat','Profit, year on year', function(v){return pct(v,0);}, 1]];
+  out.push('<div class="card" style="margin-top:18px">'
+    + '<div class="ctitle">Against the cohort</div>'
+    + '<div class="csub">Every measure for this company, the median across all listed '
+    + 'hydro, and where it ranks. <b>Rank 1 is always the better end</b>, taking each '
+    + 'measure&rsquo;s own direction &mdash; so first on debt to assets is the least '
+    + 'indebted. Distance from the capacity line carries no colour and no direction: '
+    + 'above it is dear and below it cheap, and which of those is good is a judgment, '
+    + 'not a fact.</div>'
+    + '<div class="ywrap" style="padding-left:0"><table class="ytab"><thead><tr>'
+    + '<th>Measure</th><th class="n">This company</th><th class="n">Sector median</th>'
+    + '<th class="n">Rank</th></tr></thead><tbody>'
+    + RAT.map(function(k){
+        return '<tr><td>'+k[1]+'</td>'+vsMed(r, k[0], k[2], k[3])+'</tr>'; }).join('')
+    + '</tbody></table></div></div>');
+
+  // ── dividends
+  out.push('<div class="card" style="margin-top:18px">'
+    + '<div class="ctitle">What it has declared</div>'
+    + '<div class="csub">Its own dividend record. <b>A missing year is a year with no '
+    + 'declaration</b>, not a gap in the data. Cash at 5/95 of the bonus is the '
+    + 'withholding on that bonus grossed up, and is marked as such.</div>'
+    + (r.div && r.div.length
+        ? '<div class="ywrap" style="padding-left:0">'+coDivTable(r)+'</div>'
+        : '<p class="csub" style="margin:12px 0 0">Nothing declared since it listed.</p>')
+    + '</div>');
+
+  host.innerHTML = out.join('');
+  if(qs.length >= 3) chartOneQ(qs);
+  if(qs.length){
+    btnRow('oneFallBtns', qs.map(function(q,i){ return [i, q.y+' Q'+q.q]; }), ix,
+           function(k){ oneFallIx = k; renderOne(); });
+  }
+  var c = document.getElementById('oneCount');
+  if(c) c.textContent = (D.co.rows.map(function(x){return x.tk;}).indexOf(oneTk)+1)
+      + ' of ' + D.co.rows.length;
+}
+
+function chartOneQ(qs){
+  var f = frame('c-oneq',{w:1020,h:280,m:{t:16,r:16,b:40,l:58},
+    label:'Energy sales, operating profit and profit after tax by discrete quarter'});
+  if(!f) return;
+  var KEYS = [['EnergySales','--s1'],['OperatingProfit','--s3'],['ProfitAfterTax','--s2']];
+  var lo = 0, hi = 0;
+  qs.forEach(function(q){ KEYS.forEach(function(k){
+    var v = q[k[0]]; if(v != null){ lo = Math.min(lo,v); hi = Math.max(hi,v); } }); });
+  if(hi === lo) return;
+  var pad = (hi-lo)*0.08; hi += pad; lo -= pad;
+  var Y = function(v){ return f.m.t + f.ih - (v-lo)/(hi-lo)*f.ih; };
+  for(var i=0;i<=4;i++){
+    var gv = lo + (hi-lo)*i/4;
+    f.svg.appendChild(el('line',{x1:f.m.l,x2:f.m.l+f.iw,y1:Y(gv),y2:Y(gv),
+      stroke:css(Math.abs(gv)<(hi-lo)/200?'--ink-3':'--grid'),'stroke-width':1}));
+    var t = el('text',{x:f.m.l-7,y:Y(gv)+3.5,'text-anchor':'end',fill:css('--ink-3'),
+      'font-size':10,'font-family':'IBM Plex Mono, monospace'});
+    t.textContent = fmt(gv,0); f.svg.appendChild(t);
+  }
+  var gw = f.iw/qs.length, bw = Math.min(20, (gw-10)/3);
+  qs.forEach(function(q,i){
+    var x0 = f.m.l + i*gw + (gw - 3*bw - 4)/2;
+    KEYS.forEach(function(k,j){
+      var v = q[k[0]]; if(v == null) return;
+      var y0 = Y(0), y1 = Y(v);
+      f.svg.appendChild(el('rect',{x:x0+j*(bw+2),y:Math.min(y0,y1),width:bw,
+        height:Math.max(1.5,Math.abs(y1-y0)),fill:css(k[1]),rx:2}));
+    });
+    xLabel(f, f.m.l+i*gw+gw/2, q.y+' Q'+q.q);
+    var hit = el('rect',{x:f.m.l+i*gw,y:f.m.t,width:gw,height:f.ih,class:'hit'});
+    hit.addEventListener('mousemove',function(e){
+      showTip(e, q.y+' Q'+q.q+' — discrete quarter', KEYS.map(function(k){
+        return k[0].replace(/([A-Z])/g,' $1').trim()+' <b>'
+             + (q[k[0]]==null?'—':fmt(q[k[0]],1))+'</b>'; }));
+    });
+    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
+  });
+}
+
+// ---- the listed-company section's own tabs -------------------------------
+var lTab = 'reg';
+var L_TABS = ['reg','mkt','val','one'];
+function showLTab(which){
+  lTab = which;
+  L_TABS.forEach(function(t){
+    var b = document.getElementById('ltab-'+t), p = document.getElementById('lpanel-'+t);
+    if(!b || !p) return;
+    var on = (t === which);
+    b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1;
+    p.hidden = !on;
+  });
+  drawLTab();
+}
+// Each tab draws on entry rather than once at load. Hidden at load the charts
+// would still be correct -- frame() sizes off a fixed viewBox and never measures
+// the DOM -- but a theme flip while a tab was shut would leave it on the old
+// tokens, since only the open one is redrawn.
+function drawLTab(){
+  if(!D.co) return;
+  if(lTab === 'reg'){ renderCo(); chartAgree(); chartCut(); chartPlf(); chartVal(); chartDiv(); }
+  else if(lTab === 'mkt'){ mkTiles(); chartRet(); chartRisk(); renderTech(); renderScreen(); }
+  else if(lTab === 'val'){ chartCapFit(); chartPbRoe(); chartGap(); chartGrowth();
+                           chartPayable(); renderRatio(); }
+  else { renderOne(); }
+}
+function wireListed(){
+  if(!D.co) return;
+  var bar = document.querySelector('#sec-listed .tabs');
+  if(bar){
+    bar.addEventListener('click', function(e){
+      var b = e.target.closest('button[role=tab]'); if(!b) return;
+      showLTab(b.id.replace('ltab-',''));
+    });
+    bar.addEventListener('keydown', function(e){
+      if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      var i = L_TABS.indexOf(lTab) + (e.key === 'ArrowRight' ? 1 : -1);
+      showLTab(L_TABS[(i + L_TABS.length) % L_TABS.length]);
+      document.getElementById('ltab-'+lTab).focus();
+    });
+  }
+  var q = document.getElementById('cq');
+  if(q) q.addEventListener('input', drawLTab);
+
+  [['#t-co th','c',function(k,d){ coSort=k; coDir=d; renderCo(); },
+    function(k){ return k==='tk'||k==='name'||k==='fy'; }],
+   ['#t-tech th','m',function(k,d){ techSort=k; techDir=d; renderTech(); },
+    function(k){ return k==='tk'||k==='name'; }],
+   ['#t-screen th','s',function(k,d){ scrSort=k; scrDir=d; renderScreen(); },
+    function(k){ return k==='tk'||k==='name'; }],
+   ['#t-ratio th','r',function(k,d){ ratSort=k; ratDir=d; renderRatio(); },
+    function(k){ return k==='tk'||k==='name'; }]].forEach(function(spec){
+    var cur = null, dir = -1;
+    document.querySelectorAll(spec[0]).forEach(function(th){
+      function go(){
+        var k = th.dataset[spec[1]];
+        if(cur === k) dir = -dir; else { cur = k; dir = spec[3](k) ? 1 : -1; }
+        document.querySelectorAll(spec[0]).forEach(function(o){ o.removeAttribute('aria-sort'); });
+        th.setAttribute('aria-sort', dir > 0 ? 'ascending' : 'descending');
+        spec[2](k, dir);
+      }
+      th.addEventListener('click', go);
+      th.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(); } });
+      th.tabIndex = 0;
+    });
+  });
+
+  var cob = document.querySelector('#t-co tbody');
+  if(cob){
+    var toggle = function(tr){
+      var k = tr.getAttribute('data-tk');
+      if(coOpen[k]) delete coOpen[k]; else coOpen[k] = 1;
+      renderCo();
+      var again = document.querySelector('#t-co tr.corow[data-tk="'+k+'"]');
+      if(again) again.focus();
+    };
+    cob.addEventListener('click', function(e){
+      var tr = e.target.closest('tr.corow'); if(tr) toggle(tr); });
+    cob.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' && e.key !== ' ') return;
+      var tr = e.target.closest('tr.corow'); if(!tr) return;
+      e.preventDefault(); toggle(tr);
+    });
+  }
+
+  oneList(); oneNav();
+  var pick = document.getElementById('onePick');
+  if(pick) pick.addEventListener('change', function(){
+    var v = pick.value.trim().toUpperCase();
+    if(coRow(v)) selectOne(v);
+  });
+  // the largest by capacity is a more useful landing than whatever sorts first
+  var big = D.co.rows.slice().filter(function(r){ return r.mw; })
+                     .sort(function(a,b){ return b.mw - a.mw; })[0];
+  selectOne(big ? big.tk : D.co.rows[0].tk);
+  showLTab('reg');
+}
+
 function drawAll(){
   chartEnergy(); chartCap(); chartSeason(); chartRate(); chartGen(); chartRoy(); chartRecon(); chartAge(); chartMap(); chartLic(); chartLead();
-  if(D.co && activeTab === 'co'){ chartAgree(); chartCut(); chartPlf(); chartVal(); chartDiv(); }
+  if(D.co) drawLTab();
 }
 // Section 06 exists only when an operator workbook was supplied at build time
 // (HYDRO_XLSX). CI has no workbook, so D.recon is absent there — drop the whole
@@ -2656,12 +3727,12 @@ if(!D.recon){
 // SCALPER_TOKEN has no scalper_hydro_combined.csv, so D.co is absent -- take the
 // tab and its panel out rather than leave a tab that opens onto nothing.
 if(!D.co){
-  ['tab-co','panel-co'].forEach(function(id){
-    var n = document.getElementById(id); if(n) n.parentNode.removeChild(n);
-  });
+  var lsec = document.getElementById('sec-listed');
+  if(lsec) lsec.parentNode.removeChild(lsec);
 } else { coLede(); }
 
-stats(); transTable(); reconTable(); wireTable(); renderPlants(); drawAll(); buildTableViews();
+stats(); transTable(); reconTable(); wireTable(); renderPlants();
+wireListed(); drawAll(); buildTableViews();
 wireMapExpand('map-exp'); wireMapExpand('ter-exp'); wireTerrain(); wireLayers();
 
 // redraw on theme flip so colors resolve against the new tokens

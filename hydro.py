@@ -1462,6 +1462,230 @@ def _reported_quarters():
         return None
 
 
+MKT_COLS = {
+    # what it is here          the column as the comparative file spells it
+    "px":      "Latest Close",          "avg180":  "180 Day Avg",
+    "chg1w":   "1 Wk Price Chg %",      "chg4w":   "4 Wk Price Chg %",
+    "chg12w":  "12 Wk Price Chg %",     "chgytd":  "YTD Price Chg %",
+    "chg1y":   "1 Year Price Chg %",    "mcap":    "Market Cap",
+    "paid":    "Paidup Capital",        "res":     "Reserves & Surplus",
+    "rev":     "Revenue",               "ni":      "Net Income",
+    "gm":      "Gross Margin TTM %",    "em_":     "EBITDA Margin TTM %",
+    "npm":     "Net Profit Margin TTM %",
+    "roe":     "ROE (TTM) %",           "roa":     "ROA (TTM)%",
+    "eps":     "EPS (TTM)",             "bv":      "Bookvalue",
+    "pe":      "PE (TTM)",              "pbv":     "PBV",
+    "cr":      "Current Ratio",         "qr":      "Quick Ratio",
+    "d2a":     "Debt to Asset",         "eqm":     "Equity Multiplier",
+    "beta":    "Beta Weekly",           "betam":   "Beta Monthly",
+    "var1m":   "VaR 1 Month @ 5%",      "sd":      "S.D of Returns [Wk, 1Y]%",
+    "mret":    "Mean Returns [Wk, 1Y]%", "rsi":    "RSI",
+    "rstr":    "Relative Strength %",   "ma":      "50 day MA vs 200 day MA %",
+    "vs52":    "Price Vs 52 Week High %", "macd":  "MACD Crossover",
+}
+# money in this file is NPR thousands, except Market Cap which is NPR
+MKT_SCALE = {"mcap": 1e-6, "paid": 1e-3, "res": 1e-3, "rev": 1e-3, "ni": 1e-3}
+
+# The income statement as the cascade it is. Sign says which way the bar points:
+# +1 adds to the running total, -1 takes away. Subtotals are checked against
+# their own filed column rather than accumulated and trusted.
+CASCADE = [("EnergySales", +1, "Energy sales"),
+           ("CostOfProduction", -1, "Cost of production"),
+           ("GrossProfit", 0, "Gross profit"),
+           ("OtherIncome", +1, "Other income"),
+           ("DividendIncome", +1, "Dividend income"),
+           ("ForexGainLoss", +1, "Forex"),
+           ("AdminExpenses", -1, "Admin expenses"),
+           ("OperatingProfit", 0, "Operating profit"),
+           ("InterestIncomeExpense", +1, "Interest"),
+           ("Provisions", -1, "Provisions"),
+           # Only about a quarter of filers break this out; the rest fold it into
+           # cost of production. Where it is filed it is exactly what closes the
+           # chain from operating profit to profit before tax, and leaving it out
+           # put an 18m unreconciled bar on every one of those companies.
+           ("Depreciation_IncomeStatement", -1, "Depreciation"),
+           ("ProfitBeforeTax", 0, "Profit before tax"),
+           ("Taxes", -1, "Tax"),
+           ("Bonus", -1, "Staff bonus"),
+           ("ProfitAfterTax", 0, "Profit after tax")]
+
+BS_LINES = [("PaidUpCapital", "Paid-up capital"), ("Reserves", "Reserves"),
+            ("TotalFunds", "Total funds"), ("LtLiabilities", "Long-term liabilities"),
+            ("NetFixedAssets", "Net fixed assets"), ("WorkInProgress", "Work in progress"),
+            ("Investments", "Investments"), ("Cash", "Cash"),
+            ("Receivables", "Receivables"), ("TotalCurrentAssets", "Current assets"),
+            ("TotalStLiabilities", "Current liabilities")]
+
+
+def _loo_slope_range(x, y):
+    """How far one company can move a straight-line fit. A relationship a single
+    row can invert is not one, and this is the check that says so."""
+    x, y = np.asarray(x, float), np.asarray(y, float)
+    if len(x) < 6: return None, None
+    out = []
+    for i in range(len(x)):
+        k = np.ones(len(x), bool); k[i] = False
+        out.append(np.polyfit(x[k], y[k], 1)[0])
+    return float(min(out)), float(max(out))
+
+
+def _fit(x, y):
+    x, y = np.asarray(x, float), np.asarray(y, float)
+    ok = np.isfinite(x) & np.isfinite(y)
+    x, y = x[ok], y[ok]
+    if len(x) < 6: return None
+    sl, ic = np.polyfit(x, y, 1)
+    r2 = 1 - ((y-(ic+sl*x))**2).sum()/((y-y.mean())**2).sum()
+    lo, hi = _loo_slope_range(x, y)
+    return {"slope": r(float(sl), 4), "icept": r(float(ic), 4), "r2": r(float(r2), 3),
+            "n": int(len(x)), "loo_lo": r(lo, 3), "loo_hi": r(hi, 3),
+            "flips": 1 if (lo is not None and lo*hi < 0) else 0}
+
+
+def _market(rows):
+    """The price screen, the quarterly statements and the two fits the value tab
+    turns on. Everything here is per ticker and joins onto the rows already built.
+
+    The banking version of this page fits price-to-book on return on equity, which
+    is the textbook relationship for a lender. It does not survive contact with a
+    hydro cohort: one company at 33.8x book carries the whole of an R-squared of
+    0.24, and leaving it out drops that to 0.03 and inverts the slope. So no line
+    is fitted to it and the scatter is shown bare, with the leave-one-out range
+    printed beside it.
+
+    What does hold is capacity. Market capitalisation on installed MW, log on log,
+    explains about three fifths of the variance, and no single company moves the
+    slope by more than 0.02. It is markedly sublinear -- so the market pays less
+    per megawatt the bigger the plant, and the residual from that line is a far
+    better reading of dear and cheap than a price-to-book gap would have been.
+    """
+    try:
+        v = pd.read_csv(P("scalper_hydro_comparative.csv"))
+    except FileNotFoundError:
+        return None
+    v = v.drop_duplicates("Ticker").set_index("Ticker")
+    by = {x["tk"]: x for x in rows}
+    for tk, x in by.items():
+        if tk not in v.index: continue
+        src = v.loc[tk]
+        for k, col in MKT_COLS.items():
+            if col not in v.columns: continue
+            val = pd.to_numeric(src[col], errors="coerce")
+            x[k] = None if not np.isfinite(val) else r(float(val)*MKT_SCALE.get(k, 1.0),
+                                                       0 if k in ("mcap","paid","res","rev","ni") else 4)
+        x["mcap_m"] = x.get("mcap")
+        x["mcap_mw"] = r(x["mcap"]/x["mw"], 0) if x.get("mcap") and x.get("mw") else None
+        # retained earnings against paid-up: the dividend that could be declared
+        # out of what has actually accumulated. A balance, never annualised.
+        x["payable"] = r(100*x["res"]/x["paid"], 1) if x.get("res") is not None and x.get("paid") else None
+
+    keep = [x for x in rows if x.get("mcap") and x.get("mw")]
+    cap = _fit([math.log10(x["mw"]) for x in keep], [math.log10(x["mcap"]) for x in keep])
+    if cap:
+        for x in rows:
+            if x.get("mcap") and x.get("mw"):
+                f = 10**(cap["icept"] + cap["slope"]*math.log10(x["mw"]))
+                x["cap_fit"] = r(f, 0)
+                x["cap_gap"] = r(x["mcap"]/f - 1, 3)
+        cap["doubling"] = r(2**cap["slope"], 3)
+
+    pb = [x for x in rows if x.get("pbv") is not None and x.get("roe") is not None]
+    pbroe = _fit([x["roe"] for x in pb], [x["pbv"] for x in pb])
+    trim = [x for x in pb if 0 <= x["pbv"] <= 25]
+    pbroe_trim = _fit([x["roe"] for x in trim], [x["pbv"] for x in trim])
+
+    # cohort medians, so every figure on the company tab has something to sit beside
+    med = {}
+    for k in list(MKT_COLS) + ["mw","gwh","plf","rpm","mcap_mw","payable","cap_gap","ratio","ach"]:
+        vals = [x[k] for x in rows if x.get(k) is not None]
+        if vals: med[k] = r(float(np.median(vals)), 4)
+    return {"cap": cap, "pbroe": pbroe, "pbroe_trim": pbroe_trim, "med": med,
+            "n_mkt": sum(1 for x in rows if x.get("mcap"))}
+
+
+def _quarters(rows):
+    """Eight discrete quarters per ticker out of a cumulative filing.
+
+    Every line in this series is year to date and resets at Q1, so printing it as
+    filed would show energy sales collapsing between Q4 and Q1 -- which is the
+    fiscal year restarting and nothing else. Q1 stands as filed; every other
+    quarter is itself minus the one before it, and only when that one is actually
+    there. A gap leaves a blank rather than a difference across it, because a Q3
+    with no Q2 differenced against Q1 is two quarters of trading reported as one.
+    """
+    try:
+        f = pd.read_csv(P("scalper_hydro_combined.csv"))
+    except FileNotFoundError:
+        return {}
+    f["_aud"] = (f.DataSource == "Audited").astype(int)
+    f = f.sort_values("_aud").drop_duplicates(["Ticker","Year","Quarter"], keep="last")
+    f["fy0"] = f.Year.map(lambda s: int(str(s).split("/")[0]))
+    f = f.sort_values(["fy0","Quarter"])
+    cols = [c for c, _, _ in CASCADE] + [c for c, _ in BS_LINES] + ["EpsAnnualized"]
+    cols = [c for c in dict.fromkeys(cols) if c in f.columns]
+    flow = {c for c, _, _ in CASCADE} | {"EpsAnnualized"}
+
+    out = {}
+    tickers = {x["tk"] for x in rows}
+    for tk, g in f.groupby("Ticker"):
+        if tk not in tickers: continue
+        g = g.tail(9)
+        prev = {}
+        qs = []
+        for t in g.itertuples():
+            rec = {"y": t.Year, "q": int(t.Quarter)}
+            for c in cols:
+                cum = pd.to_numeric(getattr(t, c, np.nan), errors="coerce")
+                if not np.isfinite(cum):
+                    rec[c] = None; continue
+                if c not in flow:                       # a balance is as filed
+                    rec[c] = r(float(cum)/1e3, 2); continue
+                if t.Quarter == 1:
+                    rec[c] = r(float(cum)/1e3, 2)
+                else:
+                    p = prev.get((c, t.fy0, t.Quarter-1))
+                    rec[c] = None if p is None else r((float(cum)-p)/1e3, 2)
+            for c in cols:
+                cum = pd.to_numeric(getattr(t, c, np.nan), errors="coerce")
+                if np.isfinite(cum): prev[(c, t.fy0, int(t.Quarter))] = float(cum)
+            # a null costs six bytes a line across 110 tickers by 8 quarters by
+            # 25 lines, and the reader treats absent and null the same way
+            qs.append({k: v for k, v in rec.items() if v is not None})
+        out[tk] = qs[-8:]
+    return out
+
+
+def _growth(rows, quarters):
+    """Year to date against the prior year's Q4, and this quarter against the same
+    quarter a year ago -- which is the comparison a cumulative filing supports
+    without its own seasonality getting in the way."""
+    try:
+        f = pd.read_csv(P("scalper_hydro_combined.csv"))
+    except FileNotFoundError:
+        return
+    f["_aud"] = (f.DataSource == "Audited").astype(int)
+    f = f.sort_values("_aud").drop_duplicates(["Ticker","Year","Quarter"], keep="last")
+    f["fy0"] = f.Year.map(lambda s: int(str(s).split("/")[0]))
+    by = {x["tk"]: x for x in rows}
+    for tk, g in f.groupby("Ticker"):
+        x = by.get(tk)
+        if x is None: continue
+        g = g.sort_values(["fy0","Quarter"])
+        last = g.iloc[-1]
+        x["lastq"] = f"{last.Year} Q{int(last.Quarter)}"
+        for tag, col in (("rev","EnergySales"), ("pat","ProfitAfterTax")):
+            cur = pd.to_numeric(last[col], errors="coerce")
+            if not np.isfinite(cur) or cur == 0: continue
+            yoy = g[(g.fy0 == last.fy0 - 1) & (g.Quarter == last.Quarter)]
+            if len(yoy):
+                p = pd.to_numeric(yoy.iloc[0][col], errors="coerce")
+                if np.isfinite(p) and p > 0: x[f"yoy_{tag}"] = r(cur/p - 1, 4)
+            q4 = g[(g.fy0 == last.fy0 - 1) & (g.Quarter == 4)]
+            if len(q4) and last.Quarter < 4:
+                p = pd.to_numeric(q4.iloc[0][col], errors="coerce")
+                if np.isfinite(p) and p > 0: x[f"ytd_{tag}"] = r(cur/p - 1, 4)
+
+
 def _dividends(tickers):
     """Declared dividends per ticker, newest first, plus the sector by year.
 
@@ -1684,9 +1908,16 @@ def _co_payload(d, m):
         "med_f": r(float(np.median([abs(np.log(f)) for a, f in both])), 4),
         "w2_a": within([a for a, f in both], .02), "w2_f": within([f for a, f in both], .02),
     }
+    mkt = _market(rows)
+    quarters = _quarters(rows)
+    _growth(rows, quarters)
+
     order = sorted(fleet, key=lambda y: int(str(y).split("/")[0]))
     paid = [x for x in rows if x["div_n"]]
     return {"rows": rows, "agree": agree, "divYear": div_year,
+            "mkt": mkt, "q": quarters,
+            "cascade": [[c, s, lab] for c, s, lab in CASCADE],
+            "bs": [[c, lab] for c, lab in BS_LINES],
             "n_div": len(paid),
             "n_div_now": sum(1 for x in rows if x["div_y"] == (div_year[-1]["y"] if div_year else None)),
             "fleet": [{"ad": y, "fy": fleet[y]["fy"], "reg_bn": r(fleet[y]["reg"]/1e3, 2),
