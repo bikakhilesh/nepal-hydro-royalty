@@ -925,10 +925,14 @@ def plf_refs():
     for t in inp.itertuples():
         c = float(t.ContractPLF)/100 if getattr(t, "ContractPLF", "") else None
         d = float(t.DesignPLF)/100 if getattr(t, "DesignPLF", "") else None
-        if c is None and d is None: continue
+        cost = float(t.CostPerMW) if getattr(t, "CostPerMW", "") else None
+        if c is None and d is None and cost is None: continue
         for pid in plants.get(t.Ticker, []):
-            out[pid] = {"cplf": r(c, 4), "dplf": r(d, 4),
-                        "psrc": (t.Source or None) if c is not None else "operator site"}
+            out[pid] = {"cplf": r(c, 4), "dplf": r(d, 4), "cost_mw": r(cost, 1),
+                        # who said so: the file's own Source, except a design
+                        # figure with no Source, which only ever comes from the
+                        # operator's project page.
+                        "psrc": (t.Source or None) or ("operator site" if d is not None else None)}
     return out
 
 
@@ -1241,6 +1245,7 @@ def build_payload():
                "ppa": r(allr.get(pid), 2), "ppa_wet": r(wet.get(pid), 2), "ppa_dry": r(dry.get(pid), 2),
                "rpm": r(rpm.get(pid, np.nan)/1e6, 1), "rpm_n": int(rpm_n.get(pid, 0)),
                "cplf": refs.get(pid, {}).get("cplf"), "dplf": refs.get(pid, {}).get("dplf"),
+               "cost_mw": refs.get(pid, {}).get("cost_mw"), "psrc": refs.get(pid, {}).get("psrc"),
                "implied": r(implied.get(pid, np.nan), 2), "thin": 1 if pid in thin else 0,
                "ccy": "USD" if usd_plants.get(pid) else "NPR",
                "ppa_usd": r(usd_rate.get(pid), 4), "fx": r(usd_fx.get(pid), 2)}

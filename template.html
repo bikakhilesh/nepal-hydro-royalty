@@ -1805,6 +1805,19 @@ function renderProject(){
         fact('Years assessed', p.yrs, 'fiscal years')+
         fact('Closing balance', p.bal_m!=null?fmt(p.bal_m,1):null,
              p.last_fy?('NPR m, FY '+p.last_fy):'NPR m')+
+        // Revenue per MW is the figure that survives comparing a 3.5 MW scheme to
+        // a 456 MW one. Beside it, the load factor this plant was actually meant
+        // to reach, and what it cost to build -- both from named documents, both
+        // a dash where no document says.
+        fact('Revenue per MW', p.rpm!=null?fmt(p.rpm,1):null,
+             p.rpm!=null?('NPR m per year'+(p.rpm_n?' · median of '+p.rpm_n+
+               (p.rpm_n===1?' full year':' full years'):'')):'no complete filing year')+
+        fact(p.cplf!=null?'Contracted PLF':'Design PLF',
+             p.cplf!=null?p.cplf.toFixed(2):(p.dplf!=null?p.dplf.toFixed(2):null),
+             p.cplf!=null?('what the PPA obliges'+(p.psrc?' · '+p.psrc:''))
+               :(p.dplf!=null?'operator’s design figure':'not on file'))+
+        fact('Cost per MW', p.cost_mw!=null?fmt(p.cost_mw,0):null,
+             p.cost_mw!=null?('NPR m'+(p.psrc?' · '+p.psrc:'')):'not on file')+
       '</div>'+
       yearsTable(p.id, p)+
     '</div>';
