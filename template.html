@@ -282,6 +282,11 @@ details.tv th{cursor:default}
    and the two readings of how close its billing lands to its own filing */
 .cotag{font-size:10.5px;color:var(--ink-3);font-style:italic;margin-left:6px}
 .comatch{color:var(--ok)} .comiss{color:var(--warn)}
+/* Book value under NPR 100 par: the company is into its paid-up capital and
+   every ratio with equity underneath stops being comparable. Struck through
+   rather than hidden -- the figure is real, it just is not the same quantity as
+   the column around it. */
+.subpar{color:var(--ink-3);text-decoration:line-through;text-decoration-thickness:1px}
 #t-co td:nth-child(2){max-width:230px;overflow:hidden;text-overflow:ellipsis}
 /* Squeezed to a phone these two stop being readable rather than just small: the
    dividend chart is fifteen pairs of bars and the dumbbell is twenty-five rows,
@@ -843,7 +848,11 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     <figure class="card" style="margin-top:18px">
       <figcaption><div class="ctitle">Everything the screen carries</div>
       <div class="csub">The full price and fundamentals screen, one row per ticker.
-        Click a heading to sort.</div></figcaption>
+        Click a heading to sort. <b>Book value and price to book are struck through
+        where book has fallen below the NPR 100 par</b> &mdash; the company is into
+        its paid-up capital and the ratio is no longer measuring what it does in the
+        rest of the column. The figure is still printed; it is not
+        comparable.</div></figcaption>
       <div class="tw" style="max-height:520px;overflow-y:auto">
         <table id="t-screen"><thead><tr>
           <th data-s="tk">Ticker</th><th data-s="name">Company</th>
@@ -917,7 +926,10 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 
     <figure class="card" style="margin-top:18px">
       <figcaption><div class="ctitle">Every ratio</div>
-      <div class="csub">One row per ticker, sortable. Money in NPR million.</div></figcaption>
+      <div class="csub">One row per ticker, sortable. Money in NPR million. <b>Price
+        to book and return on equity are struck through below the NPR 100 par</b>,
+        where equity is a fraction of paid-up capital and a ratio built on it swings
+        on almost nothing.</div></figcaption>
       <div class="tw" style="max-height:520px;overflow-y:auto">
         <table id="t-ratio"><thead><tr>
           <th data-r="tk">Ticker</th><th data-r="name">Company</th>
@@ -2882,6 +2894,7 @@ function tile(k, v, sub){
 // ---- sector at a glance --------------------------------------------------
 function mkTiles(){
   var m = MK(); if(!m) return;
+  // book-derived medians come from the above-par cohort; see _market()
   var host = document.getElementById('mkTiles'); if(!host) return;
   var rows = D.co.rows, sum = function(k){
     return rows.reduce(function(a,r){ return a + (r[k]||0); }, 0); };
@@ -2896,8 +2909,8 @@ function mkTiles(){
     tile('Companies', fmt(rows.length), fmt(sum('mw'),0)+' MW listed')
   + tile('Market capitalisation', fmt(sum('mcap')/1000,0)+' bn', 'NPR, at the latest close')
   + tile('P/E', fmt(MED('pe'),1), 'weighted '+fmt(w('pe'),1))
-  + tile('Price to book', fmt(MED('pbv'),2), 'weighted '+fmt(w('pbv'),2))
-  + tile('Return on equity', pct(MED('roe'),1), 'weighted '+pct(w('roe'),1))
+  + tile('Price to book', fmt(MED('pbv'),2), m.n_par+' above NPR 100 par')
+  + tile('Return on equity', pct(MED('roe'),1), 'median of the same '+m.n_par)
   + tile('Net margin', pct(MED('npm'),1), 'weighted '+pct(w('npm'),1))
   + tile('Debt to assets', pct(MED('d2a'),0), 'weighted '+pct(w('d2a'),0))
   + tile('Price, one year', pct(MED('chg1y'),1),
@@ -3067,8 +3080,12 @@ function chartCapFit(){
 
 // ---- price to book against return on equity ------------------------------
 function chartPbRoe(){
-  var m = MK(); if(!m || !m.pbroe) return;
-  var d = D.co.rows.filter(function(r){ return r.pbv != null && r.roe != null; });
+  var m = MK(); if(!m || !m.pbroe_par) return;
+  // Above par only. Below it the denominator is a fraction of paid-up capital and
+  // the ratio swings on almost nothing -- 33.8x off a book of 8.38, -10.9x off a
+  // book of -25.60 -- which is what made this look like a relationship at all.
+  var d = D.co.rows.filter(function(r){
+    return r.pbv != null && r.roe != null && !r.subpar; });
   var f = frame('c-pbroe',{w:520,h:380,m:{t:16,r:16,b:44,l:50},
     label:'Price to book against return on equity'});
   if(!f) return;
@@ -3131,17 +3148,24 @@ function chartPbRoe(){
 
   var s = document.getElementById('pbSub');
   if(s) s.innerHTML =
-    'For a bank this is the relationship that prices the sector, and a line through it '
-  + 'is the standard reading. <b>It does not hold here, and no line is drawn.</b> '
-  + 'Fitted across all ' + m.pbroe.n + ' companies it returns an R\u00b2 of '
-  + m.pbroe.r2.toFixed(2) + ', but taking out one company at a time moves the slope '
-  + 'anywhere between ' + m.pbroe.loo_lo.toFixed(1) + ' and ' + m.pbroe.loo_hi.toFixed(1)
-  + ' \u2014 it changes sign. Excluding the two names beyond 0\u201325\u00d7 book the '
-  + 'R\u00b2 is ' + m.pbroe_trim.r2.toFixed(2) + '. A hydro company is not priced on '
-  + 'what it earns on its book; it is priced on the megawatts beside it. The frame '
-  + 'covers the bulk of the cohort and <b>' + outside.length + '</b> compan'
-  + (outside.length === 1 ? 'y sits' : 'ies sit') + ' outside it, drawn as open rings '
-  + 'on the boundary rather than dropped.';
+    '<b>' + m.n_par + ' companies whose book value clears the NPR 100 par.</b> '
+  + 'The other ' + m.n_subpar + ' have eaten into paid-up capital, and with a '
+  + 'fraction of par underneath it price to book stops measuring the same thing '
+  + '\u2014 33.8\u00d7 off a book of 8.38, \u221210.9\u00d7 off a book of '
+  + '\u221225.60. For a bank this is the relationship that prices the sector. '
+  + '<b>It does not hold here, and no line is drawn.</b> Across all '
+  + m.pbroe.n + ' companies it returns an R\u00b2 of ' + m.pbroe.r2.toFixed(2)
+  + ', but taking out one at a time moves the slope between '
+  + m.pbroe.loo_lo.toFixed(1) + ' and ' + m.pbroe.loo_hi.toFixed(1)
+  + ' \u2014 it changes sign, so that figure is one company, not a finding. '
+  + 'On the ' + m.pbroe_par.n + ' above par the slope stops flipping (it stays '
+  + 'between ' + m.pbroe_par.loo_lo.toFixed(1) + ' and '
+  + m.pbroe_par.loo_hi.toFixed(1) + ') and settles at an R\u00b2 of '
+  + m.pbroe_par.r2.toFixed(3) + ', which says plainly that there is nothing there. '
+  + 'A hydro company is not priced on what it earns on its book; it is priced on '
+  + 'the megawatts beside it.'
+  + (outside.length ? ' <b>' + outside.length + '</b> of the ' + m.pbroe_par.n
+      + ' sit outside the frame and are drawn as open rings on its boundary.' : '');
 }
 
 // ---- distance from the capacity line, ranked -----------------------------
@@ -3281,8 +3305,10 @@ function renderScreen(){
     return '<tr><td><b>'+r.tk+'</b></td><td title="'+r.name.replace(/"/g,'&quot;')+'">'+r.name+'</td>'
       + '<td class="n">'+num(r.mw,1)+'</td><td class="n">'+num(r.px,1)+'</td>'
       + '<td class="n">'+num(r.mcap,0)+'</td><td class="n">'+num(r.pe,1)+'</td>'
-      + '<td class="n">'+num(r.pbv,2)+'</td><td class="n">'+num(r.eps,2)+'</td>'
-      + '<td class="n">'+num(r.bv,1)+'</td>'
+      + '<td class="n'+(r.subpar?' subpar':'')+'" title="'
+        + (r.subpar?'book value is below the NPR 100 par, so this is not comparable':'')
+        + '">'+num(r.pbv,2)+'</td><td class="n">'+num(r.eps,2)+'</td>'
+      + '<td class="n'+(r.subpar?' subpar':'')+'">'+num(r.bv,1)+'</td>'
       + '<td class="n '+signCls(r.roe)+'">'+(r.roe==null?'—':pct(r.roe,1))+'</td>'
       + '<td class="n '+signCls(r.roa)+'">'+(r.roa==null?'—':pct(r.roa,1))+'</td>'
       + '<td class="n '+signCls(r.npm)+'">'+(r.npm==null?'—':pct(r.npm,1))+'</td>'
@@ -3301,8 +3327,10 @@ function renderRatio(){
       + '<td class="n">'+num(r.mw,1)+'</td><td class="n">'+num(r.mcap_mw,0)+'</td>'
       + '<td class="n '+(r.cap_gap==null?'':(r.cap_gap>0?'stat-crit':'stat-good'))+'">'
         + (r.cap_gap==null?'—':(r.cap_gap>0?'+':'')+(100*r.cap_gap).toFixed(0)+'%')+'</td>'
-      + '<td class="n">'+num(r.pe,1)+'</td><td class="n">'+num(r.pbv,2)+'</td>'
-      + '<td class="n '+signCls(r.roe)+'">'+(r.roe==null?'—':pct(r.roe,1))+'</td>'
+      + '<td class="n">'+num(r.pe,1)+'</td>'
+      + '<td class="n'+(r.subpar?' subpar':'')+'">'+num(r.pbv,2)+'</td>'
+      + '<td class="n '+(r.subpar?'subpar':signCls(r.roe))+'">'
+        + (r.roe==null?'—':pct(r.roe,1))+'</td>'
       + '<td class="n '+signCls(r.roa)+'">'+(r.roa==null?'—':pct(r.roa,1))+'</td>'
       + '<td class="n">'+(r.gm==null?'—':pct(r.gm,0))+'</td>'
       + '<td class="n">'+(r.em_==null?'—':pct(r.em_,0))+'</td>'
@@ -3456,8 +3484,10 @@ function renderOne(){
     + tile('Price', fmt(r.px,1), r.chg1y==null?'':'a year ago '+pct(r.chg1y,1))
     + tile('Market cap', fmt(r.mcap,0), 'NPR m'+(r.mcap_mw?' · '+fmt(r.mcap_mw,0)+' per MW':''))
     + tile('P/E', fmt(r.pe,1), 'sector '+fmt(MED('pe'),1))
-    + tile('Price to book', fmt(r.pbv,2), 'sector '+fmt(MED('pbv'),2))
-    + tile('Return on equity', pct(r.roe,1), 'sector '+pct(MED('roe'),1))
+    + tile('Price to book', fmt(r.pbv,2),
+           r.subpar ? 'book below par \u2014 not comparable' : 'sector '+fmt(MED('pbv'),2))
+    + tile('Return on equity', pct(r.roe,1),
+           r.subpar ? 'book below par \u2014 not comparable' : 'sector '+pct(MED('roe'),1))
     + tile('Achieved PLF', r.plf==null?'—':r.plf.toFixed(3),
            r.ach==null ? 'no reference on file'
              : Math.round(100*r.ach)+'% of its '+(r.cplf!=null?'contracted':'design')+' figure')
@@ -3534,7 +3564,12 @@ function renderOne(){
              ['yoy_pat','Profit, year on year', function(v){return pct(v,0);}, 1]];
   out.push('<div class="card" style="margin-top:18px">'
     + '<div class="ctitle">Against the cohort</div>'
-    + '<div class="csub">Every measure for this company, the median across all listed '
+    + '<div class="csub">'
+    + (r.subpar ? '<b>This company\u2019s book value is '+fmt(r.bv,1)+', below the '
+        + 'NPR 100 par</b>, so its price to book and return on equity are ranked here '
+        + 'but are not measuring what they measure for a company above par. '
+      : '')
+    + 'Every measure for this company, the median across all listed '
     + 'hydro, and where it ranks. <b>Rank 1 is always the better end</b>, taking each '
     + 'measure&rsquo;s own direction &mdash; so first on debt to assets is the least '
     + 'indebted. Distance from the capacity line carries no colour and no direction: '

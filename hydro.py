@@ -1573,6 +1573,9 @@ def _market(rows):
             val = pd.to_numeric(src[col], errors="coerce")
             x[k] = None if not np.isfinite(val) else r(float(val)*MKT_SCALE.get(k, 1.0),
                                                        0 if k in ("mcap","paid","res","rev","ni") else 4)
+        # NEPSE par is NPR 100. Under it the company is into its paid-up capital
+        # and every ratio with equity in the denominator stops being comparable.
+        x["subpar"] = 1 if (x.get("bv") is not None and x["bv"] <= 100) else 0
         x["mcap_m"] = x.get("mcap")
         x["mcap_mw"] = r(x["mcap"]/x["mw"], 0) if x.get("mcap") and x.get("mw") else None
         # retained earnings against paid-up: the dividend that could be declared
@@ -1591,16 +1594,26 @@ def _market(rows):
 
     pb = [x for x in rows if x.get("pbv") is not None and x.get("roe") is not None]
     pbroe = _fit([x["roe"] for x in pb], [x["pbv"] for x in pb])
-    trim = [x for x in pb if 0 <= x["pbv"] <= 25]
-    pbroe_trim = _fit([x["roe"] for x in trim], [x["pbv"] for x in trim])
+    par = [x for x in pb if not x.get("subpar")]
+    pbroe_par = _fit([x["roe"] for x in par], [x["pbv"] for x in par])
 
-    # cohort medians, so every figure on the company tab has something to sit beside
+    # cohort medians, so every figure on the company tab has something to sit
+    # beside. The book-derived ones are struck on the above-par cohort only, for
+    # the same reason the chart is: a median that includes a 33.8x and a -10.9x
+    # is not describing the same quantity as the rest of the column.
+    BOOK = {"pbv", "bv", "roe", "eqm"}
     med = {}
     for k in list(MKT_COLS) + ["mw","gwh","plf","rpm","mcap_mw","payable","cap_gap","ratio","ach"]:
-        vals = [x[k] for x in rows if x.get(k) is not None]
+        src = [x for x in rows if not x.get("subpar")] if k in BOOK else rows
+        vals = [x[k] for x in src if x.get(k) is not None]
         if vals: med[k] = r(float(np.median(vals)), 4)
-    return {"cap": cap, "pbroe": pbroe, "pbroe_trim": pbroe_trim, "med": med,
-            "n_mkt": sum(1 for x in rows if x.get("mcap"))}
+    n_par = sum(1 for x in rows if x.get("bv") is not None and not x.get("subpar"))
+    return {"cap": cap, "pbroe": pbroe, "pbroe_par": pbroe_par, "med": med,
+            "n_mkt": sum(1 for x in rows if x.get("mcap")),
+            "n_par": n_par, "n_subpar": sum(1 for x in rows if x.get("subpar")),
+            "subpar_mcap": r(sum(x.get("mcap") or 0 for x in rows if x.get("subpar")), 0),
+            "all_mcap": r(sum(x.get("mcap") or 0 for x in rows), 0),
+            "book_keys": sorted(BOOK)}
 
 
 def _quarters(rows):
