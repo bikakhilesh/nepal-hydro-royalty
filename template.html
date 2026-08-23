@@ -800,6 +800,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
   </div>
 
   <div id="lpanel-mkt" role="tabpanel" aria-labelledby="ltab-mkt" hidden>
+    <div class="note" id="scrNote" style="margin:0 0 18px"></div>
     <div class="card">
       <div class="ctitle">The sector at a glance</div>
       <div class="csub">Medians across the listed hydro companies, with the
@@ -2760,6 +2761,7 @@ function renderCo(){
   document.querySelector('#t-co tbody').innerHTML = body;
   var c = document.getElementById('ccnt');
   if(c) c.textContent = rows.length + ' of ' + D.co.rows.length + ' tickers';
+  
 }
 function coDetail(r){
   var bits = [];
@@ -2863,6 +2865,12 @@ function coLede(){
 // it is removed at startup rather than drawn empty.
 var MK = function(){ return (D.co && D.co.mkt) || null; };
 var MED = function(k){ var m = MK(); return m && m.med ? m.med[k] : null; };
+// Everything on the market tab runs on the screened cohort: book value above the
+// NPR 100 par and trailing EPS above zero. Below par the equity denominator is a
+// fraction of paid-up capital; below zero earnings the multiple has no meaning.
+// The other tabs keep their own basis and say so.
+function scrRows(){ return D.co.rows.filter(function(r){ return r.scr; }); }
+var SMED = function(k){ var m = MK(); return m && m.smed ? m.smed[k] : null; };
 
 function pct(v, nd){ return v===null||v===undefined ? '—'
   : ((v>=0?'':'') + (100*v).toFixed(nd===undefined?1:nd) + '%'); }
@@ -2892,11 +2900,30 @@ function tile(k, v, sub){
 }
 
 // ---- sector at a glance --------------------------------------------------
+function scrNote(){
+  var m = MK(), n = document.getElementById('scrNote');
+  if(!m || !n) return;
+  n.innerHTML =
+    '<b>This tab is one screened cohort: ' + m.n_scr + ' of the ' + D.co.rows.length
+  + ' listed companies</b>, holding ' + Math.round(100*m.scr_mcap/m.all_mcap)
+  + '% of the sector’s capitalisation. Two conditions, and both are about '
+  + 'whether a ratio means anything rather than whether a company is any good. '
+  + '<b>Book value above the NPR 100 par</b> excludes ' + m.n_subpar + ': below par '
+  + 'the company is into its paid-up capital, and with a fraction of par underneath '
+  + 'it anything with equity in the denominator swings on almost nothing — '
+  + '33.8× book off a book of 8.38. <b>Trailing EPS above zero</b> excludes '
+  + m.n_loss + ' (' + m.n_loss_par + ' of them otherwise above par): a negative P/E '
+  + 'is not a cheap company, it is a company the multiple cannot describe. No '
+  + 'negative P/E survives into any column here. '
+  + '<b>Upper Tamakoshi is among the excluded</b>, on a book value of 44.5 — '
+  + 'the largest listed name in the sector, and this tab does not describe it. '
+  + 'Every EPS on this page is the trailing twelve months. The register, value and '
+  + 'company tabs carry all ' + D.co.rows.length + ' and state their own basis.';
+}
 function mkTiles(){
   var m = MK(); if(!m) return;
-  // book-derived medians come from the above-par cohort; see _market()
   var host = document.getElementById('mkTiles'); if(!host) return;
-  var rows = D.co.rows, sum = function(k){
+  var rows = scrRows(), sum = function(k){
     return rows.reduce(function(a,r){ return a + (r[k]||0); }, 0); };
   // capitalisation-weighted, which parts company with the median exactly when
   // the large names trade differently from the small ones
@@ -2906,14 +2933,16 @@ function mkTiles(){
     return d ? n/d : null;
   };
   host.innerHTML =
-    tile('Companies', fmt(rows.length), fmt(sum('mw'),0)+' MW listed')
-  + tile('Market capitalisation', fmt(sum('mcap')/1000,0)+' bn', 'NPR, at the latest close')
-  + tile('P/E', fmt(MED('pe'),1), 'weighted '+fmt(w('pe'),1))
-  + tile('Price to book', fmt(MED('pbv'),2), m.n_par+' above NPR 100 par')
-  + tile('Return on equity', pct(MED('roe'),1), 'median of the same '+m.n_par)
-  + tile('Net margin', pct(MED('npm'),1), 'weighted '+pct(w('npm'),1))
-  + tile('Debt to assets', pct(MED('d2a'),0), 'weighted '+pct(w('d2a'),0))
-  + tile('Price, one year', pct(MED('chg1y'),1),
+    tile('Companies screened', fmt(rows.length),
+         'of '+D.co.rows.length+' listed \u00b7 '+fmt(sum('mw'),0)+' MW')
+  + tile('Market capitalisation', fmt(sum('mcap')/1000,0)+' bn',
+         Math.round(100*m.scr_mcap/m.all_mcap)+'% of the sector')
+  + tile('P/E', fmt(SMED('pe'),1), 'weighted '+fmt(w('pe'),1))
+  + tile('Price to book', fmt(SMED('pbv'),2), 'weighted '+fmt(w('pbv'),2))
+  + tile('Return on equity', pct(SMED('roe'),1), 'weighted '+pct(w('roe'),1))
+  + tile('EPS, trailing', fmt(SMED('eps'),2), 'weighted '+fmt(w('eps'),2))
+  + tile('Debt to assets', pct(SMED('d2a'),0), 'weighted '+pct(w('d2a'),0))
+  + tile('Price, one year', pct(SMED('chg1y'),1),
          rows.filter(function(r){ return r.chg1y > 0; }).length+' of '+rows.length+' up');
 }
 
@@ -2924,7 +2953,7 @@ function chartRet(){
   var HZ = [['chg1w','1 week'],['chg4w','4 weeks'],['chg12w','12 weeks'],
             ['chgytd','Year to date'],['chg1y','1 year']];
   btnRow('mkHzn', HZ, retHzn, function(k){ retHzn = k; chartRet(); });
-  var d = D.co.rows.filter(function(r){ return r[retHzn] != null; })
+  var d = scrRows().filter(function(r){ return r[retHzn] != null; })
                    .sort(function(a,b){ return b[retHzn] - a[retHzn]; });
   if(!d.length) return;
   var f = frame('c-ret',{w:520,h:Math.max(220, d.length*4.4+56),
@@ -2932,7 +2961,7 @@ function chartRet(){
   if(!f) return;
   var lo = Math.min(0, d[d.length-1][retHzn]), hi = Math.max(0, d[0][retHzn]);
   var X = function(v){ return f.m.l + (v-lo)/(hi-lo)*f.iw; };
-  var med = MED(retHzn), bh = f.ih/d.length;
+  var med = SMED(retHzn), bh = f.ih/d.length;
   [lo, 0, hi].concat(med!=null?[med]:[]).forEach(function(v){
     f.svg.appendChild(el('line',{x1:X(v),x2:X(v),y1:f.m.t,y2:f.m.t+f.ih,
       stroke: v===0 ? css('--ink-3') : css('--grid'),
@@ -2949,7 +2978,7 @@ function chartRet(){
     hit.addEventListener('mousemove',function(e){
       showTip(e, r.tk+' · '+r.name,
         [pct(v,1)+' over '+HZ.filter(function(h){return h[0]===retHzn;})[0][1].toLowerCase(),
-         'Sector median '+pct(med,1),
+         'Cohort median '+pct(med,1),
          fmt(r.mw,1)+' MW · '+fmt(r.mcap,0)+' NPR m']);
     });
     hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
@@ -2969,7 +2998,7 @@ function chartRet(){
 // ---- return against risk -------------------------------------------------
 function chartRisk(){
   if(!MK()) return;
-  var d = D.co.rows.filter(function(r){ return r.sd > 0 && r.mret != null; });
+  var d = scrRows().filter(function(r){ return r.sd > 0 && r.mret != null; });
   if(d.length < 5) return;
   var f = frame('c-risk',{w:520,h:380,m:{t:16,r:16,b:46,l:56},
     label:'Mean weekly return against the standard deviation of weekly returns'});
@@ -2992,7 +3021,7 @@ function chartRisk(){
   f.svg.appendChild(el('line',{x1:f.m.l,x2:f.m.l+f.iw,y1:Y(0),y2:Y(0),
     stroke:css('--ink-3'),'stroke-width':1,'stroke-dasharray':'3 3'}));
   // the sector's own return per unit of risk, as a ray from the origin
-  var msd = MED('sd'), mret = MED('mret');
+  var msd = SMED('sd'), mret = SMED('mret');
   if(msd > 0 && mret != null){
     var k = mret/msd;
     f.svg.appendChild(el('line',{x1:X(0),y1:Y(0),x2:X(xhi),y2:Y(k*xhi),
@@ -3267,9 +3296,9 @@ function rankBars(mount, key, lab, aria){
 // ---- the three screen tables ---------------------------------------------
 function coSearch(){ var q = document.getElementById('cq');
   return q ? q.value.trim().toLowerCase() : ''; }
-function coFiltered(){
+function coFiltered(rows){
   var q = coSearch();
-  return D.co.rows.filter(function(r){
+  return (rows || D.co.rows).filter(function(r){
     return !q || (r.tk+' '+r.name+' '+(r.pnames||'')+' '+(r.dist||'')).toLowerCase().indexOf(q) >= 0;
   });
 }
@@ -3287,7 +3316,7 @@ var techSort = 'rsi', techDir = -1, scrSort = 'mcap', scrDir = -1,
 
 function renderTech(){
   var t = document.querySelector('#t-tech tbody'); if(!t) return;
-  t.innerHTML = sortRows(coFiltered(), techSort, techDir).map(function(r){
+  t.innerHTML = sortRows(coFiltered(scrRows()), techSort, techDir).map(function(r){
     return '<tr><td><b>'+r.tk+'</b></td><td title="'+r.name.replace(/"/g,'&quot;')+'">'+r.name+'</td>'
       + '<td class="n">'+num(r.px,1)+'</td>'
       + '<td class="n">'+num(r.rsi,1)+'</td>'
@@ -3301,14 +3330,12 @@ function renderTech(){
 }
 function renderScreen(){
   var t = document.querySelector('#t-screen tbody'); if(!t) return;
-  t.innerHTML = sortRows(coFiltered(), scrSort, scrDir).map(function(r){
+  t.innerHTML = sortRows(coFiltered(scrRows()), scrSort, scrDir).map(function(r){
     return '<tr><td><b>'+r.tk+'</b></td><td title="'+r.name.replace(/"/g,'&quot;')+'">'+r.name+'</td>'
       + '<td class="n">'+num(r.mw,1)+'</td><td class="n">'+num(r.px,1)+'</td>'
       + '<td class="n">'+num(r.mcap,0)+'</td><td class="n">'+num(r.pe,1)+'</td>'
-      + '<td class="n'+(r.subpar?' subpar':'')+'" title="'
-        + (r.subpar?'book value is below the NPR 100 par, so this is not comparable':'')
-        + '">'+num(r.pbv,2)+'</td><td class="n">'+num(r.eps,2)+'</td>'
-      + '<td class="n'+(r.subpar?' subpar':'')+'">'+num(r.bv,1)+'</td>'
+      + '<td class="n">'+num(r.pbv,2)+'</td><td class="n">'+num(r.eps,2)+'</td>'
+      + '<td class="n">'+num(r.bv,1)+'</td>'
       + '<td class="n '+signCls(r.roe)+'">'+(r.roe==null?'—':pct(r.roe,1))+'</td>'
       + '<td class="n '+signCls(r.roa)+'">'+(r.roa==null?'—':pct(r.roa,1))+'</td>'
       + '<td class="n '+signCls(r.npm)+'">'+(r.npm==null?'—':pct(r.npm,1))+'</td>'
@@ -3318,7 +3345,8 @@ function renderScreen(){
       + '<td class="n '+signCls(r.chg1y)+'">'+(r.chg1y==null?'—':pct(r.chg1y,1))+'</td></tr>';
   }).join('');
   var c = document.getElementById('ccnt');
-  if(c) c.textContent = coFiltered().length + ' of ' + D.co.rows.length + ' tickers';
+  if(c) c.textContent = coFiltered(scrRows()).length + ' of ' + MK().n_scr
+      + ' screened \u00b7 ' + D.co.rows.length + ' listed';
 }
 function renderRatio(){
   var t = document.querySelector('#t-ratio tbody'); if(!t) return;
@@ -3664,7 +3692,8 @@ function showLTab(which){
 function drawLTab(){
   if(!D.co) return;
   if(lTab === 'reg'){ renderCo(); chartAgree(); chartCut(); chartPlf(); chartVal(); chartDiv(); }
-  else if(lTab === 'mkt'){ mkTiles(); chartRet(); chartRisk(); renderTech(); renderScreen(); }
+  else if(lTab === 'mkt'){ scrNote(); mkTiles(); chartRet(); chartRisk();
+                           renderTech(); renderScreen(); }
   else if(lTab === 'val'){ chartCapFit(); chartPbRoe(); chartGap(); chartGrowth();
                            chartPayable(); renderRatio(); }
   else { renderOne(); }

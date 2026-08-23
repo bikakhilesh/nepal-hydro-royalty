@@ -1576,6 +1576,9 @@ def _market(rows):
         # NEPSE par is NPR 100. Under it the company is into its paid-up capital
         # and every ratio with equity in the denominator stops being comparable.
         x["subpar"] = 1 if (x.get("bv") is not None and x["bv"] <= 100) else 0
+        # the screened cohort the market tab runs on: above par and earning
+        x["scr"] = 1 if (not x["subpar"] and x.get("bv") is not None
+                         and x.get("eps") is not None and x["eps"] > 0) else 0
         x["mcap_m"] = x.get("mcap")
         x["mcap_mw"] = r(x["mcap"]/x["mw"], 0) if x.get("mcap") and x.get("mw") else None
         # retained earnings against paid-up: the dividend that could be declared
@@ -1602,17 +1605,30 @@ def _market(rows):
     # the same reason the chart is: a median that includes a 33.8x and a -10.9x
     # is not describing the same quantity as the rest of the column.
     BOOK = {"pbv", "bv", "roe", "eqm"}
-    med = {}
-    for k in list(MKT_COLS) + ["mw","gwh","plf","rpm","mcap_mw","payable","cap_gap","ratio","ach"]:
+    KEYS = list(MKT_COLS) + ["mw","gwh","plf","rpm","mcap_mw","payable","cap_gap","ratio","ach"]
+    med, smed = {}, {}
+    for k in KEYS:
         src = [x for x in rows if not x.get("subpar")] if k in BOOK else rows
         vals = [x[k] for x in src if x.get(k) is not None]
         if vals: med[k] = r(float(np.median(vals)), 4)
+        # and the same medians struck on the screened cohort alone, which is what
+        # the market tab compares against
+        svals = [x[k] for x in rows if x.get("scr") and x.get(k) is not None]
+        if svals: smed[k] = r(float(np.median(svals)), 4)
     n_par = sum(1 for x in rows if x.get("bv") is not None and not x.get("subpar"))
-    return {"cap": cap, "pbroe": pbroe, "pbroe_par": pbroe_par, "med": med,
+    scr = [x for x in rows if x.get("scr")]
+    return {"cap": cap, "pbroe": pbroe, "pbroe_par": pbroe_par,
+            "med": med, "smed": smed,
             "n_mkt": sum(1 for x in rows if x.get("mcap")),
             "n_par": n_par, "n_subpar": sum(1 for x in rows if x.get("subpar")),
             "subpar_mcap": r(sum(x.get("mcap") or 0 for x in rows if x.get("subpar")), 0),
             "all_mcap": r(sum(x.get("mcap") or 0 for x in rows), 0),
+            "n_scr": len(scr),
+            "scr_mcap": r(sum(x.get("mcap") or 0 for x in scr), 0),
+            "n_loss": sum(1 for x in rows if x.get("eps") is not None and x["eps"] <= 0),
+            # above par but loss-making: what the earnings test removes on its own
+            "n_loss_par": sum(1 for x in rows if not x.get("subpar")
+                              and x.get("eps") is not None and x["eps"] <= 0),
             "book_keys": sorted(BOOK)}
 
 
@@ -1634,7 +1650,7 @@ def _quarters(rows):
     f = f.sort_values("_aud").drop_duplicates(["Ticker","Year","Quarter"], keep="last")
     f["fy0"] = f.Year.map(lambda s: int(str(s).split("/")[0]))
     f = f.sort_values(["fy0","Quarter"])
-    cols = [c for c, _, _ in CASCADE] + [c for c, _ in BS_LINES] + ["EpsAnnualized"]
+    cols = [c for c, _, _ in CASCADE] + [c for c, _ in BS_LINES]
     cols = [c for c in dict.fromkeys(cols) if c in f.columns]
     flow = {c for c, _, _ in CASCADE} | {"EpsAnnualized"}
 
