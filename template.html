@@ -208,6 +208,25 @@ table.mtab tr:last-child td{border-bottom:none}
 .tl.expired .tlnow{color:var(--crit)}
 .tlends{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;
   font-size:11px;color:var(--ink-3);margin-top:22px}
+.rpmchart{margin:18px 0}
+.rpmhead{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;
+  gap:4px 14px;margin-bottom:10px}
+.rpmtitle{font-family:Archivo,sans-serif;font-size:14.5px;font-weight:600}
+.rpmsub{font-size:12px;color:var(--ink-3)}
+.rpmbars{display:flex;align-items:flex-end;gap:5px;height:132px;
+  border-bottom:1px solid var(--line);padding:0 2px}
+.rpmcol{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-end;height:100%;cursor:default}
+.rpmbarwrap{flex:1;display:flex;align-items:flex-end;width:100%;min-height:0}
+.rpmbar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;min-height:3px}
+.rpmbar.thin{background:repeating-linear-gradient(45deg,var(--line-soft),var(--line-soft) 3px,
+  transparent 3px,transparent 6px);border:1px dashed var(--ink-3)}
+.rpmcol:hover .rpmbar{background:var(--s1)}
+.rpmpct{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;color:var(--ink-2);
+  margin-bottom:3px;white-space:nowrap}
+.rpmyr{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-3);
+  margin-top:5px;white-space:nowrap}
+.rpmempty{color:var(--ink-3);font-size:13px;padding:14px 0}
 .tlends b{color:var(--ink-2);font-weight:500}
 #c-map svg{cursor:pointer}
 
@@ -2108,6 +2127,63 @@ function licenceTimeline(p){
     '</div>';
   return html;
 }
+// ---- revenue per MW, by fiscal year, against the fleet that same year -------
+// The lifetime "Revenue per MW" fact is one number across a plant's whole life;
+// this is the year-by-year version, so a plant that has gotten better or worse
+// is visible rather than averaged away. Each bar's percentile comes from
+// hydro.py's own filtered population -- the same "whole filing, plausible
+// tariff" gate the lifetime median applies -- so a short year or a broken
+// USD read can neither inflate this plant's own bar nor distort what it is
+// being measured against. A year that didn't clear that gate gets a hatched
+// placeholder bar, not a silently invented number.
+function ordinal(n){
+  n = Math.round(n);
+  if(n%100>=10 && n%100<20) return n+'th';       // 10th-19th are all "th", not "1st/2nd/3rd"
+  return n+({1:'st',2:'nd',3:'rd'}[n%10] || 'th');
+}
+function rpmChartHtml(p){
+  var rows = (D.years[String(p.id)] || []).filter(function(row){ return row[14]!=null || row[0]; });
+  if(!rows.length) return '';
+  var max = rows.reduce(function(m,row){ return row[14]!=null ? Math.max(m,row[14]) : m; }, 0);
+  if(max <= 0) return '<div class="rpmchart"><div class="rpmtitle">Revenue per MW by fiscal year</div>'+
+    '<div class="rpmempty">No fiscal year clears the whole-filing, plausible-tariff gate this '+
+    'figure needs, so there is nothing to chart yet.</div></div>';
+  var cols = rows.map(function(row){
+    var fy = row[0], v = row[14], pct = row[15], n = row[16];
+    var h = v!=null ? Math.max(3, Math.round(100*v/max)) : 0;
+    var pctLabel = v!=null ? ordinal(pct) : '';
+    return '<div class="rpmcol" data-fy="'+fy+'" data-v="'+(v!=null?v:'')+'"'+
+      ' data-pct="'+(pct!=null?pct:'')+'" data-n="'+(n!=null?n:'')+'">'+
+      (v!=null ? '<div class="rpmpct">'+pctLabel+'</div>' : '')+
+      '<div class="rpmbarwrap"><div class="rpmbar'+(v==null?' thin':'')+'" '+
+        'style="height:'+(v!=null?h:100)+'%"></div></div>'+
+      '<div class="rpmyr">'+fy+'</div></div>';
+  }).join('');
+  return '<div class="rpmchart" id="c-rpm">'+
+    '<div class="rpmhead"><div class="rpmtitle">Revenue per MW by fiscal year</div>'+
+    '<div class="rpmsub">NPR m per MW &middot; number on the bar is the percentile among every '+
+    'plant with a clean filing that year</div></div>'+
+    '<div class="rpmbars">'+cols+'</div></div>';
+}
+function wireRpmChart(p){
+  var host = document.getElementById('c-rpm'); if(!host) return;
+  host.querySelectorAll('.rpmcol').forEach(function(col){
+    col.addEventListener('mousemove', function(e){
+      var v = col.getAttribute('data-v'), n = col.getAttribute('data-n'),
+          pct = col.getAttribute('data-pct'), fy = col.getAttribute('data-fy');
+      if(!v){ showTip(e, 'FY '+fy, ['No whole, plausible-tariff filing this year']); return; }
+      showTip(e, 'FY '+fy, [fmt(parseFloat(v),2)+' NPR m per MW',
+        ordinal(parseFloat(pct))+' percentile of '+n+' plants that year']);
+    });
+    col.addEventListener('mouseleave', hideTip);
+  });
+  var rows = (D.years[String(p.id)] || []).filter(function(row){ return row[14]!=null; });
+  if(!rows.length) return;
+  addTableView('c-rpm', 'Show the year-by-year figures',
+    [{t:'Fiscal yr'},{t:'NPR m / MW',n:1},{t:'Percentile',n:1},{t:'Plants that year',n:1}],
+    rows.map(function(row){ return [row[0], fmt(row[14],2), Math.round(row[15])+'%', row[16]]; }));
+}
+
 function renderProject(){
   var host = document.getElementById('pcard');
   var p = selProject!=null ? plantById(selProject) : null;
@@ -2167,8 +2243,10 @@ function renderProject(){
         fact('Cost per MW', p.cost_mw!=null?fmt(p.cost_mw,0):null,
              p.cost_mw!=null?('NPR m'+(p.psrc?' · '+p.psrc:'')):'not on file')+
       '</div>'+
+      rpmChartHtml(p)+
       yearsTable(p.id, p)+
     '</div>';
+  wireRpmChart(p);
 }
 function selectProject(id, jump){
   selProject = id;

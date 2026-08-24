@@ -1243,6 +1243,19 @@ def build_payload():
     # in a shape the cleaner does not read. Flagged rather than dropped: the
     # generation is still good, and a silent hole is worse than a marked one.
 
+    # Per-year rpm, and its percentile against every other plant's SAME fiscal
+    # year -- both from this identical filtered population, so a short filing or
+    # an implausible tariff can neither inflate a plant's own bar chart nor
+    # contaminate the peers it gets compared against. pandas' pct rank already
+    # averages ties, so two plants at an identical figure land on the same
+    # percentile rather than an arbitrary coin flip deciding who ranks above whom.
+    ry = ry.copy()
+    ry["pct_rank"] = ry.groupby("FiscalYear").rpm.rank(pct=True) * 100
+    yr_n = ry.groupby("FiscalYear").rpm.size()
+    rpm_yearly = {(int(t.PlantId), t.FiscalYear):
+                  (r(t.rpm/1e6, 2), r(t.pct_rank, 1), int(yr_n[t.FiscalYear]))
+                  for t in ry.itertuples()}
+
 
     # ── plant table (PPA rates split wet/dry - the tariff is seasonal)
     wet = mo[~mo.BsMonth.isin(DRY_MONTHS)].groupby("PlantId").Rate_NPR_kWh.median()
@@ -1315,6 +1328,10 @@ def build_payload():
             tier = None
             if fin(t.croy) and t.croy > 0 and fin(t.Cap_kW) and t.Cap_kW > 0:
                 tier = 2 if (t.croy/t.Cap_kW) > 700 else 1
+            # None here means this specific plant-year didn't clear the same two
+            # gates the lifetime rpm median applies (a whole filing, a plausible
+            # implied tariff) -- not that the revenue or capacity is missing.
+            yrpm, ypct, yn = rpm_yearly.get((int(pid), t.FiscalYear), (None, None, None))
             rows.append([t.FiscalYear, r(t.gen/1e6,1) if fin(t.gen) else None,
                          r(t.rev/1e6,1) if fin(t.rev) else None,
                          r(eroy/1e6,2) if fin(eroy) else None,
@@ -1326,7 +1343,8 @@ def build_payload():
                          int(t.age) if fin(t.age) else None,
                          int(t.months) if fin(t.months) else 0,
                          1 if (fin(t.annual) and t.annual) else 0,
-                         r(t.rate, 2) if fin(t.rate) else None])
+                         r(t.rate, 2) if fin(t.rate) else None,
+                         yrpm, ypct, yn])
         years[str(int(pid))] = rows
 
     # ── monthly detail (third drill-down level)
