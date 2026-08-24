@@ -240,6 +240,7 @@ table.mtab tr:last-child td{border-bottom:none}
   cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .maplink:hover{border-color:var(--accent)}
 tr.qsub td{font-weight:600;border-top:1.5px solid var(--line);background:var(--surface-2)}
+th.qflag{color:var(--warn);cursor:help}
 .tlends b{color:var(--ink-2);font-weight:500}
 #c-map svg{cursor:pointer}
 
@@ -2409,14 +2410,15 @@ function wireSortableTables(){
   });
 }
 
-// ---- hover tooltip for [data-tip] cells in the plant and years tables ---
-// Scoped to these two tables specifically, not the whole document: both
-// <table> nodes persist across every search and sort (only their tbody is
-// replaced), so one binding each needs no rebinding, and -- unlike a
-// document-wide listener -- this can never fire on a mousemove that belongs
-// to some other chart's own local hover handler elsewhere and cancel its tip.
+// ---- hover tooltip for [data-tip] cells in the plant, years and single-
+// company tables. Scoped to these containers specifically, not the whole
+// document: each persists across every search, sort and ticker switch (only
+// the content inside is replaced), so one binding each needs no rebinding,
+// and -- unlike a document-wide listener -- this can never fire on a
+// mousemove that belongs to some other chart's own local hover handler
+// elsewhere and cancel its tip.
 function wireDataTip(){
-  ['t-plants','t-years'].forEach(function(id){
+  ['t-plants','t-years','oneBody'].forEach(function(id){
     var host = document.getElementById(id); if(!host) return;
     host.addEventListener('mousemove', function(e){
       var el = e.target.closest('[data-tip]');
@@ -3714,7 +3716,7 @@ function oneCascade(r, q){
   return out.join('');
 }
 
-function oneQuarterTable(qs, lines, label, nd){
+function oneQuarterTable(qs, lines, label, nd, flagKey){
   if(!qs.length) return '';
   var cols = qs.slice(-5);
   var body = lines.filter(function(L){
@@ -3729,6 +3731,10 @@ function oneQuarterTable(qs, lines, label, nd){
       + '</tr>';
   }).join('');
   if(!body) return '';
+  // A flagged column marks every line beneath it, not just the one that
+  // triggered it: Gross Profit through Net Profit all run off the same filed
+  // energy-sales figure, so a wrong top line is a wrong quarter, not a wrong
+  // cell. The mark sits on the header once rather than repeating fifteen times.
   // Deliberately not .sortable: a filed statement's row order is the thing being
   // shown, not incidental to it. A "Gross Profit" subtotal only means anything
   // sitting right after the lines it sums -- ranking rows by a quarter's value
@@ -3737,7 +3743,18 @@ function oneQuarterTable(qs, lines, label, nd){
   // visible as a real problem rather than a harmless reordering.
   return '<div class="ycap">'+label+'</div><table class="ytab"><thead><tr>'
     + '<th>Line</th>'
-    + cols.map(function(q){ return '<th class="n">'+q.y+' Q'+q.q+'</th>'; }).join('')
+    + cols.map(function(q){
+        var flag = flagKey && q[flagKey];
+        return '<th class="n'+(flag?' qflag':'')+'"'+
+          (flag ? ' data-tip="Filed energy sales this quarter ('+fmt(q.EnergySales,1)+
+            ' NPR m) is far from what the register shows for this company’s own '+
+            'plants over the same months ('+fmt(q.rms_es,1)+' NPR m). Likely an error '+
+            'in the source filing, not in this dashboard’s calculation -- check the '+
+            'primary statement before relying on this quarter. Every line below runs '+
+            'off the same filed figure, so treat the whole column with the same caution."'
+            : '')+
+          '>'+q.y+' Q'+q.q+(flag?' ⚠':'')+'</th>';
+      }).join('')
     + '</tr></thead><tbody>'+body+'</tbody></table>';
 }
 
@@ -3809,7 +3826,7 @@ function renderOne(){
 
   // ── statements
   var inc = oneQuarterTable(qs, D.co.cascade.map(function(c){ return [c[0], c[2], c[1]===0]; }),
-                            'Income statement, discrete quarters, NPR million', 1);
+                            'Income statement, discrete quarters, NPR million', 1, 'es_suspect');
   var bs  = oneQuarterTable(qs, D.co.bs, 'Balance sheet as filed, NPR million', 0);
   if(inc || bs)
     out.push('<div class="card" style="margin-top:18px">'

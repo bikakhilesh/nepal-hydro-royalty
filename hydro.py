@@ -1759,6 +1759,84 @@ def _quarters(rows):
     return out
 
 
+def _quarter_check(quarters, d, cmap):
+    """Flag a discrete quarter whose filed energy sales does not look like the
+    register's own revenue for the same plants over the same months.
+
+    Found by hand on BHCL's FY2024/25 Q3: 11.4m filed against 33.3m the register
+    shows for Upper Machha Khola Small that quarter, while Q1 and Q2 for the same
+    company de-cumulate to within 1-2% of the register -- one bad cumulative
+    figure in the source, rippling into two displayed quarters (Q4 comes out
+    correspondingly overstated). The de-cumulation math itself is not the
+    problem; it was checked against those same clean quarters first.
+
+    Reuses _co_payload's own accounting-year re-cut (Shrawan-Asar, not the
+    register's Asar-Jestha filing year) rather than a separate one, since that
+    re-cut is the one already shown to move the median company from 3.6% off
+    its own audited line to 0.6% off it -- inventing a second conversion here
+    would be two chances to get the month boundary wrong instead of one.
+
+    A ticker with no plant in the register is left alone: nothing to compare
+    reads as unchecked, not as agreeing.
+
+    The register itself runs weeks behind on its most recent months -- this
+    build's own newest month has 23 plants filed against a ~147-plant recent
+    normal, because most of the fleet simply has not filed it yet. Comparing
+    against a quarter built from that would flag nearly every ticker's latest
+    quarter at once, in the same direction, which is filing lag wearing the
+    costume of a data error and would bury the one real signal (BHCL's, an
+    isolated quarter surrounded by clean ones) under ~85 false ones. A quarter
+    is only compared once every one of its three months has close to the
+    fleet's typical recent filing count -- not "some data", enough of it.
+    """
+    pids = {t.Ticker: [int(x) for x in str(t.PlantIds).split(";") if x]
+            for t in cmap.itertuples() if t.PlantIds}
+    mo = d[~d.IsAnnualFiling].copy()
+    mo["acct"] = np.where(mo.BsMonth >= 4, mo.BsYear, mo.BsYear - 1)
+    mo["amonth"] = (mo.BsMonth - 4) % 12 + 1              # 1 = Shrawan, 12 = Asar
+    mo["aq"] = (mo.amonth - 1) // 3 + 1                    # NEPSE Q1-Q4 on that year
+    # AD "2024/25" is BS 2081/82 throughout this codebase (_co_payload's own
+    # figure); the AD start-year is the BS accounting year minus 57.
+    mo["fy0"] = mo.acct - 57
+
+    # A high percentile over the trailing window, not the median: a couple of
+    # still-filing months sitting in that same window should not drag down the
+    # bar a month has to clear to be judged complete.
+    monthly_n = d.groupby(["BsYear", "BsMonth"]).PlantName.nunique()
+    typical = monthly_n.tail(18).quantile(0.75)
+    floor = 0.6 * typical
+    complete_bsm = {ym for ym, n in monthly_n.items() if n >= floor}
+
+    def quarter_complete(fy0, aq):
+        bs = fy0 + 57
+        months = {"Q1": [(bs,4),(bs,5),(bs,6)], "Q2": [(bs,7),(bs,8),(bs,9)],
+                  "Q3": [(bs,10),(bs,11),(bs,12)], "Q4": [(bs+1,1),(bs+1,2),(bs+1,3)]
+                  }["Q"+str(aq)]
+        return all(ym in complete_bsm for ym in months)
+
+    for tk, qs in quarters.items():
+        plant_ids = pids.get(tk)
+        if not plant_ids: continue
+        rms = (mo[mo.PlantId.isin(plant_ids)]
+                 .groupby(["fy0", "aq"]).Revenue_NPR.sum() / 1e6)   # NPR million
+        for q in qs:
+            es = q.get("EnergySales")
+            if es is None: continue
+            fy0, aq = int(str(q["y"]).split("/")[0]), q["q"]
+            if not quarter_complete(fy0, aq): continue
+            got = rms.get((fy0, aq))
+            if got is None or got <= 1: continue    # nothing worth comparing to
+            ratio = es / got
+            q["rms_es"] = r(float(got), 2)
+            # Wide on purpose: this is "something is clearly wrong", not a
+            # disagreement-with-the-register meter -- that is what section 06's
+            # reconciliation and the "agree" histogram above are already for.
+            # A single quarter is noisier than an annual figure, and real
+            # accrual-timing gaps exist without either source being wrong.
+            if ratio < 0.5 or ratio > 2.0:
+                q["es_suspect"] = 1
+
+
 def _growth(rows, quarters):
     """Year to date against the prior year's Q4, and this quarter against the same
     quarter a year ago -- which is the comparison a cumulative filing supports
@@ -2014,6 +2092,7 @@ def _co_payload(d, m):
     }
     mkt = _market(rows)
     quarters = _quarters(rows)
+    _quarter_check(quarters, d, cmap)
     _growth(rows, quarters)
 
     order = sorted(fleet, key=lambda y: int(str(y).split("/")[0]))
