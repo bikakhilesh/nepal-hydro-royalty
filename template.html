@@ -239,6 +239,7 @@ table.mtab tr:last-child td{border-bottom:none}
   background:transparent;border:1px solid var(--line);border-radius:4px;padding:5px 10px;
   cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .maplink:hover{border-color:var(--accent)}
+tr.qsub td{font-weight:600;border-top:1.5px solid var(--line);background:var(--surface-2)}
 .tlends b{color:var(--ink-2);font-weight:500}
 #c-map svg{cursor:pointer}
 
@@ -3719,14 +3720,24 @@ function oneQuarterTable(qs, lines, label, nd){
   var body = lines.filter(function(L){
     return cols.some(function(q){ return q[L[0]] != null; });
   }).map(function(L){
-    return '<tr><td>'+L[1]+'</td>'
+    // A subtotal (L[2]) is bold and rests on a rule the way the filing itself
+    // sets it apart from the lines that build up to it -- Gross Profit, say,
+    // is not just another row between energy sales and admin expenses.
+    var sub = !!L[2];
+    return '<tr'+(sub?' class="qsub"':'')+'><td>'+L[1]+'</td>'
       + cols.map(function(q){ return '<td class="n">'+num(q[L[0]], nd)+'</td>'; }).join('')
       + '</tr>';
   }).join('');
   if(!body) return '';
-  return '<div class="ycap">'+label+'</div><table class="ytab sortable"><thead><tr>'
-    + '<th tabindex="0">Line</th>'
-    + cols.map(function(q){ return '<th class="n" tabindex="0">'+q.y+' Q'+q.q+'</th>'; }).join('')
+  // Deliberately not .sortable: a filed statement's row order is the thing being
+  // shown, not incidental to it. A "Gross Profit" subtotal only means anything
+  // sitting right after the lines it sums -- ranking rows by a quarter's value
+  // would scatter Total Current Assets into the middle of the fixed-asset lines,
+  // confirmed by testing it before shipping the subtotal styling that made it
+  // visible as a real problem rather than a harmless reordering.
+  return '<div class="ycap">'+label+'</div><table class="ytab"><thead><tr>'
+    + '<th>Line</th>'
+    + cols.map(function(q){ return '<th class="n">'+q.y+' Q'+q.q+'</th>'; }).join('')
     + '</tr></thead><tbody>'+body+'</tbody></table>';
 }
 
@@ -3797,7 +3808,7 @@ function renderOne(){
   }
 
   // ── statements
-  var inc = oneQuarterTable(qs, D.co.cascade.map(function(c){ return [c[0], c[2]]; }),
+  var inc = oneQuarterTable(qs, D.co.cascade.map(function(c){ return [c[0], c[2], c[1]===0]; }),
                             'Income statement, discrete quarters, NPR million', 1);
   var bs  = oneQuarterTable(qs, D.co.bs, 'Balance sheet as filed, NPR million', 0);
   if(inc || bs)

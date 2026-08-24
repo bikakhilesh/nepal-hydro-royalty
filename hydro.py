@@ -1538,35 +1538,58 @@ MKT_COLS = {
 # money in this file is NPR thousands, except Market Cap which is NPR
 MKT_SCALE = {"mcap": 1e-6, "paid": 1e-3, "res": 1e-3, "rev": 1e-3, "ni": 1e-3}
 
-# The income statement as the cascade it is. Sign says which way the bar points:
-# +1 adds to the running total, -1 takes away. Subtotals are checked against
-# their own filed column rather than accumulated and trusted.
-CASCADE = [("EnergySales", +1, "Energy sales"),
-           ("CostOfProduction", -1, "Cost of production"),
-           ("GrossProfit", 0, "Gross profit"),
-           ("OtherIncome", +1, "Other income"),
-           ("DividendIncome", +1, "Dividend income"),
-           ("ForexGainLoss", +1, "Forex"),
-           ("AdminExpenses", -1, "Admin expenses"),
-           ("OperatingProfit", 0, "Operating profit"),
-           ("InterestIncomeExpense", +1, "Interest"),
-           ("Provisions", -1, "Provisions"),
+# The income statement as the cascade it is, in the order and under the names
+# the filings themselves use -- not a paraphrase, so a reader checking this
+# against the primary source can match every line by name. Sign says which
+# way the bar points: +1 adds to the running total, -1 takes away, 0 is a
+# subtotal, checked against its own filed column rather than accumulated
+# and trusted.
+CASCADE = [("EnergySales", +1, "Income from Sale of Energy"),
+           ("CostOfProduction", -1, "Cost of Production"),
+           ("GrossProfit", 0, "Gross Profit"),
+           ("DividendIncome", +1, "Income from Dividend"),
+           ("ForexGainLoss", +1, "Forex Gain"),
+           ("OtherIncome", +1, "Income from Other Sources"),
+           ("AdminExpenses", -1, "Administrative Expenses"),
+           ("OperatingProfit", 0, "Operating Profit"),
+           ("InterestIncomeExpense", +1, "Net Interest Income"),
            # Only about a quarter of filers break this out; the rest fold it into
            # cost of production. Where it is filed it is exactly what closes the
            # chain from operating profit to profit before tax, and leaving it out
            # put an 18m unreconciled bar on every one of those companies.
            ("Depreciation_IncomeStatement", -1, "Depreciation"),
-           ("ProfitBeforeTax", 0, "Profit before tax"),
-           ("Taxes", -1, "Tax"),
-           ("Bonus", -1, "Staff bonus"),
-           ("ProfitAfterTax", 0, "Profit after tax")]
+           ("Provisions", -1, "Gross Provisions"),
+           ("ProfitBeforeTax", 0, "Profit Before Taxes"),
+           ("Taxes", -1, "Taxes"),
+           ("Bonus", -1, "Bonuses"),
+           ("ProfitAfterTax", 0, "Net Profit")]
 
-BS_LINES = [("PaidUpCapital", "Paid-up capital"), ("Reserves", "Reserves"),
-            ("TotalFunds", "Total funds"), ("LtLiabilities", "Long-term liabilities"),
-            ("NetFixedAssets", "Net fixed assets"), ("WorkInProgress", "Work in progress"),
-            ("Investments", "Investments"), ("Cash", "Cash"),
-            ("Receivables", "Receivables"), ("TotalCurrentAssets", "Current assets"),
-            ("TotalStLiabilities", "Current liabilities")]
+# The balance sheet, complete rather than a summary of it -- every line the
+# filing itself carries, same order, same names, so this can be checked
+# line by line against the primary source. Third field marks a subtotal:
+# bold in the table, and (Total Sources of Funds, Application of Funds)
+# ought to equal each other by construction, the same identity a T-account
+# balance sheet is built to enforce.
+BS_LINES = [("PaidUpCapital", "Paid up Capital", False),
+            ("Premium", "Share Premium", False),
+            ("Reserves", "Reserves", False),
+            ("LtLiabilities", "Long Term Liabilities", False),
+            ("TotalFunds", "Total Sources of Funds", True),
+            ("FixedAssets", "Fixed Assets", False),
+            ("Depreciation", "Depreciation", False),
+            ("NetFixedAssets", "Net Fixed Assets", False),
+            ("NonCoreAssets", "Non Core Assets", False),
+            ("Investments", "Investments", False),
+            ("WorkInProgress", "Work in Progress", False),
+            ("Cash", "Cash at Hand", False),
+            ("Receivables", "Receivables", False),
+            ("AdvancesPrepaymentsLoansDeposits", "Advances, Payments, Loans and Deposits", False),
+            ("Inventory", "Inventory", False),
+            ("TotalCurrentAssets", "Total Current Assets", True),
+            ("StLiabilities", "Short Term Liabilities", False),
+            ("DeferredLiabilities", "Deferred Liabilities", False),
+            ("TotalStLiabilities", "Total Short Term Liabilities", True),
+            ("ApplicationOfFunds", "Application of Funds", True)]
 
 
 def _loo_slope_range(x, y):
@@ -1702,7 +1725,7 @@ def _quarters(rows):
     f = f.sort_values("_aud").drop_duplicates(["Ticker","Year","Quarter"], keep="last")
     f["fy0"] = f.Year.map(lambda s: int(str(s).split("/")[0]))
     f = f.sort_values(["fy0","Quarter"])
-    cols = [c for c, _, _ in CASCADE] + [c for c, _ in BS_LINES]
+    cols = [c for c, _, _ in CASCADE] + [c for c, _, _ in BS_LINES]
     cols = [c for c in dict.fromkeys(cols) if c in f.columns]
     flow = {c for c, _, _ in CASCADE} | {"EpsAnnualized"}
 
@@ -1998,7 +2021,7 @@ def _co_payload(d, m):
     return {"rows": rows, "agree": agree, "divYear": div_year,
             "mkt": mkt, "q": quarters,
             "cascade": [[c, s, lab] for c, s, lab in CASCADE],
-            "bs": [[c, lab] for c, lab in BS_LINES],
+            "bs": [[c, lab, sub] for c, lab, sub in BS_LINES],
             "n_div": len(paid),
             "n_div_now": sum(1 for x in rows if x["div_y"] == (div_year[-1]["y"] if div_year else None)),
             "fleet": [{"ad": y, "fy": fleet[y]["fy"], "reg_bn": r(fleet[y]["reg"]/1e3, 2),
