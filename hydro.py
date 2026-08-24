@@ -1237,6 +1237,10 @@ def build_payload():
     ry = ry[ry.implied.between(2.5, 15.0)]
     rpm  = ry.groupby("PlantId").rpm.median()
     rpm_n = ry.groupby("PlantId").rpm.size()
+    # Same figure, ranked once across the fleet's medians rather than year by
+    # year -- "median NPR 28.9m/MW, 84th percentile of 178 plants" is a claim
+    # about the plant as a whole, not about any one of its years.
+    rpm_pct = rpm.rank(pct=True) * 100
     # Revenue over generation has to land near the filed PPA rate. Where it comes
     # out at a fraction of it the revenue line is short, not the tariff -- Khimti I
     # files 8.53 NPR/kWh and reconstructs to 0.54, because its invoices are in USD
@@ -1285,6 +1289,7 @@ def build_payload():
                "last_fy": last.FiscalYear.get(x.PlantName),
                "ppa": r(allr.get(pid), 2), "ppa_wet": r(wet.get(pid), 2), "ppa_dry": r(dry.get(pid), 2),
                "rpm": r(rpm.get(pid, np.nan)/1e6, 1), "rpm_n": int(rpm_n.get(pid, 0)),
+               "rpm_pct": r(rpm_pct.get(pid), 1),
                "cplf": refs.get(pid, {}).get("cplf"), "dplf": refs.get(pid, {}).get("dplf"),
                "cost_mw": refs.get(pid, {}).get("cost_mw"), "psrc": refs.get(pid, {}).get("psrc"),
                "cenergy": refs.get(pid, {}).get("cenergy"),

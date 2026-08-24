@@ -227,6 +227,7 @@ table.mtab tr:last-child td{border-bottom:none}
 .rpmyr{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-3);
   margin-top:5px;white-space:nowrap}
 .rpmempty{color:var(--ink-3);font-size:13px;padding:14px 0}
+#t-years .rpmcell,#t-plants .rpmcell{cursor:help}
 .tlends b{color:var(--ink-2);font-weight:500}
 #c-map svg{cursor:pointer}
 
@@ -656,6 +657,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <th data-k="cod" tabindex="0">COD (BS)</th>
       <th data-k="mw" class="n" tabindex="0">MW</th>
       <th data-k="rpm" class="n" tabindex="0">NPR m/MW/yr</th>
+      <th data-k="rpm_pct" class="n" tabindex="0">Percentile</th>
       <th data-k="cplf" class="n" tabindex="0">Own PLF ref</th>
       <th data-k="ppa" class="n" tabindex="0">PPA NPR/kWh</th>
       <th data-k="gwh" class="n" tabindex="0">Lifetime GWh</th>
@@ -677,6 +679,8 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
         <th data-y="fy" tabindex="0">Fiscal yr</th>
         <th data-y="gwh" class="n" tabindex="0">GWh</th>
         <th data-y="rev" class="n" tabindex="0">Revenue</th>
+        <th data-y="rpm" class="n" tabindex="0">NPR m/MW</th>
+        <th data-y="rpmPct" class="n" tabindex="0">Percentile</th>
         <th data-y="eroy" class="n" tabindex="0">Energy roy.</th>
         <th data-y="croy" class="n" tabindex="0">Capacity roy.</th>
         <th data-y="due" class="n" tabindex="0">Total due</th>
@@ -1991,12 +1995,15 @@ function renderPlants(){
       '<td><span class="chev">\u25b6</span> '+p.name+'</td><td>'+(p.company||'\u2014')+'</td><td>'+(p.district||'\u2014')+
       '</td><td class="mono">'+(p.cod||'\u2014')+'</td><td class="n">'+fmt(p.mw,1)+
       '</td><td class="n">'+(p.rpm!=null?fmt(p.rpm,1):'\u2014')+
+      '</td><td class="n'+(p.rpm_pct!=null?' rpmcell':'')+'"'+
+        (p.rpm_pct!=null?' data-tip="'+ordinal(p.rpm_pct)+' of every plant\u2019s lifetime median revenue per MW"':'')+
+        '>'+(p.rpm_pct!=null?ordinal(p.rpm_pct):'\u2014')+
       '</td><td class="n">'+plfRefCell(p)+
       '</td><td class="n">'+ppaCell(p)+'</td><td class="n">'+fmt(p.gwh)+
       '</td><td class="n">'+(p.cf!=null?p.cf.toFixed(3):'\u2014')+'</td><td class="n">'+fmt(p.rev_bn,2)+
       '</td><td class="n">'+fmt(p.roy_bn,3)+'</td><td class="n">'+p.yrs+'</td><td class="n">'+balTxt+
       '</td><td class="mono">'+(p.last_fy||'\u2014')+'</td></tr>';
-    if(open) tr += '<tr class="drow"><td colspan="15">'+yearsTable(p.id, p)+'</td></tr>';
+    if(open) tr += '<tr class="drow"><td colspan="16">'+yearsTable(p.id, p)+'</td></tr>';
     return tr;
   }).join('');
   document.querySelector('#t-plants tbody').innerHTML = html;
@@ -2017,7 +2024,8 @@ function buildYearRows(){
     D.years[pid].forEach(function(r){
       yRows.push({id:+pid, name:p.name, company:p.company, fy:r[0], gwh:r[1], rev:r[2],
                   eroy:r[3], croy:r[4], due:r[5], recv:r[6], bal:r[7], pct:r[8],
-                  tier:r[9], age:r[10], mo:r[11], annual:r[12]});
+                  tier:r[9], age:r[10], mo:r[11], annual:r[12],
+                  rpm:r[14], rpmPct:r[15], rpmN:r[16]});
     });
   });
   return yRows;
@@ -2043,6 +2051,10 @@ function renderYears(){
     return '<tr><td>'+r.name+'</td><td>'+(r.company||'\u2014')+'</td>'+
       '<td class="mono">'+r.fy+mark+'</td>'+
       '<td class="n">'+num(r.gwh,1)+'</td><td class="n">'+num(r.rev,1)+'</td>'+
+      '<td class="n">'+num(r.rpm,2)+'</td>'+
+      '<td class="n'+(r.rpmPct==null?'':' rpmcell')+'"'+
+        (r.rpmPct==null?'':' data-tip="'+ordinal(r.rpmPct)+' of '+r.rpmN+' plants that filed a whole, plausible-tariff year in '+r.fy+'"')+
+        '>'+(r.rpmPct==null?num(null):ordinal(r.rpmPct))+'</td>'+
       '<td class="n">'+num(r.eroy,2)+'</td><td class="n">'+num(r.croy,2)+'</td>'+
       '<td class="n">'+num(r.due,2)+'</td><td class="n">'+num(r.recv,2)+'</td>'+
       '<td class="n '+balCls+'">'+num(r.bal,2)+'</td>'+
@@ -2234,6 +2246,8 @@ function renderProject(){
         fact('Revenue per MW', p.rpm!=null?fmt(p.rpm,1):null,
              p.rpm!=null?('NPR m per year'+(p.rpm_n?' · median of '+p.rpm_n+
                (p.rpm_n===1?' full year':' full years'):'')):'no complete filing year')+
+        (p.rpm!=null && p.rpm_pct!=null ?
+          fact('Percentile', ordinal(p.rpm_pct), 'of every plant’s lifetime median revenue per MW') : '')+
         fact(p.cplf!=null?'Contracted PLF':'Design PLF',
              p.cplf!=null?p.cplf.toFixed(2):(p.dplf!=null?p.dplf.toFixed(2):null),
              p.cplf!=null?('what the PPA obliges'+(p.psrc?' · '+p.psrc:''))
@@ -2334,6 +2348,23 @@ function wireSortableTables(){
     if(e.key !== 'Enter' && e.key !== ' ') return;
     var th = e.target.closest('table.sortable thead th'); if(!th) return;
     e.preventDefault(); sortTableBy(th);
+  });
+}
+
+// ---- hover tooltip for [data-tip] cells in the plant and years tables ---
+// Scoped to these two tables specifically, not the whole document: both
+// <table> nodes persist across every search and sort (only their tbody is
+// replaced), so one binding each needs no rebinding, and -- unlike a
+// document-wide listener -- this can never fire on a mousemove that belongs
+// to some other chart's own local hover handler elsewhere and cancel its tip.
+function wireDataTip(){
+  ['t-plants','t-years'].forEach(function(id){
+    var host = document.getElementById(id); if(!host) return;
+    host.addEventListener('mousemove', function(e){
+      var el = e.target.closest('[data-tip]');
+      if(el) showTip(e, el.getAttribute('data-tip'), []); else hideTip();
+    });
+    host.addEventListener('mouseleave', hideTip);
   });
 }
 
@@ -3950,7 +3981,7 @@ if(!D.co){
 stats(); transTable(); reconTable(); wireTable(); renderPlants();
 wireListed(); drawAll(); buildTableViews();
 wireMapExpand('map-exp'); wireMapExpand('ter-exp'); wireTerrain(); wireLayers();
-wireSortableTables();
+wireSortableTables(); wireDataTip();
 
 // redraw on theme flip so colors resolve against the new tokens
 if(window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawAll);
