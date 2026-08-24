@@ -930,9 +930,14 @@ def plf_refs():
         c = float(t.ContractPLF)/100 if getattr(t, "ContractPLF", "") else None
         d = float(t.DesignPLF)/100 if getattr(t, "DesignPLF", "") else None
         cost = float(t.CostPerMW) if getattr(t, "CostPerMW", "") else None
+        # the annual energy the PLF was computed from, GWh -- the PLF is a rate,
+        # this is the scale behind it, and the two read very differently on a
+        # 3 MB run-of-river scheme versus a 300 MW one
+        energy = float(t.ContractEnergy) if getattr(t, "ContractEnergy", "") else None
         if c is None and d is None and cost is None: continue
         for pid in plants.get(t.Ticker, []):
             out[pid] = {"cplf": r(c, 4), "dplf": r(d, 4), "cost_mw": r(cost, 1),
+                        "cenergy": r(energy, 3),
                         # who said so: the file's own Source, except a design
                         # figure with no Source, which only ever comes from the
                         # operator's project page.
@@ -945,7 +950,8 @@ def plf_refs():
     for t in pr.itertuples():
         c = float(t.ContractPLF)/100 if getattr(t, "ContractPLF", "") else None
         cost = float(t.CostPerMW) if getattr(t, "CostPerMW", "") else None
-        if c is None and cost is None: continue
+        energy = float(t.ContractEnergy) if getattr(t, "ContractEnergy", "") else None
+        if c is None and cost is None and energy is None: continue
         pid = int(t.PlantId)
         prev = out.get(pid, {})
         # A column this row leaves blank keeps whatever the ticker-level entry had,
@@ -953,6 +959,7 @@ def plf_refs():
         # is not a reason to erase a cost figure it happens not to carry.
         out[pid] = {"cplf": r(c, 4), "dplf": prev.get("dplf"),
                    "cost_mw": r(cost, 1) if cost is not None else prev.get("cost_mw"),
+                   "cenergy": r(energy, 3) if energy is not None else prev.get("cenergy"),
                    "psrc": "project file"}
     return out
 
@@ -1267,6 +1274,7 @@ def build_payload():
                "rpm": r(rpm.get(pid, np.nan)/1e6, 1), "rpm_n": int(rpm_n.get(pid, 0)),
                "cplf": refs.get(pid, {}).get("cplf"), "dplf": refs.get(pid, {}).get("dplf"),
                "cost_mw": refs.get(pid, {}).get("cost_mw"), "psrc": refs.get(pid, {}).get("psrc"),
+               "cenergy": refs.get(pid, {}).get("cenergy"),
                "implied": r(implied.get(pid, np.nan), 2), "thin": 1 if pid in thin else 0,
                "ccy": "USD" if usd_plants.get(pid) else "NPR",
                "ppa_usd": r(usd_rate.get(pid), 4), "fx": r(usd_fx.get(pid), 2)}

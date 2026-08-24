@@ -402,8 +402,9 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <div style="padding:24px 24px 14px"><div class="ctitle">Plants caught mid-transition</div>
       <div class="csub" style="margin-bottom:0">Age at switch, against the recorded COD</div></div>
       <div class="tw" style="border:0;border-radius:0;max-height:392px;overflow-y:auto">
-        <table id="t-trans"><thead><tr>
-          <th>Plant</th><th>Switched</th><th>Recorded COD</th><th class="n">Age</th>
+        <table id="t-trans" class="sortable"><thead><tr>
+          <th tabindex="0">Plant</th><th tabindex="0">Switched</th><th tabindex="0">Recorded COD</th>
+          <th class="n" tabindex="0">Age</th>
         </tr></thead><tbody></tbody></table>
       </div>
     </div>
@@ -592,8 +593,9 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <div style="padding:24px 24px 14px"><div class="ctitle">Quarter-by-quarter difference</div>
       <div class="csub" style="margin-bottom:0">Median absolute gap <b id="r-med"></b></div></div>
       <div class="tw" style="border:0;border-radius:0;max-height:392px;overflow-y:auto">
-        <table id="t-recon"><thead><tr>
-          <th>Quarter</th><th class="n">Register</th><th class="n">Reported</th><th class="n">Diff</th>
+        <table id="t-recon" class="sortable"><thead><tr>
+          <th tabindex="0">Quarter</th><th class="n" tabindex="0">Register</th>
+          <th class="n" tabindex="0">Reported</th><th class="n" tabindex="0">Diff</th>
         </tr></thead><tbody></tbody></table>
       </div>
     </div>
@@ -1710,8 +1712,8 @@ function addTableView(mountId, caption, cols, rows){
   var fig = host.closest('figure') || host.parentNode;
   var old = fig.querySelector('details.tv'); if(old) old.remove();
   var d = document.createElement('details'); d.className = 'tv';
-  d.innerHTML = '<summary>'+caption+'</summary><div class="tw"><table><thead><tr>'+
-    cols.map(function(c){ return '<th'+(c.n?' class="n"':'')+'>'+c.t+'</th>'; }).join('')+
+  d.innerHTML = '<summary>'+caption+'</summary><div class="tw"><table class="sortable"><thead><tr>'+
+    cols.map(function(c){ return '<th'+(c.n?' class="n"':'')+' tabindex="0">'+c.t+'</th>'; }).join('')+
     '</tr></thead><tbody>'+
     rows.map(function(r){ return '<tr>'+r.map(function(v,i){
       return '<td'+(cols[i].n?' class="n"':'')+'>'+v+'</td>'; }).join('')+'</tr>'; }).join('')+
@@ -1820,7 +1822,15 @@ function tierPill(t){
 // figure standing in for one. A contract is set in plain type, a design figure in
 // italic, and a plant with neither says so rather than showing a borrowed number.
 function plfRefCell(p){
-  if(p.cplf!=null) return p.cplf.toFixed(2);
+  // the contract's own energy figure, right under the rate it implies -- a
+  // rate alone doesn't say whether the plant behind it is 3 MW or 300. Only
+  // for a contracted figure: cenergy is the annual energy the contract itself
+  // states, so it has nothing to say under a design PLF, which comes from a
+  // different column entirely (DesignEnergy, not shown here).
+  if(p.cplf!=null){
+    var sub = p.cenergy!=null ? '<div style="font-size:10.5px;color:var(--ink-3)">'+fmt(p.cenergy,0)+' GWh/yr</div>' : '';
+    return p.cplf.toFixed(2)+sub;
+  }
   if(p.dplf!=null) return '<em style="font-style:italic;color:var(--ink-2)">'+p.dplf.toFixed(2)+'</em>';
   return '<span style="color:var(--ink-3)">—</span>';
 }
@@ -1863,11 +1873,13 @@ function monthsTable(pid, fy){
       'This plant bills in US dollars. Revenue in NPR is reconstructed as '+
       'USD \u00d7 the month\u2019s exchange rate, so treat it as accurate to about a '+
       'percent; the USD columns are as filed.</div>' : '')+
-    '<table class="mtab"><thead><tr>'+
-    '<th>Month</th><th class="n">GWh</th><th class="n">Revenue NPR</th><th class="n">Royalty</th>'+
-    '<th class="n">PPA NPR</th>'+
-    (anyUsd ? '<th class="n">PPA USD</th><th class="n">Invoice USD</th><th class="n">FX</th>' : '')+
-    '<th class="n">CF</th><th>Season</th>'+
+    '<table class="mtab sortable"><thead><tr>'+
+    '<th tabindex="0">Month</th><th class="n" tabindex="0">GWh</th>'+
+    '<th class="n" tabindex="0">Revenue NPR</th><th class="n" tabindex="0">Royalty</th>'+
+    '<th class="n" tabindex="0">PPA NPR</th>'+
+    (anyUsd ? '<th class="n" tabindex="0">PPA USD</th><th class="n" tabindex="0">Invoice USD</th>'+
+              '<th class="n" tabindex="0">FX</th>' : '')+
+    '<th class="n" tabindex="0">CF</th><th tabindex="0">Season</th>'+
     '</tr></thead><tbody>'+body+
     '<tr class="ytot"><td class="mono">'+rows.length+' months</td>'+
     '<td class="n">'+sum(2,2)+'</td><td class="n">'+sum(3,2)+'</td>'+
@@ -1921,11 +1933,14 @@ function yearsTable(pid, plant){
     '<td class="n"></td><td class="n"></td><td class="n"></td></tr>';
   return '<div class="ywrap">'+
     '<div class="ycap">'+plant.name+' \u00b7 revenue and royalty by fiscal year \u00b7 NPR million</div>'+
-    '<table class="ytab"><thead><tr>'+
-      '<th>Fiscal yr</th><th class="n">GWh</th><th class="n">Revenue</th>'+
-      '<th class="n">Energy roy.</th><th class="n">Capacity roy.</th><th class="n">Total due</th>'+
-      '<th class="n">Received</th><th class="n">Closing bal.</th><th class="n">Eff. rate</th>'+
-      '<th class="n">Tier</th><th class="n">Age</th>'+
+    '<table class="ytab sortable"><thead><tr>'+
+      '<th tabindex="0">Fiscal yr</th><th class="n" tabindex="0">GWh</th>'+
+      '<th class="n" tabindex="0">Revenue</th>'+
+      '<th class="n" tabindex="0">Energy roy.</th><th class="n" tabindex="0">Capacity roy.</th>'+
+      '<th class="n" tabindex="0">Total due</th>'+
+      '<th class="n" tabindex="0">Received</th><th class="n" tabindex="0">Closing bal.</th>'+
+      '<th class="n" tabindex="0">Eff. rate</th>'+
+      '<th class="n" tabindex="0">Tier</th><th class="n" tabindex="0">Age</th>'+
     '</tr></thead><tbody>'+body+tot+'</tbody></table>'+
     '<div class="ycap" style="margin-top:10px;letter-spacing:0;text-transform:none;font-weight:400">'+
       'Closing balance is a carry-forward stock, so the total row shows the latest year, not a sum.'+
@@ -2147,6 +2162,8 @@ function renderProject(){
              p.cplf!=null?p.cplf.toFixed(2):(p.dplf!=null?p.dplf.toFixed(2):null),
              p.cplf!=null?('what the PPA obliges'+(p.psrc?' · '+p.psrc:''))
                :(p.dplf!=null?'operator’s design figure':'not on file'))+
+        (p.cplf!=null && p.cenergy!=null ?
+          fact('Contract energy', fmt(p.cenergy,1), 'GWh/yr the PLF above is computed from') : '')+
         fact('Cost per MW', p.cost_mw!=null?fmt(p.cost_mw,0):null,
              p.cost_mw!=null?('NPR m'+(p.psrc?' · '+p.psrc:'')):'not on file')+
       '</div>'+
@@ -2189,6 +2206,57 @@ function toggleRow(tr){
   renderPlants();
   var again = document.querySelector('#t-plants tr.prow[data-id="'+id+'"]');
   if(again) again.focus();
+}
+
+// ---- generic click-to-sort for every table.sortable ----------------------
+// t-plants/t-years/t-co/t-tech/t-screen/t-ratio each carry their own sort
+// already (a JS-side array re-rendered on click, since their rows are backed
+// by real data objects with fields a DOM cell can't recover, like a plant id).
+// Every other table on the page is populated once as plain HTML and never
+// touched again, several of them rebuilt from scratch on each drill-down open
+// -- binding directly to their <th> elements would need re-binding after every
+// rebuild. Delegating one listener on the document instead means a table can
+// be sortable the instant it exists, built before this runs or after, without
+// ever being bound twice or leaking a stale handler on the rows it replaces.
+//
+// A trailing total/carry-forward row (class="ytot") is excluded from the sort
+// and always appended back at the end -- it is a summary of the rows above it,
+// not a data point to be ranked among them.
+function sortTableBy(th){
+  var table = th.closest('table'); if(!table) return;
+  var headRow = th.parentNode;
+  var idx = Array.prototype.indexOf.call(headRow.children, th);
+  var numeric = th.classList.contains('n');
+  var dir = th.getAttribute('aria-sort') === 'ascending' ? -1 : 1;
+  headRow.querySelectorAll('th').forEach(function(o){ o.removeAttribute('aria-sort'); });
+  th.setAttribute('aria-sort', dir > 0 ? 'ascending' : 'descending');
+  var tbody = table.tBodies[0]; if(!tbody) return;
+  var rows = Array.prototype.slice.call(tbody.rows);
+  var total = rows.filter(function(r){ return r.classList.contains('ytot'); });
+  var data  = rows.filter(function(r){ return !r.classList.contains('ytot'); });
+  data.sort(function(a, b){
+    var av = a.cells[idx] ? a.cells[idx].textContent.trim() : '';
+    var bv = b.cells[idx] ? b.cells[idx].textContent.trim() : '';
+    if(numeric){
+      var an = parseFloat(av.replace(/[^0-9.\-]/g, ''));
+      var bn = parseFloat(bv.replace(/[^0-9.\-]/g, ''));
+      an = isFinite(an) ? an : -Infinity; bn = isFinite(bn) ? bn : -Infinity;
+      return (an - bn) * dir;
+    }
+    return av.localeCompare(bv) * dir;
+  });
+  data.concat(total).forEach(function(r){ tbody.appendChild(r); });
+}
+function wireSortableTables(){
+  document.addEventListener('click', function(e){
+    var th = e.target.closest('table.sortable thead th'); if(!th) return;
+    sortTableBy(th);
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    var th = e.target.closest('table.sortable thead th'); if(!th) return;
+    e.preventDefault(); sortTableBy(th);
+  });
 }
 
 function wireTable(){
@@ -2711,9 +2779,12 @@ function coHist(r){
       + '<td class="n">'+num(y[6],2)+'</td>'
       + '<td class="n">'+num(y[5],1)+'</td></tr>';
   }).join('');
-  return '<table class="ytab"><thead><tr><th>Fiscal yr</th><th class="n">GWh</th>'
-    + '<th class="n">PLF</th><th class="n">Register</th><th class="n">Reported</th>'
-    + '<th class="n">Match</th><th class="n">Royalty</th><th class="n">Profit after tax</th>'
+  return '<table class="ytab sortable"><thead><tr><th tabindex="0">Fiscal yr</th>'
+    + '<th class="n" tabindex="0">GWh</th>'
+    + '<th class="n" tabindex="0">PLF</th><th class="n" tabindex="0">Register</th>'
+    + '<th class="n" tabindex="0">Reported</th>'
+    + '<th class="n" tabindex="0">Match</th><th class="n" tabindex="0">Royalty</th>'
+    + '<th class="n" tabindex="0">Profit after tax</th>'
     + '</tr></thead><tbody>'+body+'</tbody></table>';
 }
 function renderCo(){
@@ -2792,9 +2863,10 @@ function coDetail(r){
 }
 
 function coDivTable(r){
-  return '<table class="ytab"><thead><tr><th>BS year</th><th class="n">Bonus %</th>'
-    + '<th class="n">Cash %</th><th class="n">Cash as share of bonus</th>'
-    + '<th>Announced</th></tr></thead><tbody>'
+  return '<table class="ytab sortable"><thead><tr><th tabindex="0">BS year</th>'
+    + '<th class="n" tabindex="0">Bonus %</th>'
+    + '<th class="n" tabindex="0">Cash %</th><th class="n" tabindex="0">Cash as share of bonus</th>'
+    + '<th tabindex="0">Announced</th></tr></thead><tbody>'
     + r.div.map(function(v){
         // 5/95 of the bonus is the withholding on it grossed up, not a payout
         var g = (v[1] > 0 && v[2] > 0) ? v[2]/v[1] : null;
@@ -3486,8 +3558,9 @@ function oneQuarterTable(qs, lines, label, nd){
       + '</tr>';
   }).join('');
   if(!body) return '';
-  return '<div class="ycap">'+label+'</div><table class="ytab"><thead><tr><th>Line</th>'
-    + cols.map(function(q){ return '<th class="n">'+q.y+' Q'+q.q+'</th>'; }).join('')
+  return '<div class="ycap">'+label+'</div><table class="ytab sortable"><thead><tr>'
+    + '<th tabindex="0">Line</th>'
+    + cols.map(function(q){ return '<th class="n" tabindex="0">'+q.y+' Q'+q.q+'</th>'; }).join('')
     + '</tr></thead><tbody>'+body+'</tbody></table>';
 }
 
@@ -3603,9 +3676,10 @@ function renderOne(){
     + 'indebted. Distance from the capacity line carries no colour and no direction: '
     + 'above it is dear and below it cheap, and which of those is good is a judgment, '
     + 'not a fact.</div>'
-    + '<div class="ywrap" style="padding-left:0"><table class="ytab"><thead><tr>'
-    + '<th>Measure</th><th class="n">This company</th><th class="n">Sector median</th>'
-    + '<th class="n">Rank</th></tr></thead><tbody>'
+    + '<div class="ywrap" style="padding-left:0"><table class="ytab sortable"><thead><tr>'
+    + '<th tabindex="0">Measure</th><th class="n" tabindex="0">This company</th>'
+    + '<th class="n" tabindex="0">Sector median</th>'
+    + '<th class="n" tabindex="0">Rank</th></tr></thead><tbody>'
     + RAT.map(function(k){
         return '<tr><td>'+k[1]+'</td>'+vsMed(r, k[0], k[2], k[3])+'</tr>'; }).join('')
     + '</tbody></table></div></div>');
@@ -3798,6 +3872,7 @@ if(!D.co){
 stats(); transTable(); reconTable(); wireTable(); renderPlants();
 wireListed(); drawAll(); buildTableViews();
 wireMapExpand('map-exp'); wireMapExpand('ter-exp'); wireTerrain(); wireLayers();
+wireSortableTables();
 
 // redraw on theme flip so colors resolve against the new tokens
 if(window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawAll);
