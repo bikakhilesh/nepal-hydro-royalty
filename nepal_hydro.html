@@ -228,6 +228,17 @@ table.mtab tr:last-child td{border-bottom:none}
   margin-top:5px;white-space:nowrap}
 .rpmempty{color:var(--ink-3);font-size:13px;padding:14px 0}
 #t-years .rpmcell,#t-plants .rpmcell{cursor:help}
+.mapsel{animation:mapselpulse 1.1s ease-out 2}
+@keyframes mapselpulse{
+  0%{ opacity:0; transform:scale(.6); transform-box:fill-box; transform-origin:center }
+  40%{ opacity:1; transform:scale(1.35); transform-box:fill-box; transform-origin:center }
+  100%{ opacity:1; transform:scale(1); transform-box:fill-box; transform-origin:center }
+}
+@media (prefers-reduced-motion: reduce){ .mapsel{animation:none} }
+.maplink{margin-top:10px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--accent);
+  background:transparent;border:1px solid var(--line);border-radius:4px;padding:5px 10px;
+  cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.maplink:hover{border-color:var(--accent)}
 .tlends b{color:var(--ink-2);font-weight:500}
 #c-map svg{cursor:pointer}
 
@@ -1342,6 +1353,28 @@ function chartAge(){
 // whichever group set the latest draw produced.
 var mapLayers = {outline:1, rivers:1, plan:1, grid:1, pipe:1, subs:1, peaks:1, plants:1};
 var mapG = null;
+
+// ---- the marker for whichever plant the project panel currently shows ---
+// Survives a redraw (resize, theme flip) the same way mapLayers does: state
+// lives outside chartMap(), which throws its whole SVG away and rebuilds it,
+// so anything that has to persist across that has to live somewhere else.
+var mapMarks = {};             // plant id -> {x, y, r, el} for the marker chartMap() just drew
+var selectedMapId = null;
+var mapSelRing = null;
+function applyMapSelection(){
+  if(mapSelRing){ mapSelRing.remove(); mapSelRing = null; }
+  if(selectedMapId == null || !mapG) return;
+  var m = mapMarks[selectedMapId]; if(!m) return;
+  mapSelRing = el('circle',{cx:m.x.toFixed(1), cy:m.y.toFixed(1), r:(m.r+5).toFixed(1),
+    fill:'none', stroke:css('--accent'), 'stroke-width':2.2, class:'mapsel'});
+  // appended after the marker itself (last child wins on paint order), and
+  // into the plants layer group so hiding that layer hides the ring with it
+  mapG.plants.appendChild(mapSelRing);
+}
+function setMapSelection(id){
+  selectedMapId = id;
+  applyMapSelection();
+}
 function applyLayers(G){
   mapG = G || mapG;
   if(!mapG) return;
@@ -1470,6 +1503,7 @@ function chartMap(){
   function R(mw){ return Math.min(16, 2 + 0.75*Math.sqrt(mw||0.5)); }
   var order = M.pts.slice().sort(function(a,b){ return (b.mw||0)-(a.mw||0); });
   var marks = [];
+  mapMarks = {};
   order.forEach(function(p){
     var cx=X(p.lo), cy=Y(p.la), r=R(p.mw), col = p.t2 ? css('--s2') : css('--s1');
     var c = el('circle',{cx:cx.toFixed(1), cy:cy.toFixed(1), r:r.toFixed(1)});
@@ -1484,6 +1518,7 @@ function chartMap(){
            c.setAttribute('stroke-dasharray','2.5 2'); }
     G.plants.appendChild(c);
     marks.push({x:cx, y:cy, r:r, p:p, el:c});
+    if(p.id != null) mapMarks[p.id] = {x:cx, y:cy, r:r, el:c};
   });
 
   // size key
@@ -1631,6 +1666,8 @@ function chartMap(){
   }, {passive:false});
   svg.addEventListener('touchend',    function(){ tp = null; });
   svg.addEventListener('touchcancel', function(){ tp = null; });
+
+  applyMapSelection();     // reapply after a redraw wiped the ring along with the svg
 
   document.getElementById('map-sub').textContent =
     M.pts.length+' of '+M.n_total+' plants placed \u00b7 '+fmt(M.mw_located)+' MW of '+fmt(M.mw_total)+' MW';
@@ -2213,6 +2250,14 @@ function renderProject(){
       '<div class="pname">'+p.name+
         (p.ccy==='USD'?'<span class="ccy">USD PPA</span>':'')+'</div>'+
       '<div class="pco">'+(p.company||'Operator not recorded')+'</div>'+
+      // Gated on mapMarks, not p.prec: precision comes back as the literal string
+      // "none" for an unmatched plant, which is truthy and not null, so a p.prec
+      // check alone would have shown the button for exactly the 20 plants that
+      // have no marker for it to point to. mapMarks is built from the same points
+      // the map actually drew, so it can't disagree with what's really on screen.
+      (mapMarks[p.id]
+        ? '<button class="maplink" id="btn-map-jump" type="button">⌖ Show on map</button>'
+        : '<div class="rpmempty" style="padding:6px 0 0">Not located, so there is no marker to point to.</div>')+
       '<div class="facts">'+
         fact('Capacity', p.mw!=null?fmt(p.mw,1):null, 'MW installed')+
         fact('Commissioned', p.cod, p.cod_ad?('AD '+p.cod_ad):null)+
@@ -2261,6 +2306,18 @@ function renderProject(){
       yearsTable(p.id, p)+
     '</div>';
   wireRpmChart(p);
+
+  // The map already points at whichever project is showing here, the instant
+  // it renders -- not only when the button below is clicked. Scrolling up to
+  // look confirms it without an extra click, and the button exists for the
+  // one thing a silent state change can't do: bring the map back on screen.
+  setMapSelection(p.id);
+  var jumpBtn = document.getElementById('btn-map-jump');
+  if(jumpBtn) jumpBtn.addEventListener('click', function(){
+    setMapSelection(p.id);          // re-trigger the ring's pulse even if unchanged
+    var fig = document.getElementById('c-map');
+    if(fig) fig.scrollIntoView({behavior:'smooth', block:'center'});
+  });
 }
 function selectProject(id, jump){
   selProject = id;
