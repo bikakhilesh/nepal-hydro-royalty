@@ -911,8 +911,12 @@ def plf_refs():
     plant is judged against whichever it actually has, and a plant with neither
     is reported as such rather than measured against a fleet average.
 
-    Everything here is hand-entered in scalper_plf_input.csv, keyed by ticker;
-    scalper_company_map.csv turns a ticker into the plants it runs.
+    Two files, two granularities. scalper_plf_input.csv is hand-entered, keyed
+    by ticker, and scalper_company_map.csv turns a ticker into the plants it
+    runs -- so every plant a company owns gets the same figure, which is wrong
+    for any company running more than one at genuinely different load factors.
+    scalper_plf_projects.csv is keyed directly to a PlantId and, where a plant
+    appears in both, wins: it is strictly more specific, never less trustworthy.
     """
     try:
         inp = pd.read_csv(P("scalper_plf_input.csv"), comment="#", dtype=str).fillna("")
@@ -933,6 +937,23 @@ def plf_refs():
                         # figure with no Source, which only ever comes from the
                         # operator's project page.
                         "psrc": (t.Source or None) or ("operator site" if d is not None else None)}
+
+    try:
+        pr = pd.read_csv(P("scalper_plf_projects.csv"), comment="#", dtype=str).fillna("")
+    except FileNotFoundError:
+        return out
+    for t in pr.itertuples():
+        c = float(t.ContractPLF)/100 if getattr(t, "ContractPLF", "") else None
+        cost = float(t.CostPerMW) if getattr(t, "CostPerMW", "") else None
+        if c is None and cost is None: continue
+        pid = int(t.PlantId)
+        prev = out.get(pid, {})
+        # A column this row leaves blank keeps whatever the ticker-level entry had,
+        # rather than blanking it -- plant-level data being more specific on PLF
+        # is not a reason to erase a cost figure it happens not to carry.
+        out[pid] = {"cplf": r(c, 4), "dplf": prev.get("dplf"),
+                   "cost_mw": r(cost, 1) if cost is not None else prev.get("cost_mw"),
+                   "psrc": "project file"}
     return out
 
 
