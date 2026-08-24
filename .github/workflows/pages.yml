@@ -3,6 +3,11 @@ name: Deploy dashboard
 # Publishes the built dashboard to GitHub Pages. Worth noting that the terrain
 # map only works here: it needs external tile hosts, which the Artifact CSP
 # blocks outright, so Pages is the one place all three views render.
+#
+# Last link in the daily chain: Sync external series -> Refresh from RMS ->
+# this. Each stage runs only once the one before it has actually finished, via
+# workflow_run, so a single 02:05 UTC cron start carries through to a deployed
+# site without three independently-guessed schedule offsets.
 
 on:
   push:

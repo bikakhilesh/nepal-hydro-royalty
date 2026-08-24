@@ -9,11 +9,20 @@ name: Refresh from RMS
 #
 # The commit step judges on the scraped data, not the rebuilt page, so a day
 # where the register filed nothing leaves no trace in the repo.
+#
+# The daily run is chained off Sync external series finishing, not its own
+# cron. A cron offset (sync at 02:05, this at 03:17) is a guess that the first
+# job finishes inside its own margin; a real dependency can't start early, so
+# the day's rebuild always sees the day's synced series rather than racing it.
+# Deploy dashboard is chained the same way off this workflow, so one push
+# to main now drives the full sync -> refresh -> deploy sequence in order.
 
 on:
   schedule:
-    - cron: '17 3 * * *'      # daily 03:17 UTC (09:02 Kathmandu) - current year only
     - cron: '41 2 5 * *'      # 5th monthly - full history, catches back-year edits
+  workflow_run:
+    workflows: [Sync external series]
+    types: [completed]
   workflow_dispatch:
     inputs:
       scope:
@@ -41,6 +50,9 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    # Don't scrape 198+ pages on the back of a sync that never landed -- a
+    # failed sync means today's external series is not there to join against.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
 
     steps:
       - uses: actions/checkout@v5
@@ -53,7 +65,7 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Scrape the current fiscal years
-        if: github.event.schedule == '17 3 * * *' || inputs.scope == 'latest'
+        if: github.event_name == 'workflow_run' || inputs.scope == 'latest'
         run: python hydro.py latest
 
       - name: Scrape the full history
@@ -63,7 +75,7 @@ jobs:
       # Catches a plant that has just started generating: without this it would
       # have filings and no licence, company, district or commissioning date.
       - name: Scrape plant register
-        if: github.event_name == 'schedule' || inputs.register
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_run' || inputs.register
         run: python hydro.py meta
 
       # Offline - reads the cached OSM/Wikidata candidates, no network. Runs every

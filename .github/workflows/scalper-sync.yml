@@ -9,8 +9,12 @@ name: Sync external series
 # series is versioned alongside the RMS data it will be joined to, and a bad sync
 # is a diff you can read rather than a number that silently moved.
 #
-# Runs before the RMS refresh, not after, so the day's rebuild sees the day's
-# series rather than yesterday's.
+# First link in the daily chain: this runs on its own cron, Refresh from RMS
+# runs when this one finishes (github: workflow_run), and Deploy dashboard runs
+# when that one finishes -- sync -> refresh -> deploy, in that order, once a
+# day. Chained rather than three separate offset schedules, so the rebuild
+# genuinely cannot start before the series it reads has landed; an offset is a
+# guess that the earlier job stays inside its own margin, a dependency isn't.
 #
 # The dividend file is public and needs no credential, so it is fetched and
 # committed whether or not SCALPER_TOKEN is set. A fork with no secret still gets
@@ -18,7 +22,7 @@ name: Sync external series
 
 on:
   schedule:
-    - cron: '05 2 * * *'      # daily 02:05 UTC, ~70 min ahead of the RMS refresh
+    - cron: '05 2 * * *'      # daily 02:05 UTC -- the chain's starting gun
   workflow_dispatch:
 
 permissions:
