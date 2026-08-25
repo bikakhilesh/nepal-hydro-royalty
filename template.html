@@ -3759,6 +3759,22 @@ function sparkbars(vals){
   return '<svg class="spark" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">'+baseline+bars+'</svg>';
 }
 
+// Year on year, one figure per quarter -- this quarter's cumulative against the
+// same quarter's cumulative a year earlier, the same comparison _growth() makes
+// for the single latest quarter, just repeated across the window instead of
+// keeping only its last point. Needs a same quarter four slots back, so only
+// the newest four of the eight columns can carry it; the older four are blank,
+// not zero, since there is nothing before this window to compare them to.
+function growthSeries(qs, col){
+  var cols = qs.slice(-8);
+  return cols.map(function(q, i){
+    var p = cols[i-4];
+    if(i < 4 || !p || p.q !== q.q) return null;
+    var cur = q[col+'_cum'], prev = p[col+'_cum'];
+    return (cur == null || prev == null || !(prev > 0)) ? null : cur/prev - 1;
+  });
+}
+
 function oneQuarterTable(qs, lines, label, nd, flagKey){
   if(!qs.length) return '';
   var cols = qs.slice(-8);   // hydro.py already caps _quarters() at 8; this just stops re-cropping it to 5
@@ -3945,13 +3961,20 @@ function renderOne(){
     + 'measure&rsquo;s own direction &mdash; so first on debt to assets is the least '
     + 'indebted. Distance from the capacity line carries no colour and no direction: '
     + 'above it is dear and below it cheap, and which of those is good is a judgment, '
-    + 'not a fact.</div>'
+    + 'not a fact. <b>Trend</b> is filled in only for the two growth rows -- year on '
+    + 'year, one bar per quarter, for however many of the eight quarters have a same '
+    + 'quarter a year back to compare against; the other measures have no quarterly '
+    + 'series behind them here, so their trend cell is left blank rather than guessed.</div>'
     + '<div class="ywrap" style="padding-left:0"><table class="ytab sortable"><thead><tr>'
     + '<th tabindex="0">Measure</th><th class="n" tabindex="0">This company</th>'
     + '<th class="n" tabindex="0">Sector median</th>'
-    + '<th class="n" tabindex="0">Rank</th></tr></thead><tbody>'
+    + '<th class="n" tabindex="0">Rank</th><th class="n">Trend</th></tr></thead><tbody>'
     + RAT.map(function(k){
-        return '<tr><td>'+k[1]+'</td>'+vsMed(r, k[0], k[2], k[3])+'</tr>'; }).join('')
+        var spark = k[0] === 'yoy_rev' ? sparkbars(growthSeries(qs, 'EnergySales'))
+                  : k[0] === 'yoy_pat' ? sparkbars(growthSeries(qs, 'ProfitAfterTax'))
+                  : '';
+        return '<tr><td>'+k[1]+'</td>'+vsMed(r, k[0], k[2], k[3])
+          + '<td class="n spark-cell">'+spark+'</td></tr>'; }).join('')
     + '</tbody></table></div></div>');
 
   // ── dividends
