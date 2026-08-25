@@ -326,11 +326,10 @@ details.tv th{cursor:default}
    the column around it. */
 .subpar{color:var(--ink-3);text-decoration:line-through;text-decoration-thickness:1px}
 #t-co td:nth-child(2){max-width:230px;overflow:hidden;text-overflow:ellipsis}
-/* Squeezed to a phone these two stop being readable rather than just small: the
-   dividend chart is fifteen pairs of bars and the dumbbell is twenty-five rows,
-   and height scales with width on a fixed viewBox. Given a floor they scroll
-   inside .chart, which is what that container's overflow-x is for. */
-#c-div svg{min-width:660px}
+/* Squeezed to a phone the dumbbell stops being readable rather than just
+   small: twenty-five rows, and height scales with width on a fixed viewBox.
+   Given a floor it scrolls inside .chart, which is what that container's
+   overflow-x is for. */
 #c-gap svg{min-width:700px}
 #c-ret svg,#c-growth svg,#c-payable svg{min-width:400px}
 #c-oneq svg{min-width:700px}
@@ -796,19 +795,6 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
         </div>
       </figure>
     </div>
-
-    <figure class="card" style="margin-top:18px">
-      <figcaption><div class="ctitle">Cash went out of fashion, paper came in</div>
-      <div class="csub">Median declaration across the hydro companies that declared
-        anything that year, as a percentage of the NPR 100 par value. Bikram Sambat
-        years, which is how dividends are declared.</div></figcaption>
-      <div class="chart" id="c-div"></div>
-      <div class="legend">
-        <span><i style="background:var(--s1)"></i>Bonus shares</span>
-        <span><i style="background:var(--s2)"></i>Cash</span>
-        <span><i style="background:var(--ink-3);height:2px;border-radius:0"></i>Companies declaring</span>
-      </div>
-    </figure>
 
     <div class="note" id="co-note" style="margin-top:18px"></div>
     <div class="note warn" id="co-div-note" style="margin-top:14px"></div>
@@ -2883,55 +2869,6 @@ function chartVal(){
   ly.textContent = 'Market cap per MW, NPR million'; f.svg.appendChild(ly);
 }
 
-// ---- what a hydro company actually hands back ---------------------------
-function chartDiv(){
-  if(!D.co || !D.co.divYear || D.co.divYear.length < 3) return;
-  var d = D.co.divYear;
-  var f = frame('c-div',{w:1060,h:300,m:{t:18,r:16,b:46,l:46},
-    label:'Median cash and bonus declaration by Bikram Sambat year'});
-  if(!f) return;
-  var max = 0;
-  d.forEach(function(y){ max = Math.max(max, y.cash||0, y.bonus||0); });
-  var step = Math.pow(10, Math.floor(L10(max/4)));
-  [1,2,2.5,5,10].some(function(k){ if(step*k*4 >= max){ step *= k; return true; } });
-  max = step*4;
-  yAxis(f, max, 4, function(v){ return v.toFixed(0)+'%'; });
-  var gw = f.iw/d.length, bw = Math.min(17, (gw-8)/2);
-  // The count is a different quantity from a percentage and gets no second y
-  // axis: it is drawn as a thin rule against the frame height, labelled at each
-  // end, so it reads as context behind the bars rather than a series to measure.
-  var nmax = Math.max.apply(null, d.map(function(y){ return y.n; }));
-  var line = d.map(function(y,i){
-    return (i?'L':'M')+(f.m.l+i*gw+gw/2)+' '+(f.m.t+f.ih-(y.n/nmax)*f.ih*0.92); }).join('');
-  f.svg.appendChild(el('path',{d:line,fill:'none',stroke:css('--ink-3'),'stroke-width':1.4,
-    'stroke-dasharray':'4 3',opacity:.75}));
-
-  d.forEach(function(y,i){
-    var x0 = f.m.l + i*gw + (gw - 2*bw - 2)/2;
-    [['bonus','--s1'],['cash','--s2']].forEach(function(p,k){
-      var v = y[p[0]] || 0, hh = (v/max)*f.ih;
-      if(v > 0) bar(f, x0 + k*(bw+2), f.m.t+f.ih-hh, bw, hh, css(p[1]));
-    });
-    xLabel(f, f.m.l+i*gw+gw/2, y.y);
-    var hit = el('rect',{x:f.m.l+i*gw,y:f.m.t,width:gw,height:f.ih,class:'hit'});
-    hit.addEventListener('mousemove',function(e){
-      showTip(e, 'BS '+y.y+' \u2014 '+y.n+(y.n===1?' company declared':' companies declared'), [
-        'Median bonus <b>'+y.bonus.toFixed(2)+'%</b> of par',
-        'Median cash <b>'+y.cash.toFixed(2)+'%</b> of par',
-        '<b>'+y.n_bonus+'</b> issued shares, <b>'+y.n_cash+'</b> paid cash above 1%']);
-    });
-    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
-  });
-  // both ends of the count line, above it -- the flat left-hand stretch runs
-  // straight through anything set beside it
-  [[0, d[0], 'start', 8], [d.length-1, d[d.length-1], 'end', -8]].forEach(function(p){
-    var t = el('text',{x:f.m.l+p[0]*gw+gw/2+p[3],
-      y:f.m.t+f.ih-(p[1].n/nmax)*f.ih*0.92-9,'text-anchor':p[2],
-      fill:css('--ink-3'),'font-size':10,'font-family':'IBM Plex Mono, monospace'});
-    t.textContent = p[1].n; f.svg.appendChild(t);
-  });
-}
-
 // ---- the table -----------------------------------------------------------
 var coSort = 'mw', coDir = -1, coOpen = {};
 function coVal(r, k){
@@ -4167,7 +4104,7 @@ function showLTab(which){
 // tokens, since only the open one is redrawn.
 function drawLTab(){
   if(!D.co) return;
-  if(lTab === 'reg'){ renderCo(); chartAgree(); chartCut(); chartPlf(); chartVal(); chartDiv(); }
+  if(lTab === 'reg'){ renderCo(); chartAgree(); chartCut(); chartPlf(); chartVal(); }
   else if(lTab === 'mkt'){ scrNote(); mkTiles(); chartRet(); chartRisk();
                            renderTech(); renderScreen(); }
   else if(lTab === 'val'){ chartCapFit(); chartPbRoe(); chartGap(); chartGrowth();
