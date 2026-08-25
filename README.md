@@ -1,4 +1,4 @@
-# Nepal Hydropower Royalty Ledger
+# Nepal Hydropower Ledger
 
 Scrapes the Department of Electricity Development's Royalty Management System
 (`rmsdoed.gov.np`), reconciles it, and renders an interactive dashboard.

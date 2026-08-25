@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Nepal hydropower royalty ledger - scrape, reconcile, render.
+"""Nepal hydropower ledger - scrape, reconcile, render.
 
     python hydro.py                 rebuild the dashboard from existing CSVs (default)
     python hydro.py build           same, explicitly
