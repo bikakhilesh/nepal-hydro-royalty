@@ -1735,10 +1735,21 @@ def _quarters(rows):
         if tk not in tickers: continue
         g = g.tail(9)
         prev = {}
+        prev_src = {}                 # (fy0, quarter) -> Published/Audited
         last_shares = None            # forward-filled: a share count does not
         qs = []                       # change every quarter, only on an issue
         for t in g.itertuples():
             rec = {"y": t.Year, "q": int(t.Quarter)}
+            # An audited year-end restatement is real and belongs in the
+            # cumulative figure -- but Q1-Q3 almost never get their own audit,
+            # so a restated Q4 differenced against an unaudited Q3 baseline
+            # mixes two accounting bases into one "quarter". Found on GVL:
+            # Q4 2021/22 audited cumulative PAT minus Q3's published baseline
+            # gives a standalone quarter 74% above what the same subtraction
+            # gives using the published Q4 instead (42.1m against 24.2m) --
+            # not GVL's fourth quarter, mostly the audit's own correction to
+            # the first three, dumped entirely into the last one by arithmetic.
+            basis_ok = prev_src.get((t.fy0, t.Quarter - 1)) in (None, t.DataSource)
             for c in cols:
                 cum = pd.to_numeric(getattr(t, c, np.nan), errors="coerce")
                 if not np.isfinite(cum):
@@ -1751,12 +1762,15 @@ def _quarters(rows):
                 rec[c + "_cum"] = r(float(cum)/1e3, 2)
                 if t.Quarter == 1:
                     rec[c] = r(float(cum)/1e3, 2)
+                elif not basis_ok:
+                    rec[c] = None
                 else:
                     p = prev.get((c, t.fy0, t.Quarter-1))
                     rec[c] = None if p is None else r((float(cum)-p)/1e3, 2)
             for c in cols:
                 cum = pd.to_numeric(getattr(t, c, np.nan), errors="coerce")
                 if np.isfinite(cum): prev[(c, t.fy0, int(t.Quarter))] = float(cum)
+            prev_src[(t.fy0, int(t.Quarter))] = t.DataSource
 
             # Book value per share is a point in time, like any other balance-
             # sheet line -- shown as filed, never differenced. The filing splits

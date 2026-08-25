@@ -3718,7 +3718,7 @@ function oneCascade(r, q){
 
 function oneQuarterTable(qs, lines, label, nd, flagKey){
   if(!qs.length) return '';
-  var cols = qs.slice(-5);
+  var cols = qs.slice(-8);   // hydro.py already caps _quarters() at 8; this just stops re-cropping it to 5
   var body = lines.filter(function(L){
     return cols.some(function(q){ return q[L[0]] != null; });
   }).map(function(L){
