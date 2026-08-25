@@ -3630,6 +3630,12 @@ function selectOne(tk){
   oneTk = tk;
   var p = document.getElementById('onePick'); if(p && p.value !== tk) p.value = tk;
   renderOne();
+  // Keeps a shared link honest: once the visible company is the one a link
+  // named, the address bar says so too, so copying it while browsing (search,
+  // prev/next) hands someone the page actually on screen. replaceState, not a
+  // real navigation -- picking through companies should not fill the back
+  // button with one entry per click.
+  if(lTab === 'one' && location.hash !== '#one/'+tk) history.replaceState(null, '', '#one/'+tk);
 }
 function oneNav(){
   var host = document.getElementById('oneNav'); if(!host) return;
@@ -4139,6 +4145,26 @@ function wireListed(){
                      .sort(function(a,b){ return b.mw - a.mw; })[0];
   selectOne(big ? big.tk : D.co.rows[0].tk);
   showLTab('reg');
+  applyHashRoute();
+  window.addEventListener('hashchange', applyHashRoute);
+}
+// A #one/TICKER in the URL is the whole point of selectOne writing the hash
+// back -- without also reading it on the way in, a shared link would land on
+// whichever company sorts biggest and never on the one it named. Checked
+// once at boot (after wireListed's own default selection, so this overrides
+// it rather than racing it) and again on hashchange, for back/forward and for
+// a link clicked while the page is already open. A hash that does not parse
+// or does not name a real ticker is left alone -- the default landing is a
+// fine page, not an error to report.
+function applyHashRoute(){
+  var m = /^#one\/([A-Za-z0-9]+)/.exec(location.hash);
+  if(!m) return;
+  var tk = m[1].toUpperCase();
+  if(!coRow(tk)) return;
+  showLTab('one');
+  selectOne(tk);
+  var sec = document.getElementById('sec-listed');
+  if(sec) sec.scrollIntoView();
 }
 
 function drawAll(){
