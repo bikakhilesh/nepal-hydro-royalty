@@ -3726,8 +3726,12 @@ function oneQuarterTable(qs, lines, label, nd, flagKey){
     // sets it apart from the lines that build up to it -- Gross Profit, say,
     // is not just another row between energy sales and admin expenses.
     var sub = !!L[2];
+    // A per-share figure among figures in NPR million needs its own precision --
+    // rounding a book value to the table's usual zero decimals would print 113
+    // for 112.53, which is wrong at exactly the scale a per-share number matters.
+    var lineNd = L[3] != null ? L[3] : nd;
     return '<tr'+(sub?' class="qsub"':'')+'><td>'+L[1]+'</td>'
-      + cols.map(function(q){ return '<td class="n">'+num(q[L[0]], nd)+'</td>'; }).join('')
+      + cols.map(function(q){ return '<td class="n">'+num(q[L[0]], lineNd)+'</td>'; }).join('')
       + '</tr>';
   }).join('');
   if(!body) return '';
@@ -3825,9 +3829,17 @@ function renderOne(){
   }
 
   // ── statements
-  var inc = oneQuarterTable(qs, D.co.cascade.map(function(c){ return [c[0], c[2], c[1]===0]; }),
+  // EPS and book value ride along on the same two tables rather than a third:
+  // EPS is what Net Profit becomes per share, so it belongs directly under it;
+  // book value is a balance-sheet figure (equity over shares) in everything but
+  // scale. Both get their own decimal precision -- 2 places, where the rest of
+  // each table runs at 1 or 0.
+  var incLines = D.co.cascade.map(function(c){ return [c[0], c[2], c[1]===0]; })
+    .concat([['EPSq', 'Earnings per Share', false, 2]]);
+  var bsLines = D.co.bs.concat([['BookValue', 'Book Value per Share', false, 2]]);
+  var inc = oneQuarterTable(qs, incLines,
                             'Income statement, discrete quarters, NPR million', 1, 'es_suspect');
-  var bs  = oneQuarterTable(qs, D.co.bs, 'Balance sheet as filed, NPR million', 0);
+  var bs  = oneQuarterTable(qs, bsLines, 'Balance sheet as filed, NPR million', 0);
   if(inc || bs)
     out.push('<div class="card" style="margin-top:18px">'
       + '<div class="ctitle">Five quarters, as filed and as differenced</div>'

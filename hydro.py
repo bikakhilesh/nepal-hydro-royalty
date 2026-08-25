@@ -1735,7 +1735,8 @@ def _quarters(rows):
         if tk not in tickers: continue
         g = g.tail(9)
         prev = {}
-        qs = []
+        last_shares = None            # forward-filled: a share count does not
+        qs = []                       # change every quarter, only on an issue
         for t in g.itertuples():
             rec = {"y": t.Year, "q": int(t.Quarter)}
             for c in cols:
@@ -1752,6 +1753,32 @@ def _quarters(rows):
             for c in cols:
                 cum = pd.to_numeric(getattr(t, c, np.nan), errors="coerce")
                 if np.isfinite(cum): prev[(c, t.fy0, int(t.Quarter))] = float(cum)
+
+            # Book value per share is a point in time, like any other balance-
+            # sheet line -- shown as filed, never differenced. The filing splits
+            # it across two columns depending which statement type the row came
+            # from (BookValuePerShare or NetWorthPerShare); at most one is ever
+            # populated on a given row, so this is a coalesce, not a choice.
+            bv = pd.to_numeric(getattr(t, "BookValuePerShare", np.nan), errors="coerce")
+            if not np.isfinite(bv):
+                bv = pd.to_numeric(getattr(t, "NetWorthPerShare", np.nan), errors="coerce")
+            if np.isfinite(bv): rec["BookValue"] = r(float(bv), 2)
+
+            # EPS for the discrete quarter, not the filed EpsAnnualized column --
+            # that one is the cumulative year-to-date figure extrapolated to a
+            # full year (BHCL Q2 2024/25: cumulative EPS 5.376 x 4/2 = 10.751,
+            # exactly what the column shows), a rate projection rather than what
+            # this quarter itself earned. Built instead from the same discrete
+            # ProfitAfterTax already on this row, divided by shares outstanding,
+            # so it is arithmetically exact against the Net Profit line sitting
+            # right above it in the table rather than a second, disagreeing path
+            # to a similar-looking number.
+            shares = pd.to_numeric(getattr(t, "OrdinaryShares", np.nan), errors="coerce")
+            if np.isfinite(shares): last_shares = float(shares)
+            pat_q = rec.get("ProfitAfterTax")
+            if pat_q is not None and last_shares:
+                rec["EPSq"] = r(pat_q * 1000 / last_shares, 2)   # NPR m -> NPR / (shares in '000)
+
             # a null costs six bytes a line across 110 tickers by 8 quarters by
             # 25 lines, and the reader treats absent and null the same way
             qs.append({k: v for k, v in rec.items() if v is not None})
