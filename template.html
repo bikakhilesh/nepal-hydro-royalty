@@ -386,40 +386,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 <div class="wrap">
 
 <section>
-  <div class="shead"><span class="snum">01</span><h2>The royalty regime is visible in the billing data</h2></div>
-  <p class="sdek">Nepal charges hydropower royalty on two tiers. For roughly the first 15 years of
-    commercial operation a plant pays a low energy royalty plus a nominal capacity fee; past that
-    threshold both step up sharply. You do not have to read the statute to find this &mdash; the assessed
-    amounts fall into two hard spikes with almost nothing between them.</p>
-
-  <div class="grid2">
-    <figure class="card">
-      <figcaption><div class="ctitle">Energy royalty as % of energy sales</div>
-      <div class="csub">Each plant-year, computed as royalty &divide; billed energy revenue</div></figcaption>
-      <div class="chart" id="c-energy"></div>
-      <div class="legend">
-        <span><i style="background:var(--s1)"></i>Tier 1 &mdash; within ~15 yrs</span>
-        <span><i style="background:var(--s2)"></i>Tier 2 &mdash; past ~15 yrs</span>
-      </div>
-    </figure>
-    <figure class="card">
-      <figcaption><div class="ctitle">Capacity royalty per kW of installed capacity</div>
-      <div class="csub">Each plant-year, NPR per kW per year</div></figcaption>
-      <div class="chart" id="c-cap"></div>
-      <div class="legend">
-        <span><i style="background:var(--s1)"></i>NPR 100/kW</span>
-        <span><i style="background:var(--s2)"></i>NPR 1,000/kW</span>
-      </div>
-    </figure>
-  </div>
-
-  <div class="note"><b>Two spikes, no middle.</b> <span id="n-tiers"></span> The energy rate sits at
-    exactly 2.00% or exactly 10.00%; the capacity fee at exactly NPR 100/kW or NPR 1,000/kW &mdash; a clean
-    10&times; step in both. Values off the spikes are almost entirely partial first or final years of operation.</div>
-</section>
-
-<section>
-  <div class="shead"><span class="snum">02</span><h2>The fifteen-year threshold, verified against the register</h2></div>
+  <div class="shead"><span class="snum">01</span><h2>The fifteen-year threshold, verified against the register</h2></div>
   <p class="sdek">The register carries a commercial operation date for every licensed plant. Joining those
     dates to the assessments turns the pattern above into a testable claim &mdash; and it holds with a
     sharpness rarely seen in administrative data. Below age 15 essentially no plant pays the high
@@ -453,7 +420,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     The rule holds for the regime it governs; plants outside that regime sit outside the rule.</div>
 </section>
 <section>
-  <div class="shead"><span class="snum">03</span><h2>Output and price move in opposite directions</h2></div>
+  <div class="shead"><span class="snum">02</span><h2>Output and price move in opposite directions</h2></div>
   <p class="sdek">Nepal's fleet is overwhelmingly run-of-river, so generation tracks the monsoon: it
     peaks in Aswin and falls through the winter to barely a fifth of nameplate by Falgun. The power
     purchase tariff is built to counteract exactly that, paying a steep dry-season premium in the four
@@ -481,7 +448,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section>
-  <div class="shead"><span class="snum">04</span><h2>A fleet that quadrupled in a decade</h2></div>
+  <div class="shead"><span class="snum">03</span><h2>A fleet that quadrupled in a decade</h2></div>
   <p class="sdek">Recorded generation runs from about 3.1 TWh across 29 plants in 066/67 to 14.5 TWh
     across 188 plants in 082/83. Royalty assessed and royalty received track each other closely &mdash; the
     collection side of this system is, on the whole, current.</p>
@@ -535,7 +502,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section>
-  <div class="shead"><span class="snum">05</span><h2>Where the fleet actually sits</h2></div>
+  <div class="shead"><span class="snum">04</span><h2>Where the fleet actually sits</h2></div>
   <p class="sdek">The register carries a district for most plants but no usable coordinates &mdash;
     every populated latitude field holds the same value, an unedited form default pointing at
     Illinois. Locations here come from OpenStreetMap and Wikidata where a plant can be matched by
@@ -610,7 +577,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section id="sec-recon">
-  <div class="shead"><span class="snum">06</span><h2>The register reproduces a listed company&rsquo;s revenue</h2></div>
+  <div class="shead"><span class="snum">05</span><h2>The register reproduces a listed company&rsquo;s revenue</h2></div>
   <p class="sdek">The royalty base is the plant&rsquo;s energy invoice, and that invoice is the operating
     company&rsquo;s top line. Mapping register billing months onto the Shrawan&ndash;Asar accounting year for
     Likhu-4 (52.4&nbsp;MW, Green Ventures Co. Ltd, commissioned 2078/07/21) reproduces its reported <i>Income from Sale of Energy</i> quarter by quarter
@@ -647,7 +614,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section>
-  <div class="shead"><span class="snum">07</span><h2>Plant explorer</h2></div>
+  <div class="shead"><span class="snum">06</span><h2>Plant explorer</h2></div>
   <p class="sdek">Every plant in the register, with lifetime recorded generation, median capacity
     factor and the balance standing on its most recent assessed year. <b>Select any plant to open its
     year-by-year revenue and royalty, then <b>+</b> on any year for its monthly
@@ -723,7 +690,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section id="sec-listed">
-  <div class="shead"><span class="snum">08</span><h2>The companies that own them</h2></div>
+  <div class="shead"><span class="snum">07</span><h2>The companies that own them</h2></div>
   <p class="sdek">One hundred and ten hydropower companies are listed on NEPSE, and
     between them they own most of the register. This section puts the two side by side:
     what the meter recorded and what the accounts say, what the market pays for it, and
@@ -994,7 +961,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section style="border-bottom:0">
-  <div class="shead"><span class="snum">09</span><h2>Method and caveats</h2></div>
+  <div class="shead"><span class="snum">08</span><h2>Method and caveats</h2></div>
   <div class="grid2">
     <div class="card">
       <div class="ctitle" style="margin-bottom:12px">How this was collected</div>
@@ -1093,61 +1060,6 @@ function bar(f, x, y, w, h, fill, op){
     'a'+r+' '+r+' 0 0 1 '+r+' '+r+'V'+(y+h)+'Z', fill:fill});
   if(op) p.setAttribute('opacity', op);
   f.svg.appendChild(p); return p;
-}
-
-// ---- 1. energy-royalty histogram ----------------------------------------
-function chartEnergy(){
-  var d = D.royalty.energy_hist, f = frame('c-energy',{m:{t:26,r:14,b:44,l:46},label:'Histogram of effective energy royalty rate'});
-  if(!f) return;
-  var max = Math.max.apply(null, d.map(function(r){return r.n;}));
-  yAxis(f, max, 4);
-  var bw = f.iw/d.length;
-  d.forEach(function(r,i){
-    var h = (r.n/max)*f.ih, x = f.m.l + i*bw, y = f.m.t + f.ih - h;
-    var c = r.x > 6 ? css('--s2') : css('--s1');
-    if(r.n>0) bar(f, x+1, y, bw-2, h, c);
-    var hit = el('rect',{x:x,y:f.m.t,width:bw,height:f.ih,class:'hit'});
-    hit.addEventListener('mousemove',function(e){ showTip(e, r.x.toFixed(2)+'% royalty rate',
-      [fmt(r.n)+' plant-years', r.x>6?'Tier 2 (past ~15 yrs)':'Tier 1 (within ~15 yrs)']); });
-    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
-  });
-  [1,2,3,4,5,6,7,8,9,10,11].forEach(function(v){
-    xLabel(f, f.m.l + ((v-0.5)/11.5)*f.iw, v+'%');
-  });
-  // direct labels on the two spikes
-  d.forEach(function(r,i){
-    if(r.n < max*0.12) return;
-    var h=(r.n/max)*f.ih, x=f.m.l+i*bw+bw/2, y=f.m.t+f.ih-h-7;
-    var t = el('text',{x:x,y:y,'text-anchor':'middle',fill:css('--ink'),'font-size':11.5,
-      'font-weight':600,'font-family':'IBM Plex Mono, monospace'});
-    t.textContent = fmt(r.n); f.svg.appendChild(t);
-  });
-}
-
-// ---- 2. capacity-royalty histogram --------------------------------------
-function chartCap(){
-  var d = D.royalty.cap_hist, f = frame('c-cap',{m:{t:26,r:14,b:44,l:46},label:'Histogram of capacity royalty per kW'});
-  if(!f) return;
-  var max = Math.max.apply(null, d.map(function(r){return r.n;}));
-  yAxis(f, max, 4);
-  var bw = f.iw/d.length;
-  d.forEach(function(r,i){
-    var h=(r.n/max)*f.ih, x=f.m.l+i*bw, y=f.m.t+f.ih-h;
-    var c = r.x > 700 ? css('--s2') : css('--s1');
-    if(r.n>0) bar(f, x+1, y, bw-2, h, c);
-    var hit = el('rect',{x:x,y:f.m.t,width:bw,height:f.ih,class:'hit'});
-    hit.addEventListener('mousemove',function(e){ showTip(e,'NPR '+fmt(r.x)+'/kW',
-      [fmt(r.n)+' plant-years', r.x>700?'Tier 2 (past ~15 yrs)':'Tier 1 (within ~15 yrs)']); });
-    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
-  });
-  [0,250,500,750,1000].forEach(function(v){ xLabel(f, f.m.l + (v/1050)*f.iw, fmt(v)); });
-  d.forEach(function(r,i){
-    if(r.n < max*0.12) return;
-    var h=(r.n/max)*f.ih, x=f.m.l+i*bw+bw/2, y=f.m.t+f.ih-h-7;
-    var t=el('text',{x:x,y:y,'text-anchor':'middle',fill:css('--ink'),'font-size':11.5,
-      'font-weight':600,'font-family':'IBM Plex Mono, monospace'});
-    t.textContent=fmt(r.n); f.svg.appendChild(t);
-  });
 }
 
 // ---- 4. seasonality: CF with IQR band ------------------------------------
@@ -1765,15 +1677,6 @@ function addTableView(mountId, caption, cols, rows){
   fig.appendChild(d);
 }
 function buildTableViews(){
-  var R = D.royalty;
-  addTableView('c-energy','Show data table',
-    [{t:'Rate band'},{t:'Plant-years',n:1},{t:'Tier'}],
-    R.energy_hist.filter(function(r){return r.n>0;}).map(function(r){
-      return [(r.x-0.25).toFixed(2)+'\u2013'+(r.x+0.25).toFixed(2)+'%', fmt(r.n), r.x>6?'Tier 2':'Tier 1']; }));
-  addTableView('c-cap','Show data table',
-    [{t:'NPR per kW'},{t:'Plant-years',n:1},{t:'Tier'}],
-    R.cap_hist.filter(function(r){return r.n>0;}).map(function(r){
-      return [fmt(r.x-25)+'\u2013'+fmt(r.x+25), fmt(r.n), r.x>700?'Tier 2':'Tier 1']; }));
   addTableView('c-lic','Show data table',
     [{t:'BS year'},{t:'Licences',n:1},{t:'Commissioned',n:1},{t:'Median lead (yrs)',n:1}],
     D.licence.byYear.filter(function(r){return r.y>=2050;}).map(function(r){
@@ -1826,7 +1729,6 @@ function stats(){
   document.getElementById('p-nfy').textContent    = s.n_fy;
   document.getElementById('p-py').textContent     = fmt(s.plant_years);
   document.getElementById('p-ret').textContent    = s.retrieved;
-  var r = D.royalty;
   var LC = D.licence;
   document.getElementById('n-lic').textContent =
     'A licence takes a median '+LC.median_lead+' years to reach commercial operation ('+
@@ -1834,9 +1736,6 @@ function stats(){
     'median '+LC.term_median+' years once granted. Licensing peaked at '+LC.peak_count+
     ' grants in BS '+LC.peak_year+'; commissioning peaked roughly five years later, which is the '+
     'same lag showing up on the other side of the pipeline.';
-  document.getElementById('n-tiers').textContent =
-    fmt(r.n_2pct)+' plant-years sit on the 2% energy rate against '+fmt(r.n_10pct)+' on 10%; '+
-    fmt(r.n_cap_low)+' pay NPR 100/kW against '+fmt(r.n_cap_high)+' at NPR 1,000/kW.';
 }
 
 // ---- transition table ----------------------------------------------------
@@ -4191,7 +4090,7 @@ function applyHashRoute(){
 }
 
 function drawAll(){
-  chartEnergy(); chartCap(); chartSeason(); chartRate(); chartGen(); chartRoy(); chartRecon(); chartAge(); chartMap(); chartLic(); chartLead();
+  chartSeason(); chartRate(); chartGen(); chartRoy(); chartRecon(); chartAge(); chartMap(); chartLic(); chartLead();
   if(D.co) drawLTab();
 }
 // Section 06 exists only when an operator workbook was supplied at build time

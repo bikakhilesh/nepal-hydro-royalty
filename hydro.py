@@ -1174,22 +1174,9 @@ def build_payload():
                     "bal_bn": r(sy.loc[y,"bal"]/1e9, 2), "sum_plants": int(sy.loc[y,"plants"])}
         fy.append(row)
 
-    # ── royalty tiers
-    ay = a[(a.rev > 1e6) & (a.roy > 0)].copy(); ay["pct"] = 100*ay.roy/ay.rev
-    eh = ay[ay.pct.between(0.5, 12)]
+    # ── the 15-year threshold
     sc = s[(s.Capacity_Royalty > 0) & (s.Capacity_kW > 0)].copy()
     sc["per_kw"] = sc.Capacity_Royalty/sc.Capacity_kW
-    royalty = {
-        "energy_hist": [{"x": r(lo+0.25,2), "n": int(((eh.pct>=lo)&(eh.pct<lo+0.5)).sum())}
-                        for lo in np.arange(0.5, 12, 0.5)],
-        "cap_hist": [{"x": int(lo+25), "n": int(((sc.per_kw>=lo)&(sc.per_kw<lo+50)).sum())}
-                     for lo in range(0, 1050, 50)],
-        "n_2pct": int(((eh.pct>=1.5)&(eh.pct<2.5)).sum()),
-        "n_10pct": int(((eh.pct>=9)&(eh.pct<=11)).sum()),
-        "n_cap_low": int(((sc.per_kw>=60)&(sc.per_kw<150)).sum()),
-        "n_cap_high": int((sc.per_kw>700).sum())}
-
-    # ── the 15-year threshold
     sc2 = sc.merge(m[["PlantId","CodBsYear","CodAdYear","PlantType","MitiofOperation"]],
                    on="PlantId", how="left")
     sc2["tier"] = np.where(sc2.per_kw > 700, "HIGH", "LOW")
@@ -1387,7 +1374,7 @@ def build_payload():
                "peak_count": int(lic_y.value_counts().max()),
                "first_year": yrs[0] if yrs else None, "last_year": yrs[-1] if yrs else None}
 
-    payload = {"season": season, "fy": fy, "plants": plants, "royalty": royalty,
+    payload = {"season": season, "fy": fy, "plants": plants,
                "licence": licence,
                "regime": regime, "years": years, "months": months,
                "nepMonths": NEP_MONTHS, "greg": GREG}
