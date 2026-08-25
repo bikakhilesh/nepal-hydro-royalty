@@ -247,6 +247,21 @@ td.spark-cell{padding:4px 10px}
 .sbar{fill:var(--accent);opacity:.55}
 tr.qsub .sbar{opacity:.85}
 .sbase{stroke:var(--line);stroke-width:1}
+.dotrow{display:flex;align-items:center;gap:12px;padding:5px 0;border-bottom:1px solid var(--line)}
+.dotrow:last-child{border-bottom:none}
+.dotrow.dotaxis{padding-top:0}
+.dotlabel{flex:0 0 200px;font-size:12.5px;color:var(--ink-2)}
+.dotwrap{flex:1;min-width:100px}
+.dottrack{width:100%;height:20px;display:block;cursor:crosshair}
+.dotaxis .dottrack{height:16px;cursor:default}
+.dtbase{stroke:var(--line);stroke-width:2}
+.dtmed{stroke:var(--ink-3);stroke-width:1.5;stroke-dasharray:2 2}
+.dtdot.good{fill:var(--ok)}
+.dtdot.crit{fill:var(--crit)}
+.dtdot.neutral{fill:var(--accent)}
+.dtend{font-size:9px;fill:var(--ink-3);letter-spacing:.05em;text-transform:uppercase;
+  font-family:"IBM Plex Mono",monospace}
+.dotna{font-size:12px;color:var(--ink-3);font-style:italic}
 .tlends b{color:var(--ink-2);font-weight:500}
 #c-map svg{cursor:pointer}
 
@@ -2317,12 +2332,17 @@ function wireSortableTables(){
 // and -- unlike a document-wide listener -- this can never fire on a
 // mousemove that belongs to some other chart's own local hover handler
 // elsewhere and cancel its tip.
+// "||" splits a data-tip into a bold title plus detail rows -- every existing
+// data-tip is one plain sentence with no "||" in it, so this is additive:
+// those still show as a title alone, exactly as before.
 function wireDataTip(){
   ['t-plants','t-years','oneBody'].forEach(function(id){
     var host = document.getElementById(id); if(!host) return;
     host.addEventListener('mousemove', function(e){
       var el = e.target.closest('[data-tip]');
-      if(el) showTip(e, el.getAttribute('data-tip'), []); else hideTip();
+      if(!el){ hideTip(); return; }
+      var parts = el.getAttribute('data-tip').split('||');
+      showTip(e, parts[0], parts.slice(1));
     });
     host.addEventListener('mouseleave', hideTip);
   });
@@ -3494,19 +3514,71 @@ function oneNav(){
 }
 
 // value beside the cohort median and this company's rank on it
-function vsMed(r, key, fmtf, better){
+// The rank alone doesn't say how far into the pack that is -- 6th of 9 and
+// 6th of 90 are not the same distance from the middle. pct turns rank into a
+// 0-100 position that already has direction baked in (rank 1, whichever way
+// "better" pointed to get there, always lands near 100), so a chart built on
+// pct never has to re-check better per point the way a raw-value chart would.
+function measureRank(r, key, better){
   var v = r[key], med = MED(key);
-  if(v === null || v === undefined)
-    return '<td class="n">—</td><td class="n">'+(med==null?'—':fmtf(med))+'</td><td class="n">—</td>';
+  if(v === null || v === undefined) return {v:null, med:med, rank:null, total:null, pct:null};
   var all = D.co.rows.filter(function(x){ return x[key] != null; })
                      .sort(function(a,b){ return better < 0 ? a[key]-b[key] : b[key]-a[key]; });
   var rank = all.map(function(x){return x.tk;}).indexOf(r.tk) + 1;
-  var gap = med == null ? null : v - med;
+  var pct = all.length > 1 ? 100*(all.length-rank)/(all.length-1) : 50;
+  return {v:v, med:med, rank:rank, total:all.length, pct:pct};
+}
+function vsMed(r, key, fmtf, better){
+  var m = measureRank(r, key, better);
+  if(m.v === null || m.v === undefined)
+    return '<td class="n">—</td><td class="n">'+(m.med==null?'—':fmtf(m.med))+'</td><td class="n">—</td>';
+  var gap = m.med == null ? null : m.v - m.med;
   var cls = (better === 0 || gap === null) ? ''
           : ((gap > 0) === (better > 0) ? 'stat-good' : 'stat-crit');
-  return '<td class="n"><b>'+fmtf(v)+'</b></td>'
-       + '<td class="n">'+(med==null?'—':fmtf(med))+'</td>'
-       + '<td class="n '+cls+'">'+rank+' of '+all.length+'</td>';
+  return '<td class="n"><b>'+fmtf(m.v)+'</b></td>'
+       + '<td class="n">'+(m.med==null?'—':fmtf(m.med))+'</td>'
+       + '<td class="n '+cls+'">'+m.rank+' of '+m.total+'</td>';
+}
+
+// One row per measure, all sharing the same 0-100 scale instead of each
+// keeping its own units -- a spider chart was the first idea, but sixteen
+// axes in mixed units (NPR/MW, %, a multiple, a ratio) reads as a tangle
+// long before sixteen; the percentile a rank already implies scales to
+// however many rows there are without needing to cut the list down.
+// Direction lives in pct itself (see measureRank), so colour here only ever
+// asks "above or below the median line" -- no per-row sign-checking.
+function cohortDot(pct){
+  var w = 200, pad = 6, x = pad + (pct/100)*(w-2*pad);
+  return {w:w, x:x};
+}
+function cohortDotplot(r, RAT){
+  var axisD = cohortDot(50);
+  var head = '<div class="dotrow dotaxis"><div class="dotlabel"></div><div class="dotwrap">'
+    + '<svg class="dottrack" viewBox="0 0 '+axisD.w+' 16" preserveAspectRatio="none">'
+    + '<text x="6" y="12" text-anchor="start" class="dtend">Weaker</text>'
+    + '<text x="'+axisD.x+'" y="12" text-anchor="middle" class="dtend">Median</text>'
+    + '<text x="'+(axisD.w-6)+'" y="12" text-anchor="end" class="dtend">Stronger</text>'
+    + '</svg></div></div>';
+  var rows = RAT.map(function(k){
+    var key = k[0], label = k[1], fmtf = k[2], better = k[3];
+    var m = measureRank(r, key, better);
+    if(m.pct == null)
+      return '<div class="dotrow"><div class="dotlabel">'+label+'</div>'
+        + '<div class="dotwrap dotna">not reported</div></div>';
+    var d = cohortDot(m.pct);
+    var cls = better === 0 ? 'neutral' : (m.pct >= 50 ? 'good' : 'crit');
+    var tip = label+'||This company '+fmtf(m.v)
+      + '||Sector median '+(m.med==null?'—':fmtf(m.med))
+      + '||Rank '+m.rank+' of '+m.total;
+    return '<div class="dotrow"><div class="dotlabel">'+label+'</div>'
+      + '<div class="dotwrap"><svg class="dottrack" viewBox="0 0 '+d.w+' 20" '
+      + 'preserveAspectRatio="none" data-tip="'+tip+'">'
+      + '<line class="dtbase" x1="6" y1="10" x2="'+(d.w-6)+'" y2="10"/>'
+      + '<line class="dtmed" x1="'+axisD.x+'" y1="3" x2="'+axisD.x+'" y2="17"/>'
+      + '<circle class="dtdot '+cls+'" cx="'+d.x+'" cy="10" r="5"/>'
+      + '</svg></div></div>';
+  }).join('');
+  return head + rows;
 }
 
 // Shared by both cascades: a bar walks from .from to .to, 'total' bars reset
@@ -3728,6 +3800,7 @@ var oneFallIx = null;
 var oneIncView = 'q';         // 'q' = discrete quarter, 'c' = year-to-date as filed
 var oneUnit = 'abs';          // 'abs' = NPR million, 'pct' = common size
 var oneCascView = 'single';   // 'single' = one quarter's cascade, 'delta' = bridged against the last
+var oneRatView = 'table';     // 'table' = the sortable table, 'chart' = the percentile dot-plot
 function renderOne(){
   var host = document.getElementById('oneBody'); if(!host) return;
   if(!oneTk){ host.innerHTML = ''; return; }
@@ -3834,6 +3907,18 @@ function renderOne(){
              ['rpm','Register revenue per MW', function(v){return fmt(v,1);}, 1],
              ['yoy_rev','Energy sales, year on year', function(v){return pct(v,0);}, 1],
              ['yoy_pat','Profit, year on year', function(v){return pct(v,0);}, 1]];
+  var ratTable = '<div class="ywrap" style="padding-left:0"><table class="ytab sortable"><thead><tr>'
+    + '<th tabindex="0">Measure</th><th class="n" tabindex="0">This company</th>'
+    + '<th class="n" tabindex="0">Sector median</th>'
+    + '<th class="n" tabindex="0">Rank</th><th class="n">Trend</th></tr></thead><tbody>'
+    + RAT.map(function(k){
+        var spark = k[0] === 'yoy_rev' ? sparkbars(growthSeries(qs, 'EnergySales'))
+                  : k[0] === 'yoy_pat' ? sparkbars(growthSeries(qs, 'ProfitAfterTax'))
+                  : '';
+        return '<tr><td>'+k[1]+'</td>'+vsMed(r, k[0], k[2], k[3])
+          + '<td class="n spark-cell">'+spark+'</td></tr>'; }).join('')
+    + '</tbody></table></div>';
+  var ratChart = '<div class="ywrap" style="padding-left:0">'+cohortDotplot(r, RAT)+'</div>';
   out.push('<div class="card" style="margin-top:18px">'
     + '<div class="ctitle">Against the cohort</div>'
     + '<div class="csub">'
@@ -3849,18 +3934,15 @@ function renderOne(){
     + 'not a fact. <b>Trend</b> is filled in only for the two growth rows -- year on '
     + 'year, one bar per quarter, for however many of the eight quarters have a same '
     + 'quarter a year back to compare against; the other measures have no quarterly '
-    + 'series behind them here, so their trend cell is left blank rather than guessed.</div>'
-    + '<div class="ywrap" style="padding-left:0"><table class="ytab sortable"><thead><tr>'
-    + '<th tabindex="0">Measure</th><th class="n" tabindex="0">This company</th>'
-    + '<th class="n" tabindex="0">Sector median</th>'
-    + '<th class="n" tabindex="0">Rank</th><th class="n">Trend</th></tr></thead><tbody>'
-    + RAT.map(function(k){
-        var spark = k[0] === 'yoy_rev' ? sparkbars(growthSeries(qs, 'EnergySales'))
-                  : k[0] === 'yoy_pat' ? sparkbars(growthSeries(qs, 'ProfitAfterTax'))
-                  : '';
-        return '<tr><td>'+k[1]+'</td>'+vsMed(r, k[0], k[2], k[3])
-          + '<td class="n spark-cell">'+spark+'</td></tr>'; }).join('')
-    + '</tbody></table></div></div>');
+    + 'series behind them here, so their trend cell is left blank rather than guessed. '
+    + '<b>Chart</b> turns the same rank into a 0&ndash;100 position and plots every '
+    + 'measure on one shared scale, dot right of the median line is the better side '
+    + '(already accounting for each measure&rsquo;s own direction), left is the worse '
+    + 'one &mdash; except the capacity-line row, which stays neutral for the same reason '
+    + 'it stays uncoloured in the table.</div>'
+    + '<div class="btnrow" id="oneRatBtns"></div>'
+    + (oneRatView === 'chart' ? ratChart : ratTable)
+    + '</div>');
 
   // ── eight quarters of its own, and the cascade beside it -- half width
   // each rather than full width stacked, since neither needs the whole row:
@@ -3943,6 +4025,8 @@ function renderOne(){
     btnRow('oneUnitBtns', [['abs','NPR million'],['pct','Common size']], oneUnit,
            function(k){ oneUnit = k; renderOne(); });
   }
+  btnRow('oneRatBtns', [['table','Table'],['chart','Chart']], oneRatView,
+         function(k){ oneRatView = k; renderOne(); });
   var c = document.getElementById('oneCount');
   if(c) c.textContent = (D.co.rows.map(function(x){return x.tk;}).indexOf(oneTk)+1)
       + ' of ' + D.co.rows.length;
