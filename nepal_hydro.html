@@ -2383,7 +2383,7 @@ function wireTable(){
       e.preventDefault(); coToggle(tr);
     });
   }
-  var tl = document.querySelector('.tabs');
+  var tl = document.querySelector('.tabs[aria-label="Explorer views"]');
   tl.addEventListener('click', function(e){
     var b = e.target.closest('button[role=tab]'); if(!b) return;
     showTab(b.id.replace('tab-',''));
