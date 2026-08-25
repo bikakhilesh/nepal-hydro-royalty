@@ -3781,7 +3781,13 @@ function growthSeries(qs, col){
   });
 }
 
-function oneQuarterTable(qs, lines, label, nd, flagKey){
+// baseKey names the line that reads as 100% -- revenue for the income
+// statement, total assets for the balance sheet -- and oneUnit (the shared
+// NPR/Common size toggle) decides whether it is applied at all. A line
+// marked noPct (L[4]) is exempt even in common-size mode: EPS and book value
+// are per-share figures, and dividing one by revenue produces a number that
+// is not wrong so much as meaningless, so those rows stay in NPR throughout.
+function oneQuarterTable(qs, lines, label, nd, flagKey, baseKey){
   if(!qs.length) return '';
   var cols = qs.slice(-8);   // hydro.py already caps _quarters() at 8; this just stops re-cropping it to 5
   var body = lines.filter(function(L){
@@ -3795,9 +3801,15 @@ function oneQuarterTable(qs, lines, label, nd, flagKey){
     // rounding a book value to the table's usual zero decimals would print 113
     // for 112.53, which is wrong at exactly the scale a per-share number matters.
     var lineNd = L[3] != null ? L[3] : nd;
-    var vals = cols.map(function(q){ return q[L[0]] == null ? null : q[L[0]]; });
+    var asPct = oneUnit === 'pct' && baseKey && !L[4];
+    var vals = cols.map(function(q){
+      if(q[L[0]] == null) return null;
+      if(!asPct) return q[L[0]];
+      var base = q[baseKey];
+      return base ? q[L[0]]/base : null;
+    });
     return '<tr'+(sub?' class="qsub"':'')+'><td>'+L[1]+'</td>'
-      + cols.map(function(q){ return '<td class="n">'+num(q[L[0]], lineNd)+'</td>'; }).join('')
+      + cols.map(function(q,i){ return '<td class="n">'+(asPct ? pct(vals[i],1) : num(q[L[0]], lineNd))+'</td>'; }).join('')
       + '<td class="n spark-cell">'+sparkbars(vals)+'</td>'
       + '</tr>';
   }).join('');
@@ -3832,6 +3844,7 @@ function oneQuarterTable(qs, lines, label, nd, flagKey){
 
 var oneFallIx = null;
 var oneIncView = 'q';         // 'q' = discrete quarter, 'c' = year-to-date as filed
+var oneUnit = 'abs';          // 'abs' = NPR million, 'pct' = common size
 function renderOne(){
   var host = document.getElementById('oneBody'); if(!host) return;
   if(!oneTk){ host.innerHTML = ''; return; }
@@ -3912,15 +3925,17 @@ function renderOne(){
   // between the other two, so it shows the same in both views.
   var incLines = D.co.cascade.map(function(c){ return [c[0]+cSuf, c[2], c[1]===0]; })
     .concat([['EPSq'+cSuf, oneIncView==='c' ? 'EPS, Cumulative (non-annualized)'
-                                             : 'EPS, Qtr Only (non-annualized)', false, 2],
-              ['EPSann', 'EPS, Annualized (naive)', false, 2]]);
-  var bsLines = D.co.bs.concat([['BookValue', 'Book Value per Share', false, 2]]);
+                                             : 'EPS, Qtr Only (non-annualized)', false, 2, true],
+              ['EPSann', 'EPS, Annualized (naive)', false, 2, true]]);
+  var bsLines = D.co.bs.concat([['BookValue', 'Book Value per Share', false, 2, true]]);
+  var incUnitLabel = oneUnit==='pct' ? '% of revenue' : 'NPR million';
+  var bsUnitLabel = oneUnit==='pct' ? '% of total assets' : 'NPR million';
   var inc = oneQuarterTable(qs, incLines,
                             (oneIncView==='c'
-                              ? 'Income statement, year to date as filed, NPR million'
-                              : 'Income statement, discrete quarters, NPR million'),
-                            1, 'es_suspect');
-  var bs  = oneQuarterTable(qs, bsLines, 'Balance sheet as filed, NPR million', 0);
+                              ? 'Income statement, year to date as filed, '+incUnitLabel
+                              : 'Income statement, discrete quarters, '+incUnitLabel),
+                            1, 'es_suspect', 'EnergySales'+cSuf);
+  var bs  = oneQuarterTable(qs, bsLines, 'Balance sheet as filed, '+bsUnitLabel, 0, null, 'TotalFunds');
   if(inc || bs)
     out.push('<div class="card" style="margin-top:18px">'
       + '<div class="ctitle">Eight quarters, as filed and as differenced</div>'
@@ -3933,7 +3948,14 @@ function renderOne(){
       + 'too, not recomputed here: year-to-date EPS scaled by 4/quarter to a full-year '
       + 'run rate. Read it carefully on this fleet &mdash; hydro revenue is heavily '
       + 'seasonal within a year, so annualizing a wet quarter overstates the year and a '
-      + 'dry one understates it.</div>'
+      + 'dry one understates it. <b>Common size</b> restates every line as a share of '
+      + 'that quarter&rsquo;s own base &mdash; revenue on the income statement, total '
+      + 'assets on the balance sheet &mdash; so a company can be read against its own '
+      + 'history, or against another company regardless of scale, without the NPR '
+      + 'figures getting in the way. EPS and book value stay in rupees throughout: '
+      + 'a per-share figure divided by revenue is not a smaller number, it is not a '
+      + 'number.</div>'
+      + '<div class="btnrow" id="oneUnitBtns"></div>'
       + '<div class="btnrow" id="oneIncBtns"></div>'
       + '<div class="ywrap" style="padding-left:0">'+inc+'<div style="height:16px"></div>'
       + bs+'</div></div>');
@@ -4001,6 +4023,8 @@ function renderOne(){
            function(k){ oneFallIx = k; renderOne(); });
     btnRow('oneIncBtns', [['q','Qtr only'],['c','Cumulative']], oneIncView,
            function(k){ oneIncView = k; renderOne(); });
+    btnRow('oneUnitBtns', [['abs','NPR million'],['pct','Common size']], oneUnit,
+           function(k){ oneUnit = k; renderOne(); });
   }
   var c = document.getElementById('oneCount');
   if(c) c.textContent = (D.co.rows.map(function(x){return x.tk;}).indexOf(oneTk)+1)
