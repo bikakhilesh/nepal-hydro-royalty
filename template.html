@@ -247,21 +247,11 @@ td.spark-cell{padding:4px 10px}
 .sbar{fill:var(--accent);opacity:.55}
 tr.qsub .sbar{opacity:.85}
 .sbase{stroke:var(--line);stroke-width:1}
-.dotrow{display:flex;align-items:center;gap:12px;padding:5px 0;border-bottom:1px solid var(--line)}
-.dotrow:last-child{border-bottom:none}
-.dotrow.dotaxis{padding-top:0}
-.dotlabel{flex:0 0 200px;font-size:12.5px;color:var(--ink-2)}
-.dotwrap{flex:1;min-width:100px}
-.dottrack{width:100%;height:20px;display:block;cursor:crosshair}
-.dotaxis .dottrack{height:16px;cursor:default}
-.dtbase{stroke:var(--line);stroke-width:2}
-.dtmed{stroke:var(--ink-3);stroke-width:1.5;stroke-dasharray:2 2}
+.dtbase{stroke:var(--line);stroke-width:1.5}
+.dtmed{stroke:var(--ink-3);stroke-width:1.2;stroke-dasharray:2 2}
 .dtdot.good{fill:var(--ok)}
 .dtdot.crit{fill:var(--crit)}
 .dtdot.neutral{fill:var(--accent)}
-.dtend{font-size:9px;fill:var(--ink-3);letter-spacing:.05em;text-transform:uppercase;
-  font-family:"IBM Plex Mono",monospace}
-.dotna{font-size:12px;color:var(--ink-3);font-style:italic}
 .tlends b{color:var(--ink-2);font-weight:500}
 #c-map svg{cursor:pointer}
 
@@ -3528,8 +3518,7 @@ function measureRank(r, key, better){
   var pct = all.length > 1 ? 100*(all.length-rank)/(all.length-1) : 50;
   return {v:v, med:med, rank:rank, total:all.length, pct:pct};
 }
-function vsMed(r, key, fmtf, better){
-  var m = measureRank(r, key, better);
+function vsMed(m, fmtf, better){
   if(m.v === null || m.v === undefined)
     return '<td class="n">—</td><td class="n">'+(m.med==null?'—':fmtf(m.med))+'</td><td class="n">—</td>';
   var gap = m.med == null ? null : m.v - m.med;
@@ -3540,45 +3529,26 @@ function vsMed(r, key, fmtf, better){
        + '<td class="n '+cls+'">'+m.rank+' of '+m.total+'</td>';
 }
 
-// One row per measure, all sharing the same 0-100 scale instead of each
-// keeping its own units -- a spider chart was the first idea, but sixteen
-// axes in mixed units (NPR/MW, %, a multiple, a ratio) reads as a tangle
-// long before sixteen; the percentile a rank already implies scales to
-// however many rows there are without needing to cut the list down.
-// Direction lives in pct itself (see measureRank), so colour here only ever
-// asks "above or below the median line" -- no per-row sign-checking.
-function cohortDot(pct){
-  var w = 200, pad = 6, x = pad + (pct/100)*(w-2*pad);
-  return {w:w, x:x};
-}
-function cohortDotplot(r, RAT){
-  var axisD = cohortDot(50);
-  var head = '<div class="dotrow dotaxis"><div class="dotlabel"></div><div class="dotwrap">'
-    + '<svg class="dottrack" viewBox="0 0 '+axisD.w+' 16" preserveAspectRatio="none">'
-    + '<text x="6" y="12" text-anchor="start" class="dtend">Weaker</text>'
-    + '<text x="'+axisD.x+'" y="12" text-anchor="middle" class="dtend">Median</text>'
-    + '<text x="'+(axisD.w-6)+'" y="12" text-anchor="end" class="dtend">Stronger</text>'
-    + '</svg></div></div>';
-  var rows = RAT.map(function(k){
-    var key = k[0], label = k[1], fmtf = k[2], better = k[3];
-    var m = measureRank(r, key, better);
-    if(m.pct == null)
-      return '<div class="dotrow"><div class="dotlabel">'+label+'</div>'
-        + '<div class="dotwrap dotna">not reported</div></div>';
-    var d = cohortDot(m.pct);
-    var cls = better === 0 ? 'neutral' : (m.pct >= 50 ? 'good' : 'crit');
-    var tip = label+'||This company '+fmtf(m.v)
-      + '||Sector median '+(m.med==null?'—':fmtf(m.med))
-      + '||Rank '+m.rank+' of '+m.total;
-    return '<div class="dotrow"><div class="dotlabel">'+label+'</div>'
-      + '<div class="dotwrap"><svg class="dottrack" viewBox="0 0 '+d.w+' 20" '
-      + 'preserveAspectRatio="none" data-tip="'+tip+'">'
-      + '<line class="dtbase" x1="6" y1="10" x2="'+(d.w-6)+'" y2="10"/>'
-      + '<line class="dtmed" x1="'+axisD.x+'" y1="3" x2="'+axisD.x+'" y2="17"/>'
-      + '<circle class="dtdot '+cls+'" cx="'+d.x+'" cy="10" r="5"/>'
-      + '</svg></div></div>';
-  }).join('');
-  return head + rows;
+// Where this measure sits against the cohort, 0-100, right in the row that
+// already has the number -- a separate chart view (spider, then a full-width
+// dot-plot) was tried first and both were worse than just putting the
+// position next to the figure it describes. Same footprint as a sparkline
+// cell so the column stays one width whichever rows carry which. Direction
+// lives in pct itself (see measureRank): colour only ever asks "above or
+// below the median line," never re-checks which way better pointed.
+function cohortMiniDot(m, better, tipLabel, fmtf){
+  var w = 72, h = 22, pad = 5, mid = w/2;
+  if(m.pct == null) return '<svg class="spark" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"></svg>';
+  var x = pad + (m.pct/100)*(w-2*pad);
+  var cls = better === 0 ? 'neutral' : (m.pct >= 50 ? 'good' : 'crit');
+  var tip = tipLabel+'||This company '+fmtf(m.v)
+    + '||Sector median '+(m.med==null?'—':fmtf(m.med))
+    + '||Rank '+m.rank+' of '+m.total;
+  return '<svg class="spark" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" data-tip="'+tip+'">'
+    + '<line class="dtbase" x1="'+pad+'" y1="11" x2="'+(w-pad)+'" y2="11"/>'
+    + '<line class="dtmed" x1="'+mid+'" y1="4" x2="'+mid+'" y2="18"/>'
+    + '<circle class="dtdot '+cls+'" cx="'+x+'" cy="11" r="4"/>'
+    + '</svg>';
 }
 
 // Shared by both cascades: a bar walks from .from to .to, 'total' bars reset
@@ -3719,22 +3689,6 @@ function sparkbars(vals){
   return '<svg class="spark" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">'+baseline+bars+'</svg>';
 }
 
-// Year on year, one figure per quarter -- this quarter's cumulative against the
-// same quarter's cumulative a year earlier, the same comparison _growth() makes
-// for the single latest quarter, just repeated across the window instead of
-// keeping only its last point. Needs a same quarter four slots back, so only
-// the newest four of the eight columns can carry it; the older four are blank,
-// not zero, since there is nothing before this window to compare them to.
-function growthSeries(qs, col){
-  var cols = qs.slice(-8);
-  return cols.map(function(q, i){
-    var p = cols[i-4];
-    if(i < 4 || !p || p.q !== q.q) return null;
-    var cur = q[col+'_cum'], prev = p[col+'_cum'];
-    return (cur == null || prev == null || !(prev > 0)) ? null : cur/prev - 1;
-  });
-}
-
 // baseKey names the line that reads as 100% -- revenue for the income
 // statement, total assets for the balance sheet -- and oneUnit (the shared
 // NPR/Common size toggle) decides whether it is applied at all. A line
@@ -3800,7 +3754,6 @@ var oneFallIx = null;
 var oneIncView = 'q';         // 'q' = discrete quarter, 'c' = year-to-date as filed
 var oneUnit = 'abs';          // 'abs' = NPR million, 'pct' = common size
 var oneCascView = 'single';   // 'single' = one quarter's cascade, 'delta' = bridged against the last
-var oneRatView = 'table';     // 'table' = the sortable table, 'chart' = the percentile dot-plot
 function renderOne(){
   var host = document.getElementById('oneBody'); if(!host) return;
   if(!oneTk){ host.innerHTML = ''; return; }
@@ -3907,18 +3860,6 @@ function renderOne(){
              ['rpm','Register revenue per MW', function(v){return fmt(v,1);}, 1],
              ['yoy_rev','Energy sales, year on year', function(v){return pct(v,0);}, 1],
              ['yoy_pat','Profit, year on year', function(v){return pct(v,0);}, 1]];
-  var ratTable = '<div class="ywrap" style="padding-left:0"><table class="ytab sortable"><thead><tr>'
-    + '<th tabindex="0">Measure</th><th class="n" tabindex="0">This company</th>'
-    + '<th class="n" tabindex="0">Sector median</th>'
-    + '<th class="n" tabindex="0">Rank</th><th class="n">Trend</th></tr></thead><tbody>'
-    + RAT.map(function(k){
-        var spark = k[0] === 'yoy_rev' ? sparkbars(growthSeries(qs, 'EnergySales'))
-                  : k[0] === 'yoy_pat' ? sparkbars(growthSeries(qs, 'ProfitAfterTax'))
-                  : '';
-        return '<tr><td>'+k[1]+'</td>'+vsMed(r, k[0], k[2], k[3])
-          + '<td class="n spark-cell">'+spark+'</td></tr>'; }).join('')
-    + '</tbody></table></div>';
-  var ratChart = '<div class="ywrap" style="padding-left:0">'+cohortDotplot(r, RAT)+'</div>';
   out.push('<div class="card" style="margin-top:18px">'
     + '<div class="ctitle">Against the cohort</div>'
     + '<div class="csub">'
@@ -3931,18 +3872,21 @@ function renderOne(){
     + 'measure&rsquo;s own direction &mdash; so first on debt to assets is the least '
     + 'indebted. Distance from the capacity line carries no colour and no direction: '
     + 'above it is dear and below it cheap, and which of those is good is a judgment, '
-    + 'not a fact. <b>Trend</b> is filled in only for the two growth rows -- year on '
-    + 'year, one bar per quarter, for however many of the eight quarters have a same '
-    + 'quarter a year back to compare against; the other measures have no quarterly '
-    + 'series behind them here, so their trend cell is left blank rather than guessed. '
-    + '<b>Chart</b> turns the same rank into a 0&ndash;100 position and plots every '
-    + 'measure on one shared scale, dot right of the median line is the better side '
-    + '(already accounting for each measure&rsquo;s own direction), left is the worse '
-    + 'one &mdash; except the capacity-line row, which stays neutral for the same reason '
-    + 'it stays uncoloured in the table.</div>'
-    + '<div class="btnrow" id="oneRatBtns"></div>'
-    + (oneRatView === 'chart' ? ratChart : ratTable)
-    + '</div>');
+    + 'not a fact. <b>Percentile</b> is the same rank redrawn as a 0&ndash;100 position, '
+    + 'dot right of the line is the better side (already accounting for each '
+    + 'measure&rsquo;s own direction), left is the worse one &mdash; except the '
+    + 'capacity-line row, which stays neutral for the same reason it stays uncoloured '
+    + 'in the columns beside it.</div>'
+    + '<div class="ywrap" style="padding-left:0"><table class="ytab sortable"><thead><tr>'
+    + '<th tabindex="0">Measure</th><th class="n" tabindex="0">This company</th>'
+    + '<th class="n" tabindex="0">Sector median</th>'
+    + '<th class="n" tabindex="0">Rank</th><th class="n">Percentile</th></tr></thead><tbody>'
+    + RAT.map(function(k){
+        var m = measureRank(r, k[0], k[3]);
+        var dot = cohortMiniDot(m, k[3], k[1], k[2]);
+        return '<tr><td>'+k[1]+'</td>'+vsMed(m, k[2], k[3])
+          + '<td class="n spark-cell">'+dot+'</td></tr>'; }).join('')
+    + '</tbody></table></div></div>');
 
   // ── eight quarters of its own, and the cascade beside it -- half width
   // each rather than full width stacked, since neither needs the whole row:
@@ -4025,8 +3969,6 @@ function renderOne(){
     btnRow('oneUnitBtns', [['abs','NPR million'],['pct','Common size']], oneUnit,
            function(k){ oneUnit = k; renderOne(); });
   }
-  btnRow('oneRatBtns', [['table','Table'],['chart','Chart']], oneRatView,
-         function(k){ oneRatView = k; renderOne(); });
   var c = document.getElementById('oneCount');
   if(c) c.textContent = (D.co.rows.map(function(x){return x.tk;}).indexOf(oneTk)+1)
       + ' of ' + D.co.rows.length;
