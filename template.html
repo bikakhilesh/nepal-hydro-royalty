@@ -3669,36 +3669,23 @@ function vsMed(r, key, fmtf, better){
        + '<td class="n '+cls+'">'+rank+' of '+all.length+'</td>';
 }
 
-function oneCascade(r, q){
-  if(!q || !D.co.cascade) return '';
-  var lines = D.co.cascade.filter(function(c){ return q[c[0]] != null; });
-  if(lines.length < 4) return '';
+// Shared by both cascades: a bar walks from .from to .to, 'total' bars reset
+// to zero rather than continuing the run, 'gap' bars mark whatever a chain
+// did not close on its own. Neither bar-building function needs to know how
+// any of that gets drawn.
+function cascadeSvg(bars, ariaLabel){
   var W = 1020, H = 300, m = {t:16,r:16,b:64,l:56};
   var iw = W-m.l-m.r, ih = H-m.t-m.b;
-  // The running total is rebuilt from the signed lines, but every subtotal is
-  // drawn at its own filed value rather than at the accumulation -- and where the
-  // two disagree the difference is its own bar rather than absorbed quietly.
-  var run = 0, bars = [];
-  lines.forEach(function(c){
-    var name = c[0], sign = c[1], lab = c[2], v = q[name];
-    if(sign === 0){
-      if(Math.abs(run - v) > 0.05 && bars.length)
-        bars.push({lab:'unreconciled', from:run, to:v, v:v-run, kind:'gap'});
-      bars.push({lab:lab, from:0, to:v, v:v, kind:'total'});
-      run = v;
-    } else {
-      var to = run + sign*v;
-      bars.push({lab:lab, from:run, to:to, v:sign*v, kind:'step'});
-      run = to;
-    }
-  });
   var lo = 0, hi = 0;
   bars.forEach(function(b){ lo = Math.min(lo,b.from,b.to); hi = Math.max(hi,b.from,b.to); });
+  // A quarter filed as literally all zero (seen on KHPL) leaves every bar
+  // flat at 0 -- lo and hi never separate, and scaling by a zero range is a
+  // division by zero, not a flat line. Nothing here is a chart yet.
+  if(hi === lo) return '';
   var pad = (hi-lo)*0.06; hi += pad; lo -= pad;
   var Y = function(v){ return m.t + ih - (v-lo)/(hi-lo)*ih; };
   var bw = iw/bars.length;
-  var out = ['<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="'
-    + 'Income statement as a cascade for '+r.tk+'">'];
+  var out = ['<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="'+ariaLabel+'">'];
   for(var i=0;i<=4;i++){
     var gv = lo + (hi-lo)*i/4;
     out.push('<line x1="'+m.l+'" x2="'+(m.l+iw)+'" y1="'+Y(gv)+'" y2="'+Y(gv)
@@ -3725,6 +3712,61 @@ function oneCascade(r, q){
   });
   out.push('</svg>');
   return out.join('');
+}
+
+function oneCascade(r, q){
+  if(!q || !D.co.cascade) return '';
+  var lines = D.co.cascade.filter(function(c){ return q[c[0]] != null; });
+  if(lines.length < 4) return '';
+  // The running total is rebuilt from the signed lines, but every subtotal is
+  // drawn at its own filed value rather than at the accumulation -- and where the
+  // two disagree the difference is its own bar rather than absorbed quietly.
+  var run = 0, bars = [];
+  lines.forEach(function(c){
+    var name = c[0], sign = c[1], lab = c[2], v = q[name];
+    if(sign === 0){
+      if(Math.abs(run - v) > 0.05 && bars.length)
+        bars.push({lab:'unreconciled', from:run, to:v, v:v-run, kind:'gap'});
+      bars.push({lab:lab, from:0, to:v, v:v, kind:'total'});
+      run = v;
+    } else {
+      var to = run + sign*v;
+      bars.push({lab:lab, from:run, to:to, v:sign*v, kind:'step'});
+      run = to;
+    }
+  });
+  return cascadeSvg(bars, 'Income statement as a cascade for '+r.tk);
+}
+
+// A different question from oneCascade: not how a quarter's own filing adds
+// up, but what moved between two of them. Bridges Prior Net Profit to This
+// Quarter's Net Profit through the *change* in each driver line -- a cost
+// that grew still draws red, since it still cut into profit, exactly the
+// convention oneCascade already uses for a rise in an expense line. Built
+// from leaf lines only (sign !== 0): a subtotal's own change is just the sum
+// of the leaf changes beneath it, so stepping through it too would double
+// count. Skips a line missing from either quarter rather than guessing at a
+// value that was never filed, and where the leaf deltas do not fully close
+// the gap between the two totals -- because something was skipped, or a line
+// is filed under one quarter and not the other -- the remainder is its own
+// bar rather than silently folded into whichever line happened to be last.
+function oneCascadeDelta(r, qPrev, qCur){
+  if(!qPrev || !qCur || !D.co.cascade) return '';
+  var steps = D.co.cascade.filter(function(c){ return c[1] !== 0; });
+  var start = qPrev.ProfitAfterTax, end = qCur.ProfitAfterTax;
+  if(start == null || end == null) return '';
+  var run = start, bars = [{lab:qPrev.y+' Q'+qPrev.q, from:0, to:start, v:start, kind:'total'}];
+  steps.forEach(function(c){
+    var name = c[0], sign = c[1], lab = c[2], a = qPrev[name], b = qCur[name];
+    if(a == null || b == null) return;
+    var d = sign*(b-a), to = run + d;
+    bars.push({lab:lab, from:run, to:to, v:d, kind:'step'});
+    run = to;
+  });
+  if(Math.abs(run - end) > 0.05)
+    bars.push({lab:'other', from:run, to:end, v:end-run, kind:'gap'});
+  bars.push({lab:qCur.y+' Q'+qCur.q, from:0, to:end, v:end, kind:'total'});
+  return cascadeSvg(bars, 'Change in net profit, quarter on quarter, for '+r.tk);
 }
 
 // Bars, not a line: a filed figure is a discrete quarter, not a continuous
@@ -3884,32 +3926,6 @@ function renderOne(){
       + '<div class="ywrap" style="padding-left:0">' + coHist(r) + '</div></div>');
   }
 
-  // ── eight quarters of its own
-  if(qs.length >= 3){
-    out.push('<figure class="card" style="margin-top:18px">'
-      + '<figcaption><div class="ctitle">Eight quarters of its own</div>'
-      + '<div class="csub">Discrete quarters, not the cumulative figures as filed. '
-      + 'NPR million.</div></figcaption>'
-      + '<div class="chart" id="c-oneq"></div>'
-      + '<div class="legend"><span><i style="background:var(--s1)"></i>Energy sales</span>'
-      + '<span><i style="background:var(--s3)"></i>Operating profit</span>'
-      + '<span><i style="background:var(--s2)"></i>Profit after tax</span></div></figure>');
-  }
-
-  // ── the cascade
-  if(qs.length){
-    out.push('<figure class="card" style="margin-top:18px">'
-      + '<figcaption><div class="ctitle">How one quarter&rsquo;s income becomes profit</div>'
-      + '<div class="csub">Each bar starts where the last ended; green adds, red '
-      + 'subtracts, and the wider bars are the subtotals the statement itself reports. '
-      + '<b>Every subtotal is checked against its own filed column</b> rather than '
-      + 'accumulated and trusted &mdash; where the chain does not close the difference '
-      + 'is drawn as its own bar marked <i>unreconciled</i> rather than absorbed. One '
-      + 'discrete quarter, NPR million, never a year to date.</div></figcaption>'
-      + '<div class="btnrow" id="oneFallBtns"></div>'
-      + '<div class="chart">'+oneCascade(r, qs[ix])+'</div></figure>');
-  }
-
   // ── statements
   // EPS and book value ride along on the same two tables rather than a third:
   // EPS is what Net Profit becomes per share, so it belongs directly under it;
@@ -4004,6 +4020,58 @@ function renderOne(){
         return '<tr><td>'+k[1]+'</td>'+vsMed(r, k[0], k[2], k[3])
           + '<td class="n spark-cell">'+spark+'</td></tr>'; }).join('')
     + '</tbody></table></div></div>');
+
+  // ── eight quarters of its own
+  if(qs.length >= 3){
+    out.push('<figure class="card" style="margin-top:18px">'
+      + '<figcaption><div class="ctitle">Eight quarters of its own</div>'
+      + '<div class="csub">Discrete quarters, not the cumulative figures as filed. '
+      + 'NPR million.</div></figcaption>'
+      + '<div class="chart" id="c-oneq"></div>'
+      + '<div class="legend"><span><i style="background:var(--s1)"></i>Energy sales</span>'
+      + '<span><i style="background:var(--s3)"></i>Operating profit</span>'
+      + '<span><i style="background:var(--s2)"></i>Profit after tax</span></div></figure>');
+  }
+
+  // ── the cascade
+  if(qs.length){
+    var cascadeChart = oneCascade(r, qs[ix]);
+    out.push('<figure class="card" style="margin-top:18px">'
+      + '<figcaption><div class="ctitle">How one quarter&rsquo;s income becomes profit</div>'
+      + '<div class="csub">Each bar starts where the last ended; green adds, red '
+      + 'subtracts, and the wider bars are the subtotals the statement itself reports. '
+      + '<b>Every subtotal is checked against its own filed column</b> rather than '
+      + 'accumulated and trusted &mdash; where the chain does not close the difference '
+      + 'is drawn as its own bar marked <i>unreconciled</i> rather than absorbed. One '
+      + 'discrete quarter, NPR million, never a year to date.</div></figcaption>'
+      + '<div class="btnrow" id="oneFallBtns"></div>'
+      + (cascadeChart ? '<div class="chart">'+cascadeChart+'</div>'
+          : '<p class="csub" style="margin:12px 0 0">This quarter filed as all zero '
+            + '&mdash; nothing to chart. Pick another quarter above.</p>')
+      + '</figure>');
+  }
+
+  // ── the same cascade, but quarter on quarter: what moved, not what makes it
+  // up. Shares the picker above rather than its own -- "this quarter" means
+  // the same thing in both charts -- and bridges against whichever quarter
+  // sits right before it in this eight-quarter window.
+  if(qs.length && ix > 0){
+    var deltaChart = oneCascadeDelta(r, qs[ix-1], qs[ix]);
+    if(deltaChart)
+      out.push('<figure class="card" style="margin-top:18px">'
+        + '<figcaption><div class="ctitle">How the quarter changed, quarter on quarter</div>'
+        + '<div class="csub">Same convention as above, but bridging two quarters instead '
+        + 'of building up one: each bar is the <i>change</i> in that line from the '
+        + 'previous quarter to this one, so a cost that grew still draws red -- it still '
+        + 'cut into profit, whichever direction is otherwise good news for the company. '
+        + 'Subtotals are not stepped through a second time, since a subtotal&rsquo;s own '
+        + 'change is just its leaf lines&rsquo; changes added up. Where those leaf changes '
+        + 'do not fully bridge the two filed profit figures -- a line filed one quarter '
+        + 'and not the other, most often -- the remainder is its own bar marked '
+        + '<i>other</i> rather than folded into whichever line happened to be last.'
+        + '</div></figcaption>'
+        + '<div class="chart">'+deltaChart+'</div></figure>');
+  }
 
   // ── dividends
   out.push('<div class="card" style="margin-top:18px">'
