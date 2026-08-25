@@ -3843,7 +3843,8 @@ function renderOne(){
   // EPSann is not part of the toggle -- it is a third framing, not a choice
   // between the other two, so it shows the same in both views.
   var incLines = D.co.cascade.map(function(c){ return [c[0]+cSuf, c[2], c[1]===0]; })
-    .concat([['EPSq'+cSuf, 'Earnings per Share', false, 2],
+    .concat([['EPSq'+cSuf, oneIncView==='c' ? 'EPS, Cumulative (non-annualized)'
+                                             : 'EPS, Qtr Only (non-annualized)', false, 2],
               ['EPSann', 'EPS, Annualized (naive)', false, 2]]);
   var bsLines = D.co.bs.concat([['BookValue', 'Book Value per Share', false, 2]]);
   var inc = oneQuarterTable(qs, incLines,
@@ -3854,7 +3855,7 @@ function renderOne(){
   var bs  = oneQuarterTable(qs, bsLines, 'Balance sheet as filed, NPR million', 0);
   if(inc || bs)
     out.push('<div class="card" style="margin-top:18px">'
-      + '<div class="ctitle">Five quarters, as filed and as differenced</div>'
+      + '<div class="ctitle">Eight quarters, as filed and as differenced</div>'
       + '<div class="csub">Balance-sheet lines are always point in time, shown as filed. '
       + 'Income lines the register carries cumulative, year to date, resetting at Q1 -- '
       + '<b>Qtr only</b> differences them to what that quarter alone earned (blank where '
