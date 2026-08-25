@@ -4022,22 +4022,27 @@ function renderOne(){
           + '<td class="n spark-cell">'+spark+'</td></tr>'; }).join('')
     + '</tbody></table></div></div>');
 
-  // ── eight quarters of its own
+  // ── eight quarters of its own, and the cascade beside it -- half width
+  // each rather than full width stacked, since neither needs the whole row:
+  // one is a small line chart, the other a bar chart that scales fine down
+  // to half size (the viewBox is fixed and fills whatever width it is given).
+  var oneqCard = '';
   if(qs.length >= 3){
-    out.push('<figure class="card" style="margin-top:18px">'
+    oneqCard = '<figure class="card">'
       + '<figcaption><div class="ctitle">Eight quarters of its own</div>'
       + '<div class="csub">Discrete quarters, not the cumulative figures as filed. '
       + 'NPR million.</div></figcaption>'
       + '<div class="chart" id="c-oneq"></div>'
       + '<div class="legend"><span><i style="background:var(--s1)"></i>Energy sales</span>'
       + '<span><i style="background:var(--s3)"></i>Operating profit</span>'
-      + '<span><i style="background:var(--s2)"></i>Profit after tax</span></div></figure>');
+      + '<span><i style="background:var(--s2)"></i>Profit after tax</span></div></figure>';
   }
 
-  // ── the cascade -- one quarter's own build-up, or that quarter bridged
+  // The cascade -- one quarter's own build-up, or that quarter bridged
   // against the one before it. One card: same picker, same visual grammar
   // (bars starting where the last ended, green adds, red subtracts), just two
   // different questions about the quarter the picker above has selected.
+  var cascCard = '';
   if(qs.length){
     var cascDelta = ix > 0 ? oneCascadeDelta(r, qs[ix-1], qs[ix]) : '';
     var cascadeChart = oneCascView === 'delta' ? cascDelta : oneCascade(r, qs[ix]);
@@ -4063,15 +4068,17 @@ function renderOne(){
       ? (ix > 0 ? 'Nothing to bridge for this pair of quarters. Pick another quarter above.'
                 : 'No prior quarter in this window to bridge against. Pick a later quarter above.')
       : 'This quarter filed as all zero &mdash; nothing to chart. Pick another quarter above.';
-    out.push('<figure class="card" style="margin-top:18px">'
+    cascCard = '<figure class="card">'
       + '<figcaption><div class="ctitle">'+cascTitle+'</div>'
       + '<div class="csub">'+cascSub+'</div></figcaption>'
       + '<div class="btnrow" id="oneFallBtns"></div>'
       + '<div class="btnrow" id="oneCascBtns"></div>'
       + (cascadeChart ? '<div class="chart">'+cascadeChart+'</div>'
           : '<p class="csub" style="margin:12px 0 0">'+cascFallback+'</p>')
-      + '</figure>');
+      + '</figure>';
   }
+  if(oneqCard || cascCard)
+    out.push('<div class="grid2" style="margin-top:18px">'+oneqCard+cascCard+'</div>');
 
   // ── dividends
   out.push('<div class="card" style="margin-top:18px">'
