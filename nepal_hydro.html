@@ -3887,6 +3887,7 @@ function oneQuarterTable(qs, lines, label, nd, flagKey, baseKey){
 var oneFallIx = null;
 var oneIncView = 'q';         // 'q' = discrete quarter, 'c' = year-to-date as filed
 var oneUnit = 'abs';          // 'abs' = NPR million, 'pct' = common size
+var oneCascView = 'single';   // 'single' = one quarter's cascade, 'delta' = bridged against the last
 function renderOne(){
   var host = document.getElementById('oneBody'); if(!host) return;
   if(!oneTk){ host.innerHTML = ''; return; }
@@ -4033,44 +4034,43 @@ function renderOne(){
       + '<span><i style="background:var(--s2)"></i>Profit after tax</span></div></figure>');
   }
 
-  // ── the cascade
+  // ── the cascade -- one quarter's own build-up, or that quarter bridged
+  // against the one before it. One card: same picker, same visual grammar
+  // (bars starting where the last ended, green adds, red subtracts), just two
+  // different questions about the quarter the picker above has selected.
   if(qs.length){
-    var cascadeChart = oneCascade(r, qs[ix]);
-    out.push('<figure class="card" style="margin-top:18px">'
-      + '<figcaption><div class="ctitle">How one quarter&rsquo;s income becomes profit</div>'
-      + '<div class="csub">Each bar starts where the last ended; green adds, red '
-      + 'subtracts, and the wider bars are the subtotals the statement itself reports. '
-      + '<b>Every subtotal is checked against its own filed column</b> rather than '
-      + 'accumulated and trusted &mdash; where the chain does not close the difference '
-      + 'is drawn as its own bar marked <i>unreconciled</i> rather than absorbed. One '
-      + 'discrete quarter, NPR million, never a year to date.</div></figcaption>'
-      + '<div class="btnrow" id="oneFallBtns"></div>'
-      + (cascadeChart ? '<div class="chart">'+cascadeChart+'</div>'
-          : '<p class="csub" style="margin:12px 0 0">This quarter filed as all zero '
-            + '&mdash; nothing to chart. Pick another quarter above.</p>')
-      + '</figure>');
-  }
-
-  // ── the same cascade, but quarter on quarter: what moved, not what makes it
-  // up. Shares the picker above rather than its own -- "this quarter" means
-  // the same thing in both charts -- and bridges against whichever quarter
-  // sits right before it in this eight-quarter window.
-  if(qs.length && ix > 0){
-    var deltaChart = oneCascadeDelta(r, qs[ix-1], qs[ix]);
-    if(deltaChart)
-      out.push('<figure class="card" style="margin-top:18px">'
-        + '<figcaption><div class="ctitle">How the quarter changed, quarter on quarter</div>'
-        + '<div class="csub">Same convention as above, but bridging two quarters instead '
-        + 'of building up one: each bar is the <i>change</i> in that line from the '
-        + 'previous quarter to this one, so a cost that grew still draws red -- it still '
-        + 'cut into profit, whichever direction is otherwise good news for the company. '
-        + 'Subtotals are not stepped through a second time, since a subtotal&rsquo;s own '
-        + 'change is just its leaf lines&rsquo; changes added up. Where those leaf changes '
-        + 'do not fully bridge the two filed profit figures -- a line filed one quarter '
+    var cascDelta = ix > 0 ? oneCascadeDelta(r, qs[ix-1], qs[ix]) : '';
+    var cascadeChart = oneCascView === 'delta' ? cascDelta : oneCascade(r, qs[ix]);
+    var cascTitle = oneCascView === 'delta' ? 'How the quarter changed, quarter on quarter'
+                                             : 'How one quarter&rsquo;s income becomes profit';
+    var cascSub = oneCascView === 'delta'
+      ? ('Bridging two quarters instead of building up one: each bar is the '
+        + '<i>change</i> in that line from the previous quarter to this one, so a '
+        + 'cost that grew still draws red -- it still cut into profit, whichever '
+        + 'direction is otherwise good news for the company. Subtotals are not '
+        + 'stepped through a second time, since a subtotal&rsquo;s own change is '
+        + 'just its leaf lines&rsquo; changes added up. Where those leaf changes do '
+        + 'not fully bridge the two filed profit figures -- a line filed one quarter '
         + 'and not the other, most often -- the remainder is its own bar marked '
-        + '<i>other</i> rather than folded into whichever line happened to be last.'
-        + '</div></figcaption>'
-        + '<div class="chart">'+deltaChart+'</div></figure>');
+        + '<i>other</i> rather than folded into whichever line happened to be last.')
+      : ('Each bar starts where the last ended; green adds, red '
+        + 'subtracts, and the wider bars are the subtotals the statement itself reports. '
+        + '<b>Every subtotal is checked against its own filed column</b> rather than '
+        + 'accumulated and trusted &mdash; where the chain does not close the difference '
+        + 'is drawn as its own bar marked <i>unreconciled</i> rather than absorbed. One '
+        + 'discrete quarter, NPR million, never a year to date.');
+    var cascFallback = oneCascView === 'delta'
+      ? (ix > 0 ? 'Nothing to bridge for this pair of quarters. Pick another quarter above.'
+                : 'No prior quarter in this window to bridge against. Pick a later quarter above.')
+      : 'This quarter filed as all zero &mdash; nothing to chart. Pick another quarter above.';
+    out.push('<figure class="card" style="margin-top:18px">'
+      + '<figcaption><div class="ctitle">'+cascTitle+'</div>'
+      + '<div class="csub">'+cascSub+'</div></figcaption>'
+      + '<div class="btnrow" id="oneFallBtns"></div>'
+      + '<div class="btnrow" id="oneCascBtns"></div>'
+      + (cascadeChart ? '<div class="chart">'+cascadeChart+'</div>'
+          : '<p class="csub" style="margin:12px 0 0">'+cascFallback+'</p>')
+      + '</figure>');
   }
 
   // ── dividends
@@ -4089,6 +4089,8 @@ function renderOne(){
   if(qs.length){
     btnRow('oneFallBtns', qs.map(function(q,i){ return [i, q.y+' Q'+q.q]; }), ix,
            function(k){ oneFallIx = k; renderOne(); });
+    btnRow('oneCascBtns', [['single','This quarter'],['delta','Quarter on quarter']], oneCascView,
+           function(k){ oneCascView = k; renderOne(); });
     btnRow('oneIncBtns', [['q','Qtr only'],['c','Cumulative']], oneIncView,
            function(k){ oneIncView = k; renderOne(); });
     btnRow('oneUnitBtns', [['abs','NPR million'],['pct','Common size']], oneUnit,
