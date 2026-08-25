@@ -331,7 +331,7 @@ details.tv th{cursor:default}
    Given a floor it scrolls inside .chart, which is what that container's
    overflow-x is for. */
 #c-gap svg{min-width:700px}
-#c-ret svg,#c-growth svg,#c-payable svg{min-width:400px}
+#c-ret svg,#c-payable svg{min-width:400px}
 #c-oneq svg{min-width:700px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
   background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden;
@@ -932,27 +932,18 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <div class="chart" id="c-gap"></div>
     </figure>
 
-    <div class="grid2" style="margin-top:18px">
-      <figure class="card">
-        <figcaption><div class="ctitle">Growth, against a year ago</div>
-        <div class="csub">The latest filed quarter against the same quarter a year
-          earlier, so the seasonality of a cumulative filing cancels rather than
-          distorting the number.</div></figcaption>
-        <div class="btnrow" id="grBtns"></div>
-        <div class="chart" id="c-growth"></div>
-      </figure>
-      <figure class="card">
-        <figcaption><div class="ctitle">What could be paid out</div>
-        <div class="csub">Retained earnings against paid-up capital &mdash; the dividend
-          a company could declare from what has actually accumulated. <b>Not
-          annualised:</b> retained earnings is a balance, not a quarter's earning. Nepal
-          quotes a dividend as a percentage of paid-up at NPR 100 par, so the percentage
-          and the rupee figure are the same statement. <b>A negative bar is an
-          accumulated loss</b> and means nothing can be paid from this line however
-          profitable the quarter was.</div></figcaption>
-        <div class="chart" id="c-payable"></div>
-      </figure>
-    </div>
+    <figure class="card" style="margin-top:18px">
+      <figcaption><div class="ctitle">What could be paid out</div>
+      <div class="csub">Retained earnings against paid-up capital &mdash; the dividend
+        a company could declare from what has actually accumulated, in NPR per share.
+        <b>Not annualised:</b> retained earnings is a balance, not a quarter's earning.
+        Nepal quotes a dividend as a percentage of paid-up at NPR 100 par, so that
+        percentage is also the rupee figure per share. <b>Positive only</b> --
+        a company with an accumulated loss instead of reserves has nothing to pay
+        from this line however profitable the quarter was, and does not rank
+        alongside the ones that do.</div></figcaption>
+      <div class="chart" id="c-payable"></div>
+    </figure>
 
     <figure class="card" style="margin-top:18px">
       <figcaption><div class="ctitle">Every ratio</div>
@@ -3420,24 +3411,18 @@ function chartGap(){
   });
 }
 
-// ---- growth and payout ----------------------------------------------------
-var grKey = 'yoy_rev';
-function chartGrowth(){
-  if(!MK()) return;
-  btnRow('grBtns', [['yoy_rev','Energy sales'],['yoy_pat','Profit after tax']], grKey,
-         function(k){ grKey = k; chartGrowth(); });
-  rankBars('c-growth', grKey, function(v){ return (100*v).toFixed(0)+'%'; },
-           'Year on year, latest filed quarter');
-}
+// ---- payout ----------------------------------------------------------------
 function chartPayable(){
   if(!MK()) return;
-  rankBars('c-payable', 'payable', function(v){ return v.toFixed(0)+'%'; },
-           'Retained earnings as a percentage of paid-up capital');
+  rankBars('c-payable', 'payable', function(v){ return 'NPR '+v.toFixed(0); },
+           'Retained earnings per share, companies with something to pay only',
+           function(v){ return v > 0; });
 }
-// one shape, used by both: every company that has the measure, ranked, zero ruled
-function rankBars(mount, key, lab, aria){
-  var d = D.co.rows.filter(function(r){ return r[key] != null && isFinite(r[key]); })
-                   .sort(function(a,b){ return b[key] - a[key]; });
+// every company that has the measure (and passes filter, if given), ranked, zero ruled
+function rankBars(mount, key, lab, aria, filter){
+  var d = D.co.rows.filter(function(r){
+    return r[key] != null && isFinite(r[key]) && (!filter || filter(r[key]));
+  }).sort(function(a,b){ return b[key] - a[key]; });
   if(d.length < 3){
     var host = document.getElementById(mount);
     if(host) host.innerHTML = '<p class="csub" style="margin:0">Not enough companies '
@@ -4107,7 +4092,7 @@ function drawLTab(){
   if(lTab === 'reg'){ renderCo(); chartAgree(); chartCut(); chartPlf(); chartVal(); }
   else if(lTab === 'mkt'){ scrNote(); mkTiles(); chartRet(); chartRisk();
                            renderTech(); renderScreen(); }
-  else if(lTab === 'val'){ chartCapFit(); chartPbRoe(); chartGap(); chartGrowth();
+  else if(lTab === 'val'){ chartCapFit(); chartPbRoe(); chartGap();
                            chartPayable(); renderRatio(); }
   else { renderOne(); }
 }
