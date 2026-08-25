@@ -388,22 +388,50 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 
 <section id="sec-checks">
   <div class="shead"><span class="snum">01</span><h2>What the billing data confirms</h2></div>
-  <p class="sdek">Four checks the monthly billing data holds up against on its own: an age-based
-    rate threshold, the seasonal shape of generation and price, a decade of fleet growth, and a
+  <p class="sdek">Four checks the monthly billing data holds up against on its own: the seasonal
+    shape of generation and price, an age-based rate threshold, a decade of fleet growth, and a
     listed company&rsquo;s own reported revenue. Switch between them below.</p>
 
   <div class="tabs" role="tablist" aria-label="Billing-data checks">
-    <button role="tab" id="btab-thresh" aria-controls="bpanel-thresh" aria-selected="true">
-      Fifteen-year threshold</button>
-    <button role="tab" id="btab-season" aria-controls="bpanel-season" aria-selected="false" tabindex="-1">
+    <button role="tab" id="btab-season" aria-controls="bpanel-season" aria-selected="true">
       Output and price</button>
+    <button role="tab" id="btab-thresh" aria-controls="bpanel-thresh" aria-selected="false" tabindex="-1">
+      Fifteen-year threshold</button>
     <button role="tab" id="btab-growth" aria-controls="bpanel-growth" aria-selected="false" tabindex="-1">
       Fleet growth</button>
     <button role="tab" id="btab-recon" aria-controls="bpanel-recon" aria-selected="false" tabindex="-1">
       Register vs. a listed company</button>
   </div>
 
-  <div id="bpanel-thresh" role="tabpanel" aria-labelledby="btab-thresh">
+  <div id="bpanel-season" role="tabpanel" aria-labelledby="btab-season">
+    <h3 class="subhead">Output and price move in opposite directions</h3>
+    <p class="sdek">Nepal's fleet is overwhelmingly run-of-river, so generation tracks the monsoon: it
+      peaks in Aswin and falls through the winter to barely a fifth of nameplate by Falgun. The power
+      purchase tariff is built to counteract exactly that, paying a steep dry-season premium in the four
+      months when the rivers are lowest.</p>
+
+    <div class="grid2">
+      <figure class="card">
+        <figcaption><div class="ctitle">Capacity factor by Nepali month</div>
+        <div class="csub">Median across all plant-months; band shows the interquartile range</div></figcaption>
+        <div class="chart" id="c-season"></div>
+      </figure>
+      <figure class="card">
+        <figcaption><div class="ctitle">Power purchase tariff by Nepali month</div>
+        <div class="csub">Median rate paid to generators, NPR per kWh</div></figcaption>
+        <div class="chart" id="c-rate"></div>
+        <div class="legend">
+          <span><i style="background:var(--s1)"></i>Wet-season rate</span>
+          <span><i style="background:var(--s2)"></i>Dry-season rate</span>
+        </div>
+      </figure>
+    </div>
+    <div class="note"><b>A 70% dry-season premium.</b> The tariff holds near NPR 4.94/kWh from Baisakh
+      through Mangsir, then jumps to exactly NPR 8.40/kWh for Poush, Magh, Falgun and Chaitra &mdash; the four
+      months when median capacity factor sits between 0.22 and 0.33.</div>
+  </div>
+
+  <div id="bpanel-thresh" role="tabpanel" aria-labelledby="btab-thresh" hidden>
     <h3 class="subhead">The fifteen-year threshold, verified against the register</h3>
     <p class="sdek">The register carries a commercial operation date for every licensed plant. Joining those
       dates to the assessments turns the pattern above into a testable claim &mdash; and it holds with a
@@ -436,34 +464,6 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     <div class="note warn"><b>The exceptions identify themselves.</b> Aandikhola switches at 25 years,
       not 15 &mdash; and its tariff class is <i>Local R.E Distribution</i>, not the standard seasonal PPA.
       The rule holds for the regime it governs; plants outside that regime sit outside the rule.</div>
-  </div>
-
-  <div id="bpanel-season" role="tabpanel" aria-labelledby="btab-season" hidden>
-    <h3 class="subhead">Output and price move in opposite directions</h3>
-    <p class="sdek">Nepal's fleet is overwhelmingly run-of-river, so generation tracks the monsoon: it
-      peaks in Aswin and falls through the winter to barely a fifth of nameplate by Falgun. The power
-      purchase tariff is built to counteract exactly that, paying a steep dry-season premium in the four
-      months when the rivers are lowest.</p>
-
-    <div class="grid2">
-      <figure class="card">
-        <figcaption><div class="ctitle">Capacity factor by Nepali month</div>
-        <div class="csub">Median across all plant-months; band shows the interquartile range</div></figcaption>
-        <div class="chart" id="c-season"></div>
-      </figure>
-      <figure class="card">
-        <figcaption><div class="ctitle">Power purchase tariff by Nepali month</div>
-        <div class="csub">Median rate paid to generators, NPR per kWh</div></figcaption>
-        <div class="chart" id="c-rate"></div>
-        <div class="legend">
-          <span><i style="background:var(--s1)"></i>Wet-season rate</span>
-          <span><i style="background:var(--s2)"></i>Dry-season rate</span>
-        </div>
-      </figure>
-    </div>
-    <div class="note"><b>A 70% dry-season premium.</b> The tariff holds near NPR 4.94/kWh from Baisakh
-      through Mangsir, then jumps to exactly NPR 8.40/kWh for Poush, Magh, Falgun and Chaitra &mdash; the four
-      months when median capacity factor sits between 0.22 and 0.33.</div>
   </div>
 
   <div id="bpanel-growth" role="tabpanel" aria-labelledby="btab-growth" hidden>
@@ -4113,8 +4113,8 @@ function applyHashRoute(){
 // reasoning as drawLTab(): frame() sizes off a fixed viewBox and never
 // measures the DOM, so a hidden chart would still be correct, but a theme
 // flip while a tab was shut would leave it on the old tokens.
-var bTab = 'thresh';
-var B_TABS = ['thresh','season','growth','recon'];
+var bTab = 'season';
+var B_TABS = ['season','thresh','growth','recon'];
 function showBTab(which){
   bTab = which;
   B_TABS.forEach(function(t){
@@ -4147,7 +4147,7 @@ function wireBTabs(){
       document.getElementById('btab-'+bTab).focus();
     });
   }
-  showBTab('thresh');
+  showBTab('season');
 }
 
 function drawAll(){
