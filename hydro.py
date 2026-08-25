@@ -1745,6 +1745,10 @@ def _quarters(rows):
                     rec[c] = None; continue
                 if c not in flow:                       # a balance is as filed
                     rec[c] = r(float(cum)/1e3, 2); continue
+                # Year-to-date exactly as filed, alongside the discrete figure --
+                # the toggle between them is a display choice, not a second
+                # computation, so both come from this one pass over the row.
+                rec[c + "_cum"] = r(float(cum)/1e3, 2)
                 if t.Quarter == 1:
                     rec[c] = r(float(cum)/1e3, 2)
                 else:
@@ -1778,6 +1782,9 @@ def _quarters(rows):
             pat_q = rec.get("ProfitAfterTax")
             if pat_q is not None and last_shares:
                 rec["EPSq"] = r(pat_q * 1000 / last_shares, 2)   # NPR m -> NPR / (shares in '000)
+            pat_cum = rec.get("ProfitAfterTax_cum")
+            if pat_cum is not None and last_shares:
+                rec["EPSq_cum"] = r(pat_cum * 1000 / last_shares, 2)
 
             # a null costs six bytes a line across 110 tickers by 8 quarters by
             # 25 lines, and the reader treats absent and null the same way

@@ -3763,6 +3763,7 @@ function oneQuarterTable(qs, lines, label, nd, flagKey){
 }
 
 var oneFallIx = null;
+var oneIncView = 'q';         // 'q' = discrete quarter, 'c' = year-to-date as filed
 function renderOne(){
   var host = document.getElementById('oneBody'); if(!host) return;
   if(!oneTk){ host.innerHTML = ''; return; }
@@ -3834,21 +3835,30 @@ function renderOne(){
   // book value is a balance-sheet figure (equity over shares) in everything but
   // scale. Both get their own decimal precision -- 2 places, where the rest of
   // each table runs at 1 or 0.
-  var incLines = D.co.cascade.map(function(c){ return [c[0], c[2], c[1]===0]; })
-    .concat([['EPSq', 'Earnings per Share', false, 2]]);
+  //
+  // The cascade lines carry both a discrete-quarter key (EnergySales) and a
+  // "_cum" one (EnergySales_cum, the figure exactly as filed, year to date) --
+  // the toggle below just picks which key each row reads, not two tables.
+  var cSuf = oneIncView === 'c' ? '_cum' : '';
+  var incLines = D.co.cascade.map(function(c){ return [c[0]+cSuf, c[2], c[1]===0]; })
+    .concat([['EPSq'+cSuf, 'Earnings per Share', false, 2]]);
   var bsLines = D.co.bs.concat([['BookValue', 'Book Value per Share', false, 2]]);
   var inc = oneQuarterTable(qs, incLines,
-                            'Income statement, discrete quarters, NPR million', 1, 'es_suspect');
+                            (oneIncView==='c'
+                              ? 'Income statement, year to date as filed, NPR million'
+                              : 'Income statement, discrete quarters, NPR million'),
+                            1, 'es_suspect');
   var bs  = oneQuarterTable(qs, bsLines, 'Balance sheet as filed, NPR million', 0);
   if(inc || bs)
     out.push('<div class="card" style="margin-top:18px">'
       + '<div class="ctitle">Five quarters, as filed and as differenced</div>'
-      + '<div class="csub">Balance-sheet lines are point in time and shown as filed. '
-      + 'Income lines are differenced to discrete quarters: the filings are cumulative '
-      + 'year to date and reset at Q1, so printing them as filed would show energy sales '
-      + 'collapsing between Q4 and Q1, which is the fiscal year restarting and nothing '
-      + 'else. Where the preceding quarter is missing the cell is blank rather than the '
-      + 'cumulative figure.</div>'
+      + '<div class="csub">Balance-sheet lines are always point in time, shown as filed. '
+      + 'Income lines the register carries cumulative, year to date, resetting at Q1 -- '
+      + '<b>Qtr only</b> differences them to what that quarter alone earned (blank where '
+      + 'the preceding quarter is missing, rather than showing the cumulative figure in '
+      + 'its place); <b>Cumulative</b> shows the running year-to-date total exactly as '
+      + 'filed, the same number on the primary statement.</div>'
+      + '<div class="btnrow" id="oneIncBtns"></div>'
       + '<div class="ywrap" style="padding-left:0">'+inc+'<div style="height:16px"></div>'
       + bs+'</div></div>');
 
@@ -3906,6 +3916,8 @@ function renderOne(){
   if(qs.length){
     btnRow('oneFallBtns', qs.map(function(q,i){ return [i, q.y+' Q'+q.q]; }), ix,
            function(k){ oneFallIx = k; renderOne(); });
+    btnRow('oneIncBtns', [['q','Qtr only'],['c','Cumulative']], oneIncView,
+           function(k){ oneIncView = k; renderOne(); });
   }
   var c = document.getElementById('oneCount');
   if(c) c.textContent = (D.co.rows.map(function(x){return x.tk;}).indexOf(oneTk)+1)
