@@ -74,6 +74,7 @@ section{padding:56px 0;border-bottom:1px solid var(--line-soft)}
   border:1px solid var(--accent);border-radius:3px;padding:2px 7px;flex:none}
 h2{font-size:clamp(21px,2.6vw,27px);font-weight:600;letter-spacing:-.018em}
 .sdek{color:var(--ink-2);max-width:72ch;margin:10px 0 28px;font-size:15.5px}
+h3.subhead{font-family:Archivo,sans-serif;font-size:17px;font-weight:600;letter-spacing:-.01em;margin:0 0 8px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:24px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .grid2>*{min-width:0}
@@ -385,124 +386,179 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 
 <div class="wrap">
 
-<section>
-  <div class="shead"><span class="snum">01</span><h2>The fifteen-year threshold, verified against the register</h2></div>
-  <p class="sdek">The register carries a commercial operation date for every licensed plant. Joining those
-    dates to the assessments turns the pattern above into a testable claim &mdash; and it holds with a
-    sharpness rarely seen in administrative data. Below age 15 essentially no plant pays the high
-    capacity rate; from age 15 essentially all of them do.</p>
+<section id="sec-checks">
+  <div class="shead"><span class="snum">01</span><h2>What the billing data confirms</h2></div>
+  <p class="sdek">Four checks the monthly billing data holds up against on its own: an age-based
+    rate threshold, the seasonal shape of generation and price, a decade of fleet growth, and a
+    listed company&rsquo;s own reported revenue. Switch between them below.</p>
 
-  <div class="grid2">
-    <figure class="card">
-      <figcaption><div class="ctitle">Share on the high capacity rate, by plant age</div>
-      <div class="csub">Every assessed plant-year, grouped by years since commercial operation</div></figcaption>
-      <div class="chart" id="c-age"></div>
-      <div class="legend">
-        <span><i style="background:var(--s1)"></i>Under 15 years</span>
-        <span><i style="background:var(--s2)"></i>15 years and over</span>
-      </div>
-    </figure>
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="padding:24px 24px 14px"><div class="ctitle">Plants caught mid-transition</div>
-      <div class="csub" style="margin-bottom:0">Age at switch, against the recorded COD</div></div>
-      <div class="tw" style="border:0;border-radius:0;max-height:392px;overflow-y:auto">
-        <table id="t-trans" class="sortable"><thead><tr>
-          <th tabindex="0">Plant</th><th tabindex="0">Switched</th><th tabindex="0">Recorded COD</th>
-          <th class="n" tabindex="0">Age</th>
-        </tr></thead><tbody></tbody></table>
+  <div class="tabs" role="tablist" aria-label="Billing-data checks">
+    <button role="tab" id="btab-thresh" aria-controls="bpanel-thresh" aria-selected="true">
+      Fifteen-year threshold</button>
+    <button role="tab" id="btab-season" aria-controls="bpanel-season" aria-selected="false" tabindex="-1">
+      Output and price</button>
+    <button role="tab" id="btab-growth" aria-controls="bpanel-growth" aria-selected="false" tabindex="-1">
+      Fleet growth</button>
+    <button role="tab" id="btab-recon" aria-controls="bpanel-recon" aria-selected="false" tabindex="-1">
+      Register vs. a listed company</button>
+  </div>
+
+  <div id="bpanel-thresh" role="tabpanel" aria-labelledby="btab-thresh">
+    <h3 class="subhead">The fifteen-year threshold, verified against the register</h3>
+    <p class="sdek">The register carries a commercial operation date for every licensed plant. Joining those
+      dates to the assessments turns the pattern above into a testable claim &mdash; and it holds with a
+      sharpness rarely seen in administrative data. Below age 15 essentially no plant pays the high
+      capacity rate; from age 15 essentially all of them do.</p>
+
+    <div class="grid2">
+      <figure class="card">
+        <figcaption><div class="ctitle">Share on the high capacity rate, by plant age</div>
+        <div class="csub">Every assessed plant-year, grouped by years since commercial operation</div></figcaption>
+        <div class="chart" id="c-age"></div>
+        <div class="legend">
+          <span><i style="background:var(--s1)"></i>Under 15 years</span>
+          <span><i style="background:var(--s2)"></i>15 years and over</span>
+        </div>
+      </figure>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:24px 24px 14px"><div class="ctitle">Plants caught mid-transition</div>
+        <div class="csub" style="margin-bottom:0">Age at switch, against the recorded COD</div></div>
+        <div class="tw" style="border:0;border-radius:0;max-height:392px;overflow-y:auto">
+          <table id="t-trans" class="sortable"><thead><tr>
+            <th tabindex="0">Plant</th><th tabindex="0">Switched</th><th tabindex="0">Recorded COD</th>
+            <th class="n" tabindex="0">Age</th>
+          </tr></thead><tbody></tbody></table>
+        </div>
       </div>
     </div>
+    <div class="note"><b>A clean step at 15.</b> <span id="n-regime"></span> Of the sixteen plants that
+      switch inside the window, twelve do so in exactly their fifteenth year and two more in their sixteenth.</div>
+    <div class="note warn"><b>The exceptions identify themselves.</b> Aandikhola switches at 25 years,
+      not 15 &mdash; and its tariff class is <i>Local R.E Distribution</i>, not the standard seasonal PPA.
+      The rule holds for the regime it governs; plants outside that regime sit outside the rule.</div>
   </div>
-  <div class="note"><b>A clean step at 15.</b> <span id="n-regime"></span> Of the sixteen plants that
-    switch inside the window, twelve do so in exactly their fifteenth year and two more in their sixteenth.</div>
-  <div class="note warn"><b>The exceptions identify themselves.</b> Aandikhola switches at 25 years,
-    not 15 &mdash; and its tariff class is <i>Local R.E Distribution</i>, not the standard seasonal PPA.
-    The rule holds for the regime it governs; plants outside that regime sit outside the rule.</div>
-</section>
-<section>
-  <div class="shead"><span class="snum">02</span><h2>Output and price move in opposite directions</h2></div>
-  <p class="sdek">Nepal's fleet is overwhelmingly run-of-river, so generation tracks the monsoon: it
-    peaks in Aswin and falls through the winter to barely a fifth of nameplate by Falgun. The power
-    purchase tariff is built to counteract exactly that, paying a steep dry-season premium in the four
-    months when the rivers are lowest.</p>
 
-  <div class="grid2">
-    <figure class="card">
-      <figcaption><div class="ctitle">Capacity factor by Nepali month</div>
-      <div class="csub">Median across all plant-months; band shows the interquartile range</div></figcaption>
-      <div class="chart" id="c-season"></div>
-    </figure>
-    <figure class="card">
-      <figcaption><div class="ctitle">Power purchase tariff by Nepali month</div>
-      <div class="csub">Median rate paid to generators, NPR per kWh</div></figcaption>
-      <div class="chart" id="c-rate"></div>
-      <div class="legend">
-        <span><i style="background:var(--s1)"></i>Wet-season rate</span>
-        <span><i style="background:var(--s2)"></i>Dry-season rate</span>
+  <div id="bpanel-season" role="tabpanel" aria-labelledby="btab-season" hidden>
+    <h3 class="subhead">Output and price move in opposite directions</h3>
+    <p class="sdek">Nepal's fleet is overwhelmingly run-of-river, so generation tracks the monsoon: it
+      peaks in Aswin and falls through the winter to barely a fifth of nameplate by Falgun. The power
+      purchase tariff is built to counteract exactly that, paying a steep dry-season premium in the four
+      months when the rivers are lowest.</p>
+
+    <div class="grid2">
+      <figure class="card">
+        <figcaption><div class="ctitle">Capacity factor by Nepali month</div>
+        <div class="csub">Median across all plant-months; band shows the interquartile range</div></figcaption>
+        <div class="chart" id="c-season"></div>
+      </figure>
+      <figure class="card">
+        <figcaption><div class="ctitle">Power purchase tariff by Nepali month</div>
+        <div class="csub">Median rate paid to generators, NPR per kWh</div></figcaption>
+        <div class="chart" id="c-rate"></div>
+        <div class="legend">
+          <span><i style="background:var(--s1)"></i>Wet-season rate</span>
+          <span><i style="background:var(--s2)"></i>Dry-season rate</span>
+        </div>
+      </figure>
+    </div>
+    <div class="note"><b>A 70% dry-season premium.</b> The tariff holds near NPR 4.94/kWh from Baisakh
+      through Mangsir, then jumps to exactly NPR 8.40/kWh for Poush, Magh, Falgun and Chaitra &mdash; the four
+      months when median capacity factor sits between 0.22 and 0.33.</div>
+  </div>
+
+  <div id="bpanel-growth" role="tabpanel" aria-labelledby="btab-growth" hidden>
+    <h3 class="subhead">A fleet that quadrupled in a decade</h3>
+    <p class="sdek">Recorded generation runs from about 3.1 TWh across 29 plants in 066/67 to 14.5 TWh
+      across 188 plants in 082/83. Royalty assessed and royalty received track each other closely &mdash; the
+      collection side of this system is, on the whole, current.</p>
+
+    <div class="grid2">
+      <figure class="card">
+        <figcaption><div class="ctitle">Recorded generation by fiscal year</div>
+        <div class="csub">GWh, summed across all reporting plants</div></figcaption>
+        <div class="chart" id="c-gen"></div>
+        <div class="legend"><span><i style="background:var(--s1)"></i>Full monthly coverage</span>
+        <span><i style="background:var(--s1);opacity:.42"></i>Sparse coverage &mdash; see note</span></div>
+      </figure>
+      <figure class="card">
+        <figcaption><div class="ctitle">Royalty assessed vs. received</div>
+        <div class="csub">NPR billion per fiscal year</div></figcaption>
+        <div class="chart" id="c-roy"></div>
+        <div class="legend">
+          <span><i style="background:var(--s1)"></i>Assessed (energy + capacity)</span>
+          <span><i style="background:var(--s2)"></i>Received</span>
+        </div>
+      </figure>
+    </div>
+    <h3 class="subhead" style="margin-top:34px">The pipeline behind that growth</h3>
+    <p class="sdek" style="margin-bottom:22px">Every plant carries a licence date as well as a
+      commissioning date, so the register also records the development pipeline: when the state
+      granted permission, when each project actually delivered, and the years in between.</p>
+
+    <div class="grid2">
+      <figure class="card">
+        <figcaption><div class="ctitle">Licences granted vs. plants commissioned</div>
+        <div class="csub">Count per Bikram Sambat year</div></figcaption>
+        <div class="chart" id="c-lic"></div>
+        <div class="legend">
+          <span><i style="background:var(--s1)"></i>Licences granted</span>
+          <span><i style="background:var(--s2)"></i>Plants reaching operation</span>
+        </div>
+      </figure>
+      <figure class="card">
+        <figcaption><div class="ctitle">Years from licence to commercial operation</div>
+        <div class="csub">Median per licence cohort, where at least three plants licensed that year</div></figcaption>
+        <div class="chart" id="c-lead"></div>
+      </figure>
+    </div>
+    <div class="note"><b>A lag you can see.</b> <span id="n-lic"></span></div>
+
+    <div class="note warn"><b>Read 073/74&ndash;075/76 with care.</b> Recorded generation dips there while
+      installed capacity keeps rising. That is a reporting gap, not a collapse in output: only 34 of 62
+      plants filed monthly detail in 073/74. Those bars are drawn faded, and the royalty series &mdash; which
+      comes from a different, more complete part of the page &mdash; shows no such dip.</div>
+  </div>
+
+  <div id="bpanel-recon" role="tabpanel" aria-labelledby="btab-recon" hidden>
+    <h3 class="subhead">The register reproduces a listed company&rsquo;s revenue</h3>
+    <p class="sdek">The royalty base is the plant&rsquo;s energy invoice, and that invoice is the operating
+      company&rsquo;s top line. Mapping register billing months onto the Shrawan&ndash;Asar accounting year for
+      Likhu-4 (52.4&nbsp;MW, Green Ventures Co. Ltd, commissioned 2078/07/21) reproduces its reported <i>Income from Sale of Energy</i> quarter by quarter
+      &mdash; six of eleven quarters land within 0.01%, on figures of NPR 270&ndash;570&nbsp;million.</p>
+
+    <div class="grid2">
+      <figure class="card">
+        <figcaption><div class="ctitle">Register billing vs. reported energy revenue</div>
+        <div class="csub">Standalone quarters, NPR million</div></figcaption>
+        <div class="chart" id="c-recon"></div>
+        <div class="legend">
+          <span><i style="background:var(--s1)"></i>Register billing (scraped)</span>
+          <span><i style="background:var(--s2)"></i>Reported in accounts</span>
+        </div>
+      </figure>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:24px 24px 14px"><div class="ctitle">Quarter-by-quarter difference</div>
+        <div class="csub" style="margin-bottom:0">Median absolute gap <b id="r-med"></b></div></div>
+        <div class="tw" style="border:0;border-radius:0;max-height:392px;overflow-y:auto">
+          <table id="t-recon" class="sortable"><thead><tr>
+            <th tabindex="0">Quarter</th><th class="n" tabindex="0">Register</th>
+            <th class="n" tabindex="0">Reported</th><th class="n" tabindex="0">Diff</th>
+          </tr></thead><tbody></tbody></table>
+        </div>
       </div>
-    </figure>
+    </div>
+    <div class="note"><b>Two adjustments make it line up.</b> The register files each fiscal block Asar&ndash;Jestha,
+      one month ahead of the Shrawan&ndash;Asar accounting year, so the window has to be shifted; and the
+      published quarterly figures are cumulative year-to-date, so they have to be differenced.</div>
+    <div class="note warn"><b>Where it breaks is informative.</b> The &minus;20.7% quarter is Baisakh 2081,
+      carrying the register remark <i lang="ne">&ldquo;&#2348;&#2367;&#2354; &#2352;&#2325;&#2350; &#2348;&#2352;&#2366;&#2348;&#2352; short supply penalty &#2325;&#2366;&#2351;&#2350; &#2327;&#2352;&#2375;&#2325;&#2379; &#2404;&rdquo;</i>
+      &mdash; a short-supply penalty equal to the whole bill. The register books settlement net of the penalty
+      (zero); the accounts recognise revenue gross on accrual. The gap is a difference in basis, not in data.</div>
   </div>
-  <div class="note"><b>A 70% dry-season premium.</b> The tariff holds near NPR 4.94/kWh from Baisakh
-    through Mangsir, then jumps to exactly NPR 8.40/kWh for Poush, Magh, Falgun and Chaitra &mdash; the four
-    months when median capacity factor sits between 0.22 and 0.33.</div>
 </section>
 
 <section>
-  <div class="shead"><span class="snum">03</span><h2>A fleet that quadrupled in a decade</h2></div>
-  <p class="sdek">Recorded generation runs from about 3.1 TWh across 29 plants in 066/67 to 14.5 TWh
-    across 188 plants in 082/83. Royalty assessed and royalty received track each other closely &mdash; the
-    collection side of this system is, on the whole, current.</p>
-
-  <div class="grid2">
-    <figure class="card">
-      <figcaption><div class="ctitle">Recorded generation by fiscal year</div>
-      <div class="csub">GWh, summed across all reporting plants</div></figcaption>
-      <div class="chart" id="c-gen"></div>
-      <div class="legend"><span><i style="background:var(--s1)"></i>Full monthly coverage</span>
-      <span><i style="background:var(--s1);opacity:.42"></i>Sparse coverage &mdash; see note</span></div>
-    </figure>
-    <figure class="card">
-      <figcaption><div class="ctitle">Royalty assessed vs. received</div>
-      <div class="csub">NPR billion per fiscal year</div></figcaption>
-      <div class="chart" id="c-roy"></div>
-      <div class="legend">
-        <span><i style="background:var(--s1)"></i>Assessed (energy + capacity)</span>
-        <span><i style="background:var(--s2)"></i>Received</span>
-      </div>
-    </figure>
-  </div>
-  <h3 style="font-family:Archivo,sans-serif;font-size:17px;font-weight:600;
-      letter-spacing:-.01em;margin:34px 0 8px">The pipeline behind that growth</h3>
-  <p class="sdek" style="margin-bottom:22px">Every plant carries a licence date as well as a
-    commissioning date, so the register also records the development pipeline: when the state
-    granted permission, when each project actually delivered, and the years in between.</p>
-
-  <div class="grid2">
-    <figure class="card">
-      <figcaption><div class="ctitle">Licences granted vs. plants commissioned</div>
-      <div class="csub">Count per Bikram Sambat year</div></figcaption>
-      <div class="chart" id="c-lic"></div>
-      <div class="legend">
-        <span><i style="background:var(--s1)"></i>Licences granted</span>
-        <span><i style="background:var(--s2)"></i>Plants reaching operation</span>
-      </div>
-    </figure>
-    <figure class="card">
-      <figcaption><div class="ctitle">Years from licence to commercial operation</div>
-      <div class="csub">Median per licence cohort, where at least three plants licensed that year</div></figcaption>
-      <div class="chart" id="c-lead"></div>
-    </figure>
-  </div>
-  <div class="note"><b>A lag you can see.</b> <span id="n-lic"></span></div>
-
-  <div class="note warn"><b>Read 073/74&ndash;075/76 with care.</b> Recorded generation dips there while
-    installed capacity keeps rising. That is a reporting gap, not a collapse in output: only 34 of 62
-    plants filed monthly detail in 073/74. Those bars are drawn faded, and the royalty series &mdash; which
-    comes from a different, more complete part of the page &mdash; shows no such dip.</div>
-</section>
-
-<section>
-  <div class="shead"><span class="snum">04</span><h2>Where the fleet actually sits</h2></div>
+  <div class="shead"><span class="snum">02</span><h2>Where the fleet actually sits</h2></div>
   <p class="sdek">The register carries a district for most plants but no usable coordinates &mdash;
     every populated latitude field holds the same value, an unedited form default pointing at
     Illinois. Locations here come from OpenStreetMap and Wikidata where a plant can be matched by
@@ -576,45 +632,8 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     district holds &mdash; not where any one of them is. Half-filled dots are on the correct watercourse but at an arbitrary point along it. <span id="map-note"></span></div>
 </section>
 
-<section id="sec-recon">
-  <div class="shead"><span class="snum">05</span><h2>The register reproduces a listed company&rsquo;s revenue</h2></div>
-  <p class="sdek">The royalty base is the plant&rsquo;s energy invoice, and that invoice is the operating
-    company&rsquo;s top line. Mapping register billing months onto the Shrawan&ndash;Asar accounting year for
-    Likhu-4 (52.4&nbsp;MW, Green Ventures Co. Ltd, commissioned 2078/07/21) reproduces its reported <i>Income from Sale of Energy</i> quarter by quarter
-    &mdash; six of eleven quarters land within 0.01%, on figures of NPR 270&ndash;570&nbsp;million.</p>
-
-  <div class="grid2">
-    <figure class="card">
-      <figcaption><div class="ctitle">Register billing vs. reported energy revenue</div>
-      <div class="csub">Standalone quarters, NPR million</div></figcaption>
-      <div class="chart" id="c-recon"></div>
-      <div class="legend">
-        <span><i style="background:var(--s1)"></i>Register billing (scraped)</span>
-        <span><i style="background:var(--s2)"></i>Reported in accounts</span>
-      </div>
-    </figure>
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="padding:24px 24px 14px"><div class="ctitle">Quarter-by-quarter difference</div>
-      <div class="csub" style="margin-bottom:0">Median absolute gap <b id="r-med"></b></div></div>
-      <div class="tw" style="border:0;border-radius:0;max-height:392px;overflow-y:auto">
-        <table id="t-recon" class="sortable"><thead><tr>
-          <th tabindex="0">Quarter</th><th class="n" tabindex="0">Register</th>
-          <th class="n" tabindex="0">Reported</th><th class="n" tabindex="0">Diff</th>
-        </tr></thead><tbody></tbody></table>
-      </div>
-    </div>
-  </div>
-  <div class="note"><b>Two adjustments make it line up.</b> The register files each fiscal block Asar&ndash;Jestha,
-    one month ahead of the Shrawan&ndash;Asar accounting year, so the window has to be shifted; and the
-    published quarterly figures are cumulative year-to-date, so they have to be differenced.</div>
-  <div class="note warn"><b>Where it breaks is informative.</b> The &minus;20.7% quarter is Baisakh 2081,
-    carrying the register remark <i lang="ne">&ldquo;&#2348;&#2367;&#2354; &#2352;&#2325;&#2350; &#2348;&#2352;&#2366;&#2348;&#2352; short supply penalty &#2325;&#2366;&#2351;&#2350; &#2327;&#2352;&#2375;&#2325;&#2379; &#2404;&rdquo;</i>
-    &mdash; a short-supply penalty equal to the whole bill. The register books settlement net of the penalty
-    (zero); the accounts recognise revenue gross on accrual. The gap is a difference in basis, not in data.</div>
-</section>
-
 <section>
-  <div class="shead"><span class="snum">06</span><h2>Plant explorer</h2></div>
+  <div class="shead"><span class="snum">03</span><h2>Plant explorer</h2></div>
   <p class="sdek">Every plant in the register, with lifetime recorded generation, median capacity
     factor and the balance standing on its most recent assessed year. <b>Select any plant to open its
     year-by-year revenue and royalty, then <b>+</b> on any year for its monthly
@@ -690,7 +709,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section id="sec-listed">
-  <div class="shead"><span class="snum">07</span><h2>The companies that own them</h2></div>
+  <div class="shead"><span class="snum">04</span><h2>The companies that own them</h2></div>
   <p class="sdek">One hundred and ten hydropower companies are listed on NEPSE, and
     between them they own most of the register. This section puts the two side by side:
     what the meter recorded and what the accounts say, what the market pays for it, and
@@ -961,7 +980,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section style="border-bottom:0">
-  <div class="shead"><span class="snum">08</span><h2>Method and caveats</h2></div>
+  <div class="shead"><span class="snum">05</span><h2>Method and caveats</h2></div>
   <div class="grid2">
     <div class="card">
       <div class="ctitle" style="margin-bottom:12px">How this was collected</div>
@@ -2464,7 +2483,7 @@ function wireTerrain(){
 // ---- listed companies: the register's meter against the companies' books ----
 // Everything below is drawn from D.co, which exists only when the scalper sync
 // has run. Without it the whole tab is removed at startup rather than drawn
-// empty, the same way section 06 handles a missing workbook.
+// empty, the same way a missing D.recon takes out just its one tab in section 01.
 var L10 = Math.log10 || function(v){ return Math.log(v)/Math.LN10; };
 
 function coPct(v, nd){ return v===null||v===undefined ? '—' : (100*v).toFixed(nd===undefined?1:nd)+'%'; }
@@ -4089,19 +4108,66 @@ function applyHashRoute(){
   if(sec) sec.scrollIntoView();
 }
 
+// ---- section 01's own tabs -------------------------------------------
+// Each of the four checks draws on entry rather than once at load, same
+// reasoning as drawLTab(): frame() sizes off a fixed viewBox and never
+// measures the DOM, so a hidden chart would still be correct, but a theme
+// flip while a tab was shut would leave it on the old tokens.
+var bTab = 'thresh';
+var B_TABS = ['thresh','season','growth','recon'];
+function showBTab(which){
+  bTab = which;
+  B_TABS.forEach(function(t){
+    var b = document.getElementById('btab-'+t), p = document.getElementById('bpanel-'+t);
+    if(!b || !p) return;
+    var on = (t === which);
+    b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1;
+    p.hidden = !on;
+  });
+  drawBTab();
+}
+function drawBTab(){
+  if(bTab === 'thresh') chartAge();
+  else if(bTab === 'season'){ chartSeason(); chartRate(); }
+  else if(bTab === 'growth'){ chartGen(); chartRoy(); chartLic(); chartLead(); }
+  else if(bTab === 'recon') chartRecon();
+}
+function wireBTabs(){
+  var bar = document.querySelector('#sec-checks .tabs');
+  if(bar){
+    bar.addEventListener('click', function(e){
+      var b = e.target.closest('button[role=tab]'); if(!b) return;
+      showBTab(b.id.replace('btab-',''));
+    });
+    bar.addEventListener('keydown', function(e){
+      if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      var i = B_TABS.indexOf(bTab) + (e.key === 'ArrowRight' ? 1 : -1);
+      showBTab(B_TABS[(i + B_TABS.length) % B_TABS.length]);
+      document.getElementById('btab-'+bTab).focus();
+    });
+  }
+  showBTab('thresh');
+}
+
 function drawAll(){
-  chartSeason(); chartRate(); chartGen(); chartRoy(); chartRecon(); chartAge(); chartMap(); chartLic(); chartLead();
+  chartMap();
+  drawBTab();
   if(D.co) drawLTab();
 }
-// Section 06 exists only when an operator workbook was supplied at build time
-// (HYDRO_XLSX). CI has no workbook, so D.recon is absent there — drop the whole
-// section and close the gap in the numbering rather than shipping a dead panel.
+// The register-vs-listed-company check reads the operator's reported quarterlies,
+// normally served from a cache (recon_reported.json) precisely so a build without
+// the source workbook -- CI, or anyone but the author -- still has them. D.recon
+// is only actually absent if that cache is itself missing or unreadable. Unlike a
+// whole missing section, dropping one tab out of four does not shift any section's
+// number, so there is nothing to renumber -- just take the tab and its panel out
+// rather than leave a tab that opens onto nothing.
 if(!D.recon){
-  var rsec = document.getElementById('sec-recon');
+  var rsec = document.getElementById('bpanel-recon');
+  var rtab = document.getElementById('btab-recon');
   if(rsec) rsec.parentNode.removeChild(rsec);
-  Array.prototype.forEach.call(document.querySelectorAll('.snum'), function(n,i){
-    n.textContent = ('0'+(i+1)).slice(-2);
-  });
+  if(rtab) rtab.parentNode.removeChild(rtab);
+  B_TABS = B_TABS.filter(function(t){ return t !== 'recon'; });
 }
 
 // The listed-company tab needs the scalper sync to have run. A fork without
@@ -4113,7 +4179,7 @@ if(!D.co){
 } else { coLede(); }
 
 stats(); transTable(); reconTable(); wireTable(); renderPlants();
-wireListed(); drawAll(); buildTableViews();
+wireListed(); wireBTabs(); drawAll(); buildTableViews();
 wireMapExpand('map-exp'); wireMapExpand('ter-exp'); wireTerrain(); wireLayers();
 wireSortableTables(); wireDataTip();
 
