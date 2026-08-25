@@ -3840,8 +3840,11 @@ function renderOne(){
   // "_cum" one (EnergySales_cum, the figure exactly as filed, year to date) --
   // the toggle below just picks which key each row reads, not two tables.
   var cSuf = oneIncView === 'c' ? '_cum' : '';
+  // EPSann is not part of the toggle -- it is a third framing, not a choice
+  // between the other two, so it shows the same in both views.
   var incLines = D.co.cascade.map(function(c){ return [c[0]+cSuf, c[2], c[1]===0]; })
-    .concat([['EPSq'+cSuf, 'Earnings per Share', false, 2]]);
+    .concat([['EPSq'+cSuf, 'Earnings per Share', false, 2],
+              ['EPSann', 'EPS, Annualized (naive)', false, 2]]);
   var bsLines = D.co.bs.concat([['BookValue', 'Book Value per Share', false, 2]]);
   var inc = oneQuarterTable(qs, incLines,
                             (oneIncView==='c'
@@ -3857,7 +3860,11 @@ function renderOne(){
       + '<b>Qtr only</b> differences them to what that quarter alone earned (blank where '
       + 'the preceding quarter is missing, rather than showing the cumulative figure in '
       + 'its place); <b>Cumulative</b> shows the running year-to-date total exactly as '
-      + 'filed, the same number on the primary statement.</div>'
+      + 'filed, the same number on the primary statement. <b>EPS, Annualized</b> is filed '
+      + 'too, not recomputed here: year-to-date EPS scaled by 4/quarter to a full-year '
+      + 'run rate. Read it carefully on this fleet &mdash; hydro revenue is heavily '
+      + 'seasonal within a year, so annualizing a wet quarter overstates the year and a '
+      + 'dry one understates it.</div>'
       + '<div class="btnrow" id="oneIncBtns"></div>'
       + '<div class="ywrap" style="padding-left:0">'+inc+'<div style="height:16px"></div>'
       + bs+'</div></div>');

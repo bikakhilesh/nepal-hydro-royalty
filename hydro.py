@@ -1786,6 +1786,14 @@ def _quarters(rows):
             if pat_cum is not None and last_shares:
                 rec["EPSq_cum"] = r(pat_cum * 1000 / last_shares, 2)
 
+            # The filed run-rate: year-to-date EPS scaled to a full year by
+            # 4/quarter, as filed rather than recomputed -- shown alongside, not
+            # instead of, the two above. Naive on this specific fleet: hydro
+            # revenue is heavily seasonal within a year, so annualizing a wet
+            # quarter overstates and a dry one understates, and the table says so.
+            ann = pd.to_numeric(getattr(t, "EpsAnnualized", np.nan), errors="coerce")
+            if np.isfinite(ann): rec["EPSann"] = r(float(ann), 2)
+
             # a null costs six bytes a line across 110 tickers by 8 quarters by
             # 25 lines, and the reader treats absent and null the same way
             qs.append({k: v for k, v in rec.items() if v is not None})
