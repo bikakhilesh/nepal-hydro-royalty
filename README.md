@@ -214,13 +214,26 @@ official record — read it against the source before relying on a number.
   Received = Balance`, carried forward — never sum it across years.
 - **Capacity royalty of zero means "not assessed yet", not "tier 1."** Common in
   the current fiscal year.
-- **Positions carry three confidence levels, not two.** `exact` (31) is a name
-  match to a surveyed OSM/Wikidata point. `river` (59) means the register names
-  the plant's river, that river is mapped, and the marker sits on it at the point
-  nearest the district centre — right watercourse, arbitrary point along it.
-  `district` (88) is the bare centroid. 20 have neither. Distance to the nearest
-  mapped watercourse: 1.7 km median for `exact`, 2.2 km for `district` — which is
-  what motivated the snap.
+- **Positions carry four confidence levels.** `plus` (68) is a location the
+  author looked up on Google Maps one plant at a time and checked against
+  imagery — the only positions here a person verified rather than a matcher, so
+  they outrank everything else. `exact` (31) is a name match to a surveyed
+  OSM/Wikidata point. `river` (48) means the register names the plant's river,
+  that river is mapped, and the marker sits on it — right watercourse, arbitrary
+  point along it. `district` (31) is the bare centroid. 20 have neither.
+- **Plus codes are short codes, so they were decoded and then checked.** A short
+  code (`G4R7+5M7`) omits the leading characters and is only meaningful next to a
+  reference point; each was recovered against its own district centre and then
+  tested — inside Nepal, inside a plausible radius of that district, and, where
+  OSM names the watercourse the register gives, close to it. Two of the 70 failed
+  and were dropped: both repeated the row above's code, putting `Solu` 87 km from
+  any Solu Khola and `Sipring Khola HP` 40 km outside Dolakha.
+- **A cascade files every station under one district on one river.** Snapped
+  naively they all take the same nearest vertex and draw as a single dot only one
+  of which can be clicked — six of the eight Mai Khola stations were stacked on
+  one point. The snap now keeps a ledger per river and spreads them at least
+  800 m apart down the reach. The point along the river was always arbitrary, so
+  this costs no accuracy and is the difference between seeing six plants and one.
 - **Most of the fleet is on a khola, and OSM does not call those rivers.** A
   `waterway=river` query returns the main stems and nothing else, so at any length
   threshold it misses the tributary most stations actually sit on. `fetch_terrain`

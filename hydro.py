@@ -844,7 +844,8 @@ def _named_rivers(field):
     return [p for p in re.split(r"[,/;&]| and ", field) if p.strip()]
 
 
-def _snap_to_river(plant_name, river_field, lat, lon, idx, ceil_km=30):
+def _snap_to_river(plant_name, river_field, lat, lon, idx, ceil_km=30,
+                   taken=None, sep_km=0.8):
     """A district centroid is a town or a ridge; a hydropower plant is on a
     watercourse. Where the register names the river (or the plant is named after
     it) and that river is mapped, move the marker to the point on THAT river
@@ -871,12 +872,24 @@ def _snap_to_river(plant_name, river_field, lat, lon, idx, ceil_km=30):
     name, pts, km = hit[0], hit[1], hit[2]
     max_km = min(ceil_km, max(10, km))
     kx = math.cos(math.radians(28.4))
-    best, bp = 1e18, None
-    for lo, la in pts:
-        d = ((lo-lon)*kx*111.32)**2 + ((la-lat)*110.57)**2
-        if d < best: best, bp = d, (lo, la)
-    if bp is None or math.sqrt(best) > max_km: return None
-    return bp[1], bp[0], name
+    cand = sorted((math.hypot((lo-lon)*kx*111.32, (la-lat)*110.57), lo, la) for lo, la in pts)
+    cand = [c for c in cand if c[0] <= max_km]
+    if not cand: return None
+    # A cascade files every station under one district on one river, and each
+    # would otherwise take the same nearest vertex and draw as a single dot that
+    # only one of them could be clicked on. The point along the river was always
+    # arbitrary, so spreading them down the reach costs no accuracy and is the
+    # difference between six plants being visible and one being visible.
+    used = None if taken is None else taken.setdefault(name, [])
+    if used is not None:
+        for d, lo, la in cand:
+            if any(math.hypot((lo-ulo)*kx*111.32, (la-ula)*110.57) < sep_km
+                   for ula, ulo in used): continue
+            used.append((la, lo))
+            return la, lo, name
+    _, lo, la = cand[0]                      # reach full: fall back to the nearest
+    if used is not None: used.append((la, lo))
+    return la, lo, name
 
 
 # The register's DistrictId is sometimes the company's registered office rather
@@ -890,6 +903,89 @@ DISTRICT_FIX = {
     "Rahughat Mangale": "Myagdi",
     # 21.3 MW at Kuinemangle, Raghuganga RM-8, Myagdi -- the same municipality.
     "Thulo Khola HPP":  "Myagdi",
+}
+
+
+# Positions the author looked up on Google Maps, one plant at a time, and gave
+# as plus codes. They are the only locations here that a person checked against
+# satellite imagery rather than a name match, so they outrank both the candidate
+# match and the river snap. Each was decoded against its district centre and
+# then verified: inside Nepal, inside a plausible radius of that district, and -
+# where OpenStreetMap names the watercourse the register gives - close to it.
+# Two rows of the batch were dropped, both a copy of the row above's code:
+# "Solu" carried Mathillo Thulo Khola A's point at Chimkhola in Myagdi, 87 km
+# from any Solu Khola, and "Sipring Khola HP" carried Upper Chaku A's point at
+# Phulpingkatti in Sindhupalchok, 40 km outside Dolakha.
+# name -> (lat, lon, plus code, the locality Google printed with it)
+PLUS_FIX = {
+    "Ankhukhola Small HP": (27.999938, 84.931953, "XWXJ+XQG", "45100"),
+    "Baramchi Khola HPP": (27.836137, 85.775859, "RQPG+F85", "Baramchi 45308"),
+    "Bijaypur-1 Small HP": (28.178887, 84.033078, "52HM+H64", "Lekhnath 33700"),
+    "Buku Khola HPP": (27.523687, 86.350812, "G9F2+F8", "Rawadolu"),
+    "Buku-Kapati HPP": (27.518512, 86.398641, "G99X+CF2", "Goli 56000"),
+    "Chaku Khola  Small HP": (27.875512, 85.929516, "VWGH+6R2", ""),
+    "Chatara HP": (26.815963, 87.157203, "R584+9VP", "Barahakshetra 56703"),
+    "Dordi 1": (28.230812, 84.450688, "6FJ2+87", "Chiti 33600"),
+    "Dordi Khola": (28.170063, 84.442484, "5CCR+2XH", "Unnamed Road, Chiti 33600"),
+    "Down Piluwa": (27.245188, 87.280438, "67WJ+35", "Ankhibhui 56900"),
+    "Fewa (Pokhara)  HP": (28.182163, 83.972234, "5XJC+VV9", "Unnamed Road, Pokhara 33700"),
+    "Ghalemdi Khola": (28.536887, 83.675078, "GMPG+Q24", "Narchyang 33200"),
+    "Ghar Khola": (28.479337, 83.642922, "FJHV+P5M", "Pokharebagar 33200"),
+    "Ghatte Khola": (27.786937, 86.286812, "Q7PP+QP", "Sikpasor Khani 45500"),
+    "Hidi Khola HEP": (28.226562, 84.110062, "64G6+J2", "Saimarang 33700"),
+    "Jiri Khola SHP": (27.585663, 86.226672, "H6PG+7M7", "Jiri 45500"),
+    "Jogmai Cascade HPP": (26.897738, 87.994422, "VXXV+3QV", "Namsaling 57300"),
+    "Jogmai Khola": (26.913937, 88.018797, "W279+HGF", "Namsaling 57300"),
+    "Kapadigad HPP": (29.004437, 80.759187, "2Q35+QM", "BP Nagar 10800"),
+    "Khorunga Khola HPP": (27.159987, 87.544641, "5G5V+XVR", "Oyakjung 57500"),   # shared point
+    "Kulekhani-I  HP": (27.540412, 85.114172, "G4R7+5M7", "Bhimphedi 44100"),
+    "Kulekhani-II  HP": (27.512688, 85.047828, "G27X+34G", "Bhaise 44100"),
+    "Lankhuwa Khola HPP": (27.290312, 87.193938, "75RV+4H", "Heel 33300"),
+    "Lower Chaku HP": (27.882813, 85.910672, "VWM6+47F", "Chaku"),
+    "Lower Jogmai Khola HPP": (26.890687, 87.959437, "VXR5+7Q", "Namsaling 57300"),
+    "Lower Khare": (27.758538, 86.197172, "Q55W+CV7", "Charikot - Lamabagar Rd, Sunkhani 45500"),
+    "Lower Tadi Khola": (27.922837, 85.349734, "W8FX+4VQ", "Thaprek 44900"),
+    "Madme Khola HPP": (28.419562, 84.116312, "C498+RG", "Namarjung 33700"),
+    "Mailung Khola": (28.072513, 85.209172, "36F5+2M3", "Mailung Bazzar Bus Stop, Dandagaun 45000"),
+    "Mathillo Thulo Khola A HEP": (28.581937, 83.537562, "HGJQ+Q2", "Chimkhola 33200"),
+    "Mewa Khola HPP": (27.416162, 87.614484, "CJ87+FQ9", "57500"),
+    "Middle Chaku HP": (27.872138, 85.933297, "VWCM+V83", ""),
+    "Mistry Khola": (28.536962, 83.674422, "GMPF+QQM", "Narchyang 33200"),   # shared point
+    "Nilgiri Khola ": (28.578712, 83.692359, "HMHR+FWQ", "Narchyang 33200"),
+    "Nilgiri Khola-II cascade Project": (28.536962, 83.674422, "GMPF+QQM", "Narchyang 33200"),   # shared point
+    "Phawa khola": (27.280888, 87.756828, "7QJ4+9P4", "Unnamed Road, Thechambu 57500"),
+    "Pikhuwa Khola": (27.120338, 87.066016, "43C8+4CJ", "Bhojpur 57000"),   # shared point
+    "Radhi Small": (28.396613, 84.429172, "9CWH+JMV", "33600"),
+    "Rahughat Mangale": (28.475562, 83.518422, "FGG9+69F", "Sisneri, Pakhapani 33200"),
+    "Rawa Khola": (27.348187, 86.840063, "8RXR+72", "Sungdel 56200"),
+    "Rele Khola HPP": (28.530188, 83.679813, "GMJH+3W", "Narchyang 33200"),
+    "Rudi A": (28.231262, 84.210547, "66J6+G63", "Madi-9, Baluwabesi"),
+    "Sagu Khola HEP": (27.788113, 86.115547, "Q4Q8+66V", "45500"),
+    "Sanjen": (28.217937, 85.284312, "679M+5P", "Chilime"),
+    "Sapsu Khola Small HP": (27.112838, 86.737766, "4P7Q+44J", "Rajapani 56200"),
+    "Siddhi Khola HPP": (26.833613, 88.157672, "R5M5+C3V", "Jirmale 57300"),
+    "Singati": (27.743687, 86.159188, "P5V5+FM", "Singati 45500"),
+    "Super Dordi Kha": (28.271438, 84.532891, "7GCM+H5C", "Tanje 33600"),
+    "Suri Khola": (27.753737, 86.219297, "Q639+FPV", "Suri 45500"),
+    "Tadikhola HP": (27.922112, 85.324984, "W8CF+RXX", "F181, Ralukadevi 44900"),
+    "Taksar Pikhuwa": (27.120338, 87.066016, "43C8+4CJ", "Bhojpur 57000"),   # shared point
+    "Upper Chaku A": (27.873913, 85.926453, "VWFG+HH8", "Phulpingkatti"),
+    "Upper Chameliya": (29.742037, 80.781828, "PQRJ+RP8", "Tapoban 10100"),
+    "Upper Chirkhuwa Khola": (27.370188, 87.106062, "94C4+3C", "Shadananda 57000"),
+    "Upper Gaddi Gad": (29.280938, 81.058937, "73J5+9H", "Sanagaun 10800"),
+    "Upper Hugdi": (28.102613, 83.415328, "4C38+24W", "Way to Chorkate, Shantipur 32600"),
+    "Upper Kalangad": (29.597538, 80.884766, "HVXM+2W6", "Banjh 10500"),
+    "Upper Khorunga HPP": (27.159987, 87.544641, "5G5V+XVR", "Oyakjung 57500"),   # shared point
+    "Upper Naugad Gad ": (29.723513, 80.663359, "PMF7+C85", "10100"),
+    "Upper Phawa HPP": (27.318462, 87.765641, "8Q98+97J", "4, 57500"),
+    "Upper Piluwa Khola 2": (27.296788, 87.385828, "79WP+P88", "Chainpur 56900"),
+    "Upper Rahughat": (28.376212, 83.572359, "9HGC+FWQ", "F042, Rakhu Piple 33200"),
+    "Upper Richet Khola SHP": (28.000013, 84.316672, "2828+2M3", "Yarsa 44900"),
+    "Upper Sanjen": (28.183587, 85.303391, "58M3+C9J", "Chilime 45000"),
+    "Upper Suri": (27.738437, 86.244062, "P6QV+9J", "Chankhu 45500"),
+    "Upper Syange Khola Small": (28.386212, 84.396203, "99PW+FFP", "33600"),
+    "Upper Tadi": (27.973012, 85.436922, "XCFP+6Q3", "Ghyangphedi 44900"),
+    "Yambaling Khola": (27.951038, 85.790641, "XQ2R+C76", ""),
 }
 
 
@@ -922,6 +1018,7 @@ def resolve_coords():
     cands = json.load(open(P("geo_candidates.json"), encoding="utf-8"))
     dists = json.load(open(P("np_districts.json"), encoding="utf-8"))
     ridx  = _river_index()
+    taken = {}                       # river name -> points already given to a plant
     LAT, LON = (26.0, 30.7), (79.9, 88.4)
 
     rows = []
@@ -930,14 +1027,20 @@ def resolve_coords():
                 and LAT[0] <= c["lat"] <= LAT[1] and LON[0] <= c["lon"] <= LON[1]]
         rec = {"PlantId": t.PlantId, "PlantName": t.PlantName, "Cap_kW": t.Cap_kW,
                "District": t.DistrictId, "Province": t.ProvinceId}
-        if hits:
+        pf = PLUS_FIX.get(t.PlantName)
+        if pf:
+            # a person checked this one against imagery; nothing here beats that
+            rec |= {"lat": pf[0], "lon": pf[1], "precision": "plus",
+                    "source": "Google Maps " + pf[2] + (", " + pf[3] if pf[3] else ""),
+                    "matched_to": None}
+        elif hits:
             hits.sort(key=lambda c: c["src"] != "OSM")
             rec |= {"lat": hits[0]["lat"], "lon": hits[0]["lon"], "precision": "exact",
                     "source": hits[0]["src"], "matched_to": hits[0]["name"]}
         elif isinstance(t.DistrictId, str) and t.DistrictId in dists:
             dd = dists[t.DistrictId]
             snap = _snap_to_river(t.PlantName, getattr(t, "Rivers", None),
-                                  dd["lat"], dd["lon"], ridx)
+                                  dd["lat"], dd["lon"], ridx, taken=taken)
             if snap:
                 rec |= {"lat": snap[0], "lon": snap[1], "precision": "river",
                         "source": "on " + snap[2] + ", nearest " + t.DistrictId,
@@ -959,7 +1062,7 @@ def resolve_coords():
         if row.precision == "exact" and row.matched_to in clash:
             dd = dists.get(row.District) if isinstance(row.District, str) else None
             if dd:
-                sn = _snap_to_river(row.PlantName, None, dd["lat"], dd["lon"], ridx)
+                sn = _snap_to_river(row.PlantName, None, dd["lat"], dd["lon"], ridx, taken=taken)
                 df.loc[i, ["lat","lon","precision","source","matched_to"]] = (
                     [sn[0], sn[1], "river", "on " + sn[2] + ", nearest " + str(row.District), sn[2]]
                     if sn else [dd["lat"], dd["lon"], "district", "district centroid", row.District])
@@ -1614,6 +1717,18 @@ def _map_payload(d, m, c, plants):
             rad, ang = 0.055*math.sqrt(k+0.6), (k+1)*GOLDEN
             x.loc[i,"jlat"] = x.loc[i,"lat"] + rad*math.sin(ang)
             x.loc[i,"jlon"] = x.loc[i,"lon"] + rad*math.cos(ang)/math.cos(math.radians(28.4))
+    # Whatever still lands on one coordinate: three of the looked-up pairs share a
+    # reference point, and two plants on different rivers can meet at a confluence
+    # the snap sent both to. Drawn at the same spot they are one dot that only the
+    # last one drawn can be hovered or clicked, so ring them at ~300 m - well
+    # inside the error these positions already carry. District centroids are
+    # excluded because the loop above has already spread them much further.
+    for _, grp in x[x.precision != "district"].groupby(["lat", "lon"]):
+        if len(grp) < 2: continue
+        for k, i in enumerate(grp.index):
+            ang = k * 2*math.pi/len(grp)
+            x.loc[i,"jlat"] = x.loc[i,"lat"] + 0.0027*math.sin(ang)
+            x.loc[i,"jlon"] = x.loc[i,"lon"] + 0.0027*math.cos(ang)/math.cos(math.radians(28.4))
     try:
         terrain = json.load(open(P("np_terrain.json"), encoding="utf-8"))
     except FileNotFoundError:
@@ -1628,7 +1743,7 @@ def _map_payload(d, m, c, plants):
         pts.append({"id": pid, "n": t.PlantName,
                     "co": None if pd.isna(t.CompanyId) else str(t.CompanyId)[:52],
                     "mw": r(t.Cap_kW/1000.0, 1), "la": r(t.jlat, 4), "lo": r(t.jlon, 4),
-                    "p": 2 if t.precision == "exact" else (1 if t.precision == "river" else 0),
+                    "p": 2 if t.precision in ("exact", "plus") else (1 if t.precision == "river" else 0),
                     "src": None if pd.isna(t.source) else str(t.source),
                     "di": None if pd.isna(t.District) else str(t.District),
                     "cod": None if pd.isna(t.MitiofOperation) else str(t.MitiofOperation),
@@ -1654,6 +1769,7 @@ def _map_payload(d, m, c, plants):
             "plan_plant_labels": plan.get("plant_labels", {}),
             "plan_sub_labels": plan.get("sub_labels", {}),
             "n_exact": int((c.precision == "exact").sum()),
+            "n_plus": int((c.precision == "plus").sum()),
             "n_river": int((c.precision == "river").sum()),
             "n_district": int((c.precision == "district").sum()),
             "n_none": int((c.precision == "none").sum()), "n_total": int(len(c)),

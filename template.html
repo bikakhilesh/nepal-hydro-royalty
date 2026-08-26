@@ -1852,7 +1852,8 @@ function chartMap(){
   document.getElementById('map-sub').textContent =
     M.pts.length+' of '+M.n_total+' plants placed \u00b7 '+fmt(M.mw_located)+' MW of '+fmt(M.mw_total)+' MW';
   document.getElementById('map-note').textContent =
-    M.n_exact+' plants matched a surveyed position in OpenStreetMap or Wikidata; '+
+    M.n_exact+' plants matched a surveyed position in OpenStreetMap or Wikidata and '+
+    (M.n_plus||0)+' were looked up one at a time on Google Maps and checked against imagery; '+
     (M.n_river||0)+' sit on the river the register names for them, at the point nearest their '+
     'district centre; '+M.n_district+' are placed by district centroid alone; '+M.n_none+' carry neither a match nor a district and are left off the map. '+
     'Select any marker to open that project\u2019s full record below, or any river to list what is built on it.';
