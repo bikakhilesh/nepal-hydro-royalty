@@ -215,12 +215,37 @@ official record — read it against the source before relying on a number.
 - **Capacity royalty of zero means "not assessed yet", not "tier 1."** Common in
   the current fiscal year.
 - **Positions carry three confidence levels, not two.** `exact` (31) is a name
-  match to a surveyed OSM/Wikidata point. `river` (47) means the register names
+  match to a surveyed OSM/Wikidata point. `river` (59) means the register names
   the plant's river, that river is mapped, and the marker sits on it at the point
   nearest the district centre — right watercourse, arbitrary point along it.
-  `district` (100) is the bare centroid. 20 have neither. Distance to the nearest
-  mapped river: 1.8 km median for `exact`, 4.6 km for `district` — which is what
-  motivated the snap.
+  `district` (88) is the bare centroid. 20 have neither. Distance to the nearest
+  mapped watercourse: 1.7 km median for `exact`, 2.2 km for `district` — which is
+  what motivated the snap.
+- **Most of the fleet is on a khola, and OSM does not call those rivers.** A
+  `waterway=river` query returns the main stems and nothing else, so at any length
+  threshold it misses the tributary most stations actually sit on. `fetch_terrain`
+  runs a second pass over `waterway=stream` and keeps only the 36 named streams a
+  plant in the register is named for — Nepal has about 1,460, so the filter is what
+  makes embedding them affordable. They are what lets 112 of the 178 plotted plants
+  be attributed to a named watercourse at all, across 54 of them.
+- **How far a plant may be snapped is bounded by the river's own length.** Khola
+  names repeat all over Nepal — a 5 km `Pikhuwa Khola` found 39 km from the district
+  the plant is filed under is a *different* Pikhuwa Khola. The snap radius is
+  `min(30 km, max(10 km, mapped length))`, so a main stem can pull a marker further
+  than a creek can. Without it the stream pass looked like it placed 81 plants on
+  their river; 22 of those were coincidences of a common name. A hollow dot reading
+  "district only" is a better answer than a filled one on the wrong stream.
+- **The register sometimes names two rivers in one field.** `Kabeli Khola, Amji
+  Khola` is a plant drawing from both. The field is split on its punctuation and
+  tried in written order, so the river the register puts first wins — reducing the
+  whole field to a token set picks between them arbitrarily.
+- **OSM names one river several ways along its length.** `Kali Gandaki` and
+  `Kali Gandaki River` are one river in two rows; `Seti Nadi` / `Seti Khola` /
+  `Seti River` / `Seti Gandaki River` are one river in four. The map merges them
+  on the normalised core name and labels the group with its longest variant —
+  otherwise selecting a river would mean selecting which spelling of it you meant.
+  Segments are then stitched end to end (968 OSM ways → 430 polylines), which is
+  what gives a label a continuous run to sit along.
 - **Coordinate matching is deliberately strict.** Sibling stations differ by one
   qualifier (`Upper`/`Lower`, an ordinal, a size class), so both the core name
   and the qualifier set must agree, and a candidate claimed by two plants is

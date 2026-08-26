@@ -459,6 +459,15 @@ Q_RIVERS = """
 area["ISO3166-1"="NP"][admin_level=2]->.np;
 ( way["waterway"="river"]["name"](area.np); );
 out geom;"""
+# Most of the fleet sits on a khola, not on a main stem, and OSM tags those
+# waterway=stream - so they are absent from Q_RIVERS at any length threshold.
+# Nepal has ~1,460 named streams; only the ones a plant is actually named for
+# are kept (see _fleet_keys), which is what makes embedding them affordable.
+Q_STREAMS = """
+[out:json][timeout:280];
+area["ISO3166-1"="NP"][admin_level=2]->.np;
+( way["waterway"="stream"]["name"](area.np); );
+out geom;"""
 Q_PEAKS = """
 [out:json][timeout:180];
 area["ISO3166-1"="NP"][admin_level=2]->.np;
@@ -533,48 +542,114 @@ def _seglen(pts):
     return tot
 
 
-def fetch_terrain(min_km=25, min_ele=6800):
-    """Nepal's river network and high peaks - the physical context the fleet sits in.
-    Rivers arrive split into many ways sharing a name, so group by name, drop the
-    creeks, and simplify hard enough to embed."""
+def _ways_by_name(j):
+    """Overpass returns a watercourse split into many ways sharing one name."""
     from collections import defaultdict
-    sys.setrecursionlimit(30000)
-    j = _overpass(Q_RIVERS)
     by_name = defaultdict(list)
     for w in (j or {}).get("elements", []):
         if not w.get("geometry"): continue
         nm = (w.get("tags", {}).get("name:en") or w.get("tags", {}).get("name") or "").strip()
+        if not nm: continue
         pts = [(round(g["lon"], 4), round(g["lat"], 4)) for g in w["geometry"]]
         if len(pts) >= 2: by_name[nm].append(pts)
-    rivers = []
-    for nm, segs in by_name.items():
-        km = sum(_seglen(x) for x in segs)
-        if km < min_km: continue
-        simp = [p for p in (_rdp(x, 0.008) for x in segs) if len(p) >= 2]
-        if simp: rivers.append({"n": nm, "km": round(km), "segs": simp})
-    rivers.sort(key=lambda x: -x["km"])
+    return by_name
+
+
+def _fleet_keys():
+    """Every normalised name the fleet could be looked up by - the river the
+    register names for a plant, and the plant's own name, since a station is
+    almost always named for the water it sits on. Single tokens are included
+    because _snap_to_river falls back to them."""
+    try:
+        m = pd.read_csv(P("rms_plants_meta.csv"), dtype=str)
+    except FileNotFoundError:
+        return set()
+    keys = set()
+    for col in ("Rivers", "PlantName"):
+        if col not in m.columns: continue
+        for v in m[col].dropna():
+            core = _parts(v)[0]
+            if not core: continue
+            keys.add(frozenset(core))
+            keys |= {frozenset([t]) for t in core}
+    return keys
+
+
+def fetch_terrain(min_km=25, min_ele=6800):
+    """Nepal's river network and high peaks - the physical context the fleet sits in.
+    Rivers arrive split into many ways sharing a name, so group by name, drop the
+    creeks, and simplify hard enough to embed.
+
+    Three Overpass calls, and the API rate-limits. A part whose call fails keeps
+    whatever the last good run wrote rather than overwriting it with nothing --
+    losing the peaks because the rivers used up the quota is not an improvement."""
+    sys.setrecursionlimit(30000)
+    try:
+        prev = json.load(open(P("np_terrain.json"), encoding="utf-8"))
+    except (FileNotFoundError, ValueError):
+        prev = {}
+    kept = []
+
+    jr = _overpass(Q_RIVERS)
+    if jr is None:
+        rivers, _ = prev.get("rivers", []), kept.append("rivers")
+    else:
+        rivers = []
+        for nm, segs in _ways_by_name(jr).items():
+            km = sum(_seglen(x) for x in segs)
+            if km < min_km: continue
+            simp = [p for p in (_rdp(x, 0.008) for x in segs) if len(p) >= 2]
+            if simp: rivers.append({"n": nm, "km": round(km), "segs": simp})
+        rivers.sort(key=lambda x: -x["km"])
+
+    # ── the tributaries the fleet is actually built on ──────────────────────
+    # A main stem carries a handful of stations; the rest are on kholas that
+    # Q_RIVERS never returns. Keeping only fleet-named streams turns ~1,460
+    # candidates into a few dozen, small enough to embed and snap against.
+    want = _fleet_keys()
+    have = {frozenset(_parts(r["n"])[0]) for r in rivers}
+    js = _overpass(Q_STREAMS) if want else {}
+    if js is None:
+        streams, _ = prev.get("streams", []), kept.append("streams")
+    else:
+        streams = []
+        for nm, segs in _ways_by_name(js).items():
+            k = frozenset(_parts(nm)[0])
+            if not k or k in have or k not in want: continue
+            km = sum(_seglen(x) for x in segs)
+            # a stream simplified as hard as a main stem loses its shape
+            simp = [p for p in (_rdp(x, 0.0015) for x in segs) if len(p) >= 2]
+            if simp: streams.append({"n": nm, "km": round(km), "segs": simp, "sm": 1})
+        streams.sort(key=lambda x: -x["km"])
 
     j2 = _overpass(Q_PEAKS)
-    raw = []
-    for e in (j2 or {}).get("elements", []):
-        t = e.get("tags", {})
-        nm = t.get("name:en") or t.get("name")
-        mm = re.match(r"^\s*(\d{3,5})", str(t.get("ele", "")))
-        if not nm or not mm or e.get("lat") is None: continue
-        h = int(mm.group(1))
-        if h >= min_ele:
-            raw.append({"n": nm, "e": h, "la": round(e["lat"], 4), "lo": round(e["lon"], 4)})
-    # OSM maps subsidiary summits separately (Lhotse Shar, Everest South Peak...);
-    # keep the highest point of each massif so the map reads as mountains, not noise
-    raw.sort(key=lambda p: -p["e"])
-    peaks = []
-    for p in raw:
-        if any(abs(p["la"]-q["la"]) < 0.06 and abs(p["lo"]-q["lo"]) < 0.06 for q in peaks):
-            continue
-        peaks.append(p)
-    json.dump({"rivers": rivers, "peaks": peaks},
+    if j2 is None:
+        peaks, _ = prev.get("peaks", []), kept.append("peaks")
+    else:
+        raw = []
+        for e in j2.get("elements", []):
+            t = e.get("tags", {})
+            nm = t.get("name:en") or t.get("name")
+            mm = re.match(r"^\s*(\d{3,5})", str(t.get("ele", "")))
+            if not nm or not mm or e.get("lat") is None: continue
+            h = int(mm.group(1))
+            if h >= min_ele:
+                raw.append({"n": nm, "e": h, "la": round(e["lat"], 4), "lo": round(e["lon"], 4)})
+        # OSM maps subsidiary summits separately (Lhotse Shar, Everest South Peak...);
+        # keep the highest point of each massif so the map reads as mountains, not noise
+        raw.sort(key=lambda p: -p["e"])
+        peaks = []
+        for p in raw:
+            if any(abs(p["la"]-q["la"]) < 0.06 and abs(p["lo"]-q["lo"]) < 0.06 for q in peaks):
+                continue
+            peaks.append(p)
+
+    json.dump({"rivers": rivers, "streams": streams, "peaks": peaks},
               open(P("np_terrain.json"), "w", encoding="utf-8"), ensure_ascii=False)
+    if kept: print(f"  overpass failed for {', '.join(kept)} - kept the previous data")
     print(f"terrain: {len(rivers)} rivers ({sum(len(x) for r in rivers for x in r['segs'])} pts),"
+          f" {len(streams)} fleet tributaries"
+          f" ({sum(len(x) for r in streams for x in r['segs'])} pts),"
           f" {len(peaks)} peaks")
 
 
@@ -736,42 +811,65 @@ def _is_match(a, b):
 
 
 def _river_index():
-    """Map a river's core-name token set -> its vertices, for snapping."""
+    """Map a watercourse's core-name token set -> its vertices, for snapping.
+    Tributaries count: a plant named for a khola snaps far closer on that khola
+    than on the main stem it eventually joins."""
     try:
         terr = json.load(open(P("np_terrain.json"), encoding="utf-8"))
     except FileNotFoundError:
         return {}
     idx = {}
-    for rv in terr.get("rivers", []):
+    for rv in terr.get("rivers", []) + terr.get("streams", []):
         k = frozenset(_parts(rv["n"])[0])
         if not k: continue
         pts = [p for seg in rv["segs"] for p in seg]
-        if k not in idx or len(pts) > len(idx[k][1]):
-            idx[k] = (rv["n"], pts)
+        e = idx.get(k)
+        if e is None:
+            idx[k] = [rv["n"], pts, rv["km"], rv["km"]]   # name, pts, total km, best variant
         else:
-            idx[k][1].extend(pts)
+            # same river under another spelling: one watercourse, so pool the
+            # vertices and the length, and label it with the longest variant
+            e[1] = e[1] + pts
+            e[2] += rv["km"]
+            if rv["km"] > e[3]: e[0], e[3] = rv["n"], rv["km"]
     return idx
 
 
-def _snap_to_river(plant_name, river_field, lat, lon, idx, max_km=50):
+def _named_rivers(field):
+    """The register sometimes names two watercourses in one field -- 'Kabeli
+    Khola, Amji Khola' for a plant that draws from both. Yield them in the order
+    written, so the one the register puts first is the one tried first; reducing
+    the whole field to a token set loses that and picks arbitrarily."""
+    if not isinstance(field, str): return []
+    return [p for p in re.split(r"[,/;&]| and ", field) if p.strip()]
+
+
+def _snap_to_river(plant_name, river_field, lat, lon, idx, ceil_km=30):
     """A district centroid is a town or a ridge; a hydropower plant is on a
     watercourse. Where the register names the river (or the plant is named after
     it) and that river is mapped, move the marker to the point on THAT river
     nearest the district centre. Still approximate - but on the right river, and
-    constrained to the right district."""
+    constrained to the right district.
+
+    How far the marker may travel is bounded by the watercourse's own mapped
+    length, because khola names repeat all over Nepal: a 5 km Pikhuwa Khola found
+    39 km from the district it is supposed to be in is a different Pikhuwa Khola,
+    and a district centroid drawn as a hollow dot is a more honest answer than a
+    filled one on the wrong stream."""
     hit = None
-    for src in (river_field, plant_name):
+    for src in _named_rivers(river_field) + [plant_name]:
         if not isinstance(src, str): continue
         core = _parts(src)[0]
         if not core: continue
         k = frozenset(core)
         if k in idx: hit = idx[k]; break
-        for tok in core:
+        for tok in sorted(core):                 # sorted: never depend on set order
             kk = frozenset([tok])
             if kk in idx: hit = idx[kk]; break
         if hit: break
     if not hit: return None
-    name, pts = hit
+    name, pts, km = hit[0], hit[1], hit[2]
+    max_km = min(ceil_km, max(10, km))
     kx = math.cos(math.radians(28.4))
     best, bp = 1e18, None
     for lo, la in pts:
@@ -1407,6 +1505,100 @@ def build_payload():
     return payload
 
 
+def _chain(segs):
+    """OSM splits one river into consecutive ways, so a 60 km drainage arrives as
+    fifteen fragments none of which is long enough to hang a label on. Stitch the
+    ones that share an endpoint back into continuous polylines: labels get a run
+    to sit along, and hit-testing and rendering both get cheaper for it."""
+    from collections import defaultdict
+    segs = [[tuple(p) for p in s] for s in segs if len(s) >= 2]
+    ends = defaultdict(list)
+    for i, s in enumerate(segs):
+        ends[s[0]].append(i)
+        ends[s[-1]].append(i)
+    used, out = set(), []
+    for i, s in enumerate(segs):
+        if i in used: continue
+        used.add(i)
+        ch = list(s)
+        for _ in range(2):                      # extend one way, flip, extend the other
+            while True:
+                nxt = next((j for j in ends.get(ch[-1], ()) if j not in used), None)
+                if nxt is None: break
+                used.add(nxt)
+                t = segs[nxt]
+                ch += t[1:] if t[0] == ch[-1] else t[-2::-1]
+            ch.reverse()
+        out.append([list(p) for p in ch])
+    return out
+
+
+def _watercourses(terr, m, c):
+    """One selectable entity per real watercourse, plus the river each plant sits on.
+
+    OSM names a single river several ways along its length -- 'Kali Gandaki' and
+    'Kali Gandaki River' are one river in two rows, as are 'Seti Nadi' / 'Seti
+    Khola' / 'Seti River' -- so segments are merged on the normalised core name
+    and the longest variant supplies the label. Otherwise picking a river would
+    mean picking which spelling of it you wanted.
+
+    A plant is attributed in the order that keeps the map honest: the watercourse
+    its marker was snapped onto first, so the dot and the claim never disagree,
+    then the river the register names for it, then its own name."""
+    groups = {}
+    for rv in terr.get("rivers", []) + terr.get("streams", []):
+        # a Devanagari name normalises to nothing; key it raw so it still draws
+        core = _parts(rv["n"])[0]
+        k = frozenset(core) if core else "raw:" + rv["n"]
+        g = groups.get(k)
+        if g is None:
+            g = groups[k] = {"n": rv["n"], "km": 0.0, "best": -1.0, "segs": [], "sm": 1}
+        g["km"] += rv["km"]
+        g["segs"] += rv["segs"]
+        if not rv.get("sm"): g["sm"] = 0          # any main-stem variant -> main stem
+        if rv["km"] > g["best"]: g["best"], g["n"] = rv["km"], rv["n"]
+
+    order = sorted(groups.items(), key=lambda kv: -kv[1]["km"])
+    idx = {k: k for k, _ in order if isinstance(k, frozenset)}
+    for k, _ in order:                            # single-token fallback, longest first
+        if isinstance(k, frozenset):
+            for t in k: idx.setdefault(frozenset([t]), k)
+
+    def resolve(*srcs):
+        for s in srcs:
+            for one in (_named_rivers(s) if s is not None else []):
+                core = _parts(one)[0]
+                if not core: continue
+                hit = idx.get(frozenset(core))
+                if hit: return hit
+                for t in sorted(core):            # sorted: never depend on set order
+                    hit = idx.get(frozenset([t]))
+                    if hit: return hit
+        return None
+
+    pos = {t.PlantId: t for t in c.itertuples()}
+    rivers = {}                                   # register river name by plant id
+    if "Rivers" in m.columns:
+        rivers = dict(zip(m.PlantId, m.Rivers))
+    gid, out = {}, []
+    for k, g in order:
+        gid[k] = len(out)
+        out.append({"n": g["n"], "km": int(round(g["km"])), "segs": _chain(g["segs"]),
+                    "sm": g["sm"], "np": 0, "mw": 0.0})
+
+    by_plant = {}
+    for pid, t in pos.items():
+        snap = t.matched_to if getattr(t, "precision", None) == "river" else None
+        k = resolve(snap, rivers.get(pid), t.PlantName)
+        if k is None: continue
+        by_plant[pid] = gid[k]
+        out[gid[k]]["np"] += 1
+        kw = getattr(t, "Cap_kW", None)
+        if kw is not None and np.isfinite(kw): out[gid[k]]["mw"] += kw/1000.0
+    for w in out: w["mw"] = r(w["mw"], 1)
+    return out, by_plant
+
+
 def _map_payload(d, m, c, plants):
     try: outline = json.load(open(P("np_outline.json"), encoding="utf-8"))
     except FileNotFoundError: return None
@@ -1422,6 +1614,11 @@ def _map_payload(d, m, c, plants):
             rad, ang = 0.055*math.sqrt(k+0.6), (k+1)*GOLDEN
             x.loc[i,"jlat"] = x.loc[i,"lat"] + rad*math.sin(ang)
             x.loc[i,"jlon"] = x.loc[i,"lon"] + rad*math.cos(ang)/math.cos(math.radians(28.4))
+    try:
+        terrain = json.load(open(P("np_terrain.json"), encoding="utf-8"))
+    except FileNotFoundError:
+        terrain = {"rivers": [], "streams": [], "peaks": []}
+    wcs, on_river = _watercourses(terrain, m, x)
     ids = {key(p["name"]): p["id"] for p in plants}
     pts, linked = [], 0
     for t in x.itertuples():
@@ -1436,12 +1633,9 @@ def _map_payload(d, m, c, plants):
                     "di": None if pd.isna(t.District) else str(t.District),
                     "cod": None if pd.isna(t.MitiofOperation) else str(t.MitiofOperation),
                     "age": age, "t2": 1 if (age is not None and age >= 15) else 0,
+                    "rv": on_river.get(t.PlantId),
                     "gwh": r(t.gwh, 0), "cf": r(t.cf, 3)})
     pts.sort(key=lambda q: -(q["mw"] or 0))
-    try:
-        terrain = json.load(open(P("np_terrain.json"), encoding="utf-8"))
-    except FileNotFoundError:
-        terrain = {"rivers": [], "peaks": []}
     try:
         grid = json.load(open(P("np_grid.json"), encoding="utf-8"))
     except FileNotFoundError:
@@ -1451,7 +1645,8 @@ def _map_payload(d, m, c, plants):
     except FileNotFoundError:
         plan = {"lines": [], "labels": {}}
     return {"pts": pts, "outline": outline["rings"], "bbox": outline["bbox"],
-            "rivers": terrain["rivers"], "peaks": terrain["peaks"],
+            "rivers": wcs, "n_onriver": sum(1 for q in pts if q["rv"] is not None),
+            "peaks": terrain["peaks"],
             "lines": grid["lines"], "subs": grid["subs"],
             "plan": plan["lines"], "plan_labels": plan.get("labels", {}),
             "plan_subs": plan.get("subs", []),

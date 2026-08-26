@@ -1,6 +1,6 @@
 PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 1,Chilime Plant,22100.0,,Province 1,28.1576851,85.3316721,exact,OSM,The Chilime Hydro Power Plant
-5,Piluwa Khola HP,3200.0,Sankhuwasabha,Province 1,27.2909987,87.3144334,district,district centroid,Sankhuwasabha
+5,Piluwa Khola HP,3200.0,Sankhuwasabha,Province 1,27.2675,87.324,river,"on Piluwa Khola, nearest Sankhuwasabha",Piluwa Khola
 6,Ridi Khola HP,2400.0,Palpa,Lumbini,27.9343,83.4402,river,"on Ridi Khola, nearest Palpa",Ridi Khola
 7,Upper Bhotekoshi,45000.0,Sindhupalchok,Bagmati,27.8729,85.8821,river,"on Bhote Koshi, nearest Sindhupalchok",Bhote Koshi
 8,Aandikhola HP,9400.0,,Province 1,,,none,,
@@ -35,7 +35,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 39,Lower Modi-1 HP,10200.0,Parbat,Province 1,28.2027,83.6696,river,"on Modi Khola, nearest Parbat",Modi Khola
 40,Siuri HP,5000.0,Lamjung,Gandaki,28.2290844,84.3791341,district,district centroid,Lamjung
 41,Sipring Khola HP,10000.0,Dolakha,Province 1,27.6329785,86.2324209,district,district centroid,Dolakha
-42,Tadikhola HP,5000.0,Nuwakot,Bagmati,27.9139628,85.1421083,district,district centroid,Nuwakot
+42,Tadikhola HP,5000.0,Nuwakot,Bagmati,27.8898,85.1654,river,"on Tadi Khola, nearest Nuwakot",Tadi Khola
 43,Bhairav kunda khola Small HP,3000.0,Sindhupalchok,Province 1,27.9059127,85.7563055,district,district centroid,Sindhupalchok
 44,Ankhukhola Small HP,8400.0,Dhading,Province 1,27.9114659,84.8980987,district,district centroid,Dhading
 45,Middle Chaku HP,1800.0,Sindhupalchok,Province 1,27.9059127,85.7563055,district,district centroid,Sindhupalchok
@@ -46,8 +46,8 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 50,Sanima Mai,22000.0,Ilam,Province 1,26.8794,87.9288,river,"on Mai Khola, nearest Ilam",Mai Khola
 51,Mai Cascade,7000.0,Ilam,Province 1,26.76583333,87.86916667,exact,Wikidata,Mai Cascade Hydropower Plant
 52,Radhi Small,4400.0,Lamjung,Province 1,28.2290844,84.3791341,district,district centroid,Lamjung
-53,Upper Puwa-1,3000.0,Ilam,Province 1,26.8854074,87.9203052,district,district centroid,Ilam
-54,Jiri Khola SHP,2400.0,Dolakha,Province 1,27.6329785,86.2324209,district,district centroid,Dolakha
+53,Upper Puwa-1,3000.0,Ilam,Province 1,26.9202,87.9066,river,"on Puwa Khola, nearest Ilam",Puwa Khola
+54,Jiri Khola SHP,2400.0,Dolakha,Province 1,27.6277,86.2308,river,"on Jiri Khola, nearest Dolakha",Jiri Khola
 55,Mailung Khola,5000.0,Rashuwa,Province 1,28.1100125,85.2966703,district,district centroid,Rashuwa
 61,Nau gad khola,8500.0,Darchula,Sudurpashchim,29.9127333,80.7937159,district,district centroid,Darchula
 62,Upper Mai,12000.0,,,,,none,,
@@ -74,7 +74,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 83,Madkyu Khola,13000.0,Kaski,Gandaki,28.3663,84.12392,exact,Wikidata,Madkyu Khola Hydropower Station
 84,Mai Sana Cascade HPP,8000.0,,Province 1,,,none,,
 85,Theule Khola HPP,1500.0,Baglung,Gandaki,28.26568,83.5972502,district,district centroid,Baglung
-86,Baramchi Khola HPP,4200.0,Sindhupalchok,Bagmati,27.9059127,85.7563055,district,district centroid,Sindhupalchok
+86,Baramchi Khola HPP,4200.0,Sindhupalchok,Bagmati,27.839,85.7797,river,"on Baramchi Khola, nearest Sindhupalchok",Baramchi Khola
 87,Super Mai HPP,7800.0,Ilam,Province 1,26.8794,87.9288,river,"on Mai Khola, nearest Ilam",Mai Khola
 88,Rudi A,8800.0,Lamjung,Gandaki,28.2290844,84.3791341,district,district centroid,Lamjung
 89,Bagmati Nadi,32000.0,Makawanpur,Bagmati,27.5048,85.2345,river,"on Bagmati, nearest Makawanpur",Bagmati
@@ -87,7 +87,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 96,Lower Hewa,22100.0,Panchthar,Province 1,27.1582,87.7474,river,"on Hewa Khola, nearest Panchthar",Hewa Khola
 97,Upper Mardi,7000.0,Kaski,Gandaki,28.37161,83.88348,exact,Wikidata,Upper Mardi Khola Hydropower Station
 98,Iwa Khola	,9900.0,Taplejung,Province 1,27.2838,87.8315,river,"on Iwa, nearest Taplejung",Iwa
-99,Upper Trishuli 3A,60000.0,Rashuwa,Bagmati,27.8602,85.0945,river,"on Trisuli, nearest Rashuwa",Trisuli
+99,Upper Trishuli 3A,60000.0,Rashuwa,Bagmati,28.1100125,85.2966703,district,district centroid,Rashuwa
 100,Kulekhani-III HP,14000.0,Makawanpur,Bagmati,27.4732383,85.0395276,exact,OSM,Kulekhani III HEP
 101,Upper Naugad Gad ,8000.0,Darchula,Sudurpashchim,29.9127333,80.7937159,district,district centroid,Darchula
 102,Kabeli B - 1,25000.0,Panchthar,Province 1,27.2725,87.7808,river,"on Kabeli, nearest Panchthar",Kabeli
@@ -95,7 +95,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 104,Ghalemdi Khola,5000.0,Myagdi,Gandaki,28.5439443,83.4632633,district,district centroid,Myagdi
 105,Solu,23500.0,Sankhuwasabha,Province 1,27.2909987,87.3144334,district,district centroid,Sankhuwasabha
 106,Rawa Khola,3000.0,Khotang,Province 1,27.2133094,86.7949062,district,district centroid,Khotang
-107,Namarjun Madi,12000.0,Kaski,Gandaki,28.2356,84.0834,river,"on Madi Khola, nearest Kaski",Madi Khola
+107,Namarjun Madi,12000.0,Kaski,Gandaki,28.2356,84.0834,river,"on Madi River, nearest Kaski",Madi River
 108,Ghatte Khola,5000.0,Dolakha,Bagmati,27.6329785,86.2324209,district,district centroid,Dolakha
 109,Bijaypur Khola 2 HPP,4500.0,Kaski,Gandaki,28.2127189,83.9810569,district,district centroid,Kaski
 110,Taksar Pikhuwa,8000.0,Bhojpur,Province 1,27.1743038,87.0934775,district,district centroid,Bhojpur
@@ -108,7 +108,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 119,Lower Jogmai Khola HPP,6200.0,Ilam,Province 1,26.8854074,87.9203052,district,district centroid,Ilam
 120,Lower Modi Khola,20000.0,Parbat,Gandaki,28.236028,83.7121054,exact,OSM,Lower Modi HEP
 121,Mai Beni HPP,9510.0,Ilam,Province 1,26.8794,87.9288,river,"on Mai Khola, nearest Ilam",Mai Khola
-122,Lower Tadi Khola,4996.0,Nuwakot,Bagmati,27.9139628,85.1421083,district,district centroid,Nuwakot
+122,Lower Tadi Khola,4996.0,Nuwakot,Bagmati,27.8898,85.1654,river,"on Tadi Khola, nearest Nuwakot",Tadi Khola
 123,Kabeli B-1 Cascade,9940.0,Panchthar,Province 1,27.2725,87.7808,river,"on Kabeli, nearest Panchthar",Kabeli
 124,Upper Syange Khola Small,2400.0,Lamjung,Gandaki,28.2290844,84.3791341,district,district centroid,Lamjung
 125,Upper Chhandi Khola Small,4000.0,Lamjung,Gandaki,28.2290844,84.3791341,district,district centroid,Lamjung
@@ -119,7 +119,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 130,Nyadi,30000.0,Lamjung,Gandaki,28.2290844,84.3791341,district,district centroid,Lamjung
 131,Upper Khimti II,7000.0,Ramechhap,Bagmati,27.6415532,86.3103359,exact,OSM,Upper Khimti-II Hydropower Project
 132,Uppallo Khimti,12000.0,Ramechhap,Bagmati,27.4749,86.1127,river,"on Khimti Khola, nearest Ramechhap",Khimti Khola
-133,Upper Hewa,8500.0,Sankhuwasabha,Province 1,27.156,87.7102,river,"on Hewa Khola, nearest Sankhuwasabha",Hewa Khola
+133,Upper Hewa,8500.0,Sankhuwasabha,Province 1,27.2909987,87.3144334,district,district centroid,Sankhuwasabha
 134,Dordi Khola,27000.0,Lamjung,Gandaki,28.2290844,84.3791341,district,district centroid,Lamjung
 135,Makarigad,10000.0,Darchula,Sudurpashchim,29.9127333,80.7937159,district,district centroid,Darchula
 136,Upper Dordi A,25000.0,Lamjung,Gandaki,28.2516619,84.4739051,exact,OSM,Upper Dordi A
@@ -129,22 +129,22 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 140,Upper Balephi A,36000.0,,Province 1,,,none,,
 141,Mid Solu Khola ,9500.0,Solukhumbu,Province 1,27.5222,86.5758,river,"on Solu Khola, nearest Solukhumbu",Solu Khola
 142,Dordi 1,12000.0,Lamjung,Gandaki,28.2290844,84.3791341,district,district centroid,Lamjung
-143,Puwa 2,4960.0,Ilam,Province 1,26.8854074,87.9203052,district,district centroid,Ilam
+143,Puwa 2,4960.0,Ilam,Province 1,26.9202,87.9066,river,"on Puwa Khola, nearest Ilam",Puwa Khola
 144,Middle Modi,18000.0,Parbat,Gandaki,28.2027,83.6696,river,"on Modi Khola, nearest Parbat",Modi Khola
 145,Kalanga,15330.0,Bajhanga,Sudurpashchim,29.5486985,80.8589458,exact,OSM,Kalanga Gad HEP
 146,Upper Kalangad,38460.0,Bajhanga,Sudurpashchim,29.5477308,81.1933393,district,district centroid,Bajhanga
 147,Upper Machha Khola Small,4550.0,Gorkha,Gandaki,27.9949532,84.6279988,district,district centroid,Gorkha
-148,Upper Piluwa Khola 2,4720.0,Sankhuwasabha,Province 1,27.2909987,87.3144334,district,district centroid,Sankhuwasabha
-149,Super Madi,44000.0,Kaski,Gandaki,28.2356,84.0834,river,"on Madi Khola, nearest Kaski",Madi Khola
+148,Upper Piluwa Khola 2,4720.0,Sankhuwasabha,Province 1,27.2675,87.324,river,"on Piluwa Khola, nearest Sankhuwasabha",Piluwa Khola
+149,Super Madi,44000.0,Kaski,Gandaki,28.2356,84.0834,river,"on Madi River, nearest Kaski",Madi River
 150,Rukum gad,5000.0,Rukum,Lumbini,28.6448822,82.5617218,district,district centroid,Rukum
 151,Super Dordi Kha,54000.0,Lamjung,Gandaki,28.2290844,84.3791341,district,district centroid,Lamjung
 152,Upper Solu Khola,19800.0,Solukhumbu,Province 1,27.5222,86.5758,river,"on Solu Khola, nearest Solukhumbu",Solu Khola
-153,Maya Khola,14900.0,Sankhuwasabha,Province 1,27.2909987,87.3144334,district,district centroid,Sankhuwasabha
-154,Ghar Khola,14000.0,Myagdi,Gandaki,28.5439443,83.4632633,district,district centroid,Myagdi
+153,Maya Khola,14900.0,Sankhuwasabha,Province 1,27.2675,87.3246,river,"on Maya Khola, nearest Sankhuwasabha",Maya Khola
+154,Ghar Khola,14000.0,Myagdi,Gandaki,28.4843,83.6478,river,"on Ghar Khola, nearest Myagdi",Ghar Khola
 155,Upper Chameliya,40000.0,Darchula,Sudurpashchim,29.9127333,80.7937159,district,district centroid,Darchula
-156,Down Piluwa,10300.0,Sankhuwasabha,Province 1,27.2909987,87.3144334,district,district centroid,Sankhuwasabha
+156,Down Piluwa,10300.0,Sankhuwasabha,Province 1,27.2675,87.324,river,"on Piluwa Khola, nearest Sankhuwasabha",Piluwa Khola
 157,Likhu 2,55000.0,Ramechhap,Bagmati,27.6735805,86.459181,exact,OSM,Likhu 2
-158,Upper Sanjen,14800.0,Rashuwa,Bagmati,28.1100125,85.2966703,district,district centroid,Rashuwa
+158,Upper Sanjen,14800.0,Rashuwa,Bagmati,28.2166,85.2849,river,"on Sanjen Khola, nearest Rashuwa",Sanjen Khola
 159,Upper Sanigad,10700.0,Bajhanga,Sudurpashchim,29.6614159,80.8568725,exact,OSM,Upper Sanigad Hydroelectric Project
 160,Super Chepe,9050.0,Gorkha,Gandaki,28.1,84.5408,river,"on Chepe Khola, nearest Gorkha",Chepe Khola
 161,Upper Suri,7000.0,Dolakha,Bagmati,27.6329785,86.2324209,district,district centroid,Dolakha
@@ -154,24 +154,24 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 165,Upper Ingwa Khola,9700.0,Taplejung,Province 1,27.3586827,87.6729259,district,district centroid,Taplejung
 166,Upper Phawa HPP,5800.0,Taplejung,Province 1,27.3586827,87.6729259,district,district centroid,Taplejung
 167,Upper Mailun Khola,14300.0,Rashuwa,Bagmati,28.1100125,85.2966703,district,district centroid,Rashuwa
-168,Middle Tamor	,73000.0,Taplejung,Province 1,27.336,87.6496,river,"on Tamor River, nearest Taplejung",Tamor River
+168,Middle Tamor	,73000.0,Taplejung,Province 1,27.336,87.6496,river,"on Tamor Nadi, nearest Taplejung",Tamor Nadi
 169,Yambaling Khola,7271.0,Sindhupalchok,Bagmati,27.9059127,85.7563055,district,district centroid,Sindhupalchok
 170,Nilgiri Khola ,38000.0,Myagdi,Gandaki,28.5439443,83.4632633,district,district centroid,Myagdi
 171,Chepe A HEP,7000.0,Gorkha,Gandaki,28.1,84.5408,river,"on Chepe Khola, nearest Gorkha",Chepe Khola
 172,Dudhkunda Khola HEP,12000.0,Solukhumbu,Province 1,27.5222,86.5758,river,"on Solu Khola, nearest Solukhumbu",Solu Khola
 173,Upper Chirkhuwa Khola,4700.0,Bhojpur,Province 1,27.1743038,87.0934775,district,district centroid,Bhojpur
-174,Gelun Khola HPP,3200.0,Sindhupalchok,Bagmati,27.9059127,85.7563055,district,district centroid,Sindhupalchok
-175,Seti Khola HPP,3500.0,Parbat,Gandaki,28.2079,83.9906,river,"on Seti Nadi, nearest Parbat",Seti Nadi
+174,Gelun Khola HPP,3200.0,Sindhupalchok,Bagmati,27.8401,85.7985,river,"on Gelun Khola, nearest Sindhupalchok",Gelun Khola
+175,Seti Khola HPP,3500.0,Parbat,Gandaki,28.2116711,83.6757747,district,district centroid,Parbat
 176,Seti Nadi hpp,25000.0,Kaski,Gandaki,28.2088,83.991,river,"on Seti Nadi, nearest Kaski",Seti Nadi
 177,Upper Richet Khola SHP,2000.0,Gorkha,Gandaki,27.9949532,84.6279988,district,district centroid,Gorkha
 178,Super Kabeli Khola A HEP,13500.0,Taplejung,Province 1,27.2914,87.6958,river,"on Kabeli, nearest Taplejung",Kabeli
-179,Sanjen,42500.0,Rashuwa,Bagmati,28.1100125,85.2966703,district,district centroid,Rashuwa
+179,Sanjen,42500.0,Rashuwa,Bagmati,28.2166,85.2849,river,"on Sanjen Khola, nearest Rashuwa",Sanjen Khola
 180,Rasuwagadhi HPP,111000.0,Rashuwa,Bagmati,28.1644,85.3413,river,"on Bhote Koshi, nearest Rashuwa",Bhote Koshi
 181,Sanjen Khola HPP,78000.0,,Province 1,,,none,,
 182,Lankhuwa Khola HPP,5000.0,Sankhuwasabha,Province 1,27.2909987,87.3144334,district,district centroid,Sankhuwasabha
 183,Super Kabeli Khola HPP,12000.0,Taplejung,Province 1,27.2914,87.6958,river,"on Kabeli, nearest Taplejung",Kabeli
 184,Bhim Khola Small HPP,4960.0,Baglung,Gandaki,28.26568,83.5972502,district,district centroid,Baglung
-185,Super Hewa HPP,6000.0,Sankhuwasabha,Province 1,27.156,87.7102,river,"on Hewa Khola, nearest Sankhuwasabha",Hewa Khola
+185,Super Hewa HPP,6000.0,Sankhuwasabha,Province 1,27.2909987,87.3144334,district,district centroid,Sankhuwasabha
 186,Upper Lohore SHP,4000.0,Dailekh,Karnali,28.8380316,81.7106443,district,district centroid,Dailekh
 187,Karuwa Seti HPP,32000.0,Kaski,Gandaki,28.2088,83.991,river,"on Seti Nadi, nearest Kaski",Seti Nadi
 188,Jogmai Cascade HPP,5200.0,Ilam,Province 1,26.8854074,87.9203052,district,district centroid,Ilam
@@ -179,7 +179,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 190,Madhya Bhotekoshi HPP,102000.0,,Province 1,,,none,,
 191,Sagu khola 1 HPP,5500.0,Dolakha,Bagmati,27.6329785,86.2324209,district,district centroid,Dolakha
 192,Sagu Khola HEP,20000.0,Dolakha,Bagmati,27.6329785,86.2324209,district,district centroid,Dolakha
-193,Upper Tadi,11000.0,Nuwakot,Bagmati,27.9139628,85.1421083,district,district centroid,Nuwakot
+193,Upper Tadi,11000.0,Nuwakot,Bagmati,27.8898,85.1654,river,"on Tadi Khola, nearest Nuwakot",Tadi Khola
 194,Rahughat Mangale,37000.0,Myagdi,Bagmati,28.5439443,83.4632633,district,district centroid,Myagdi
 195,Lower Solu Hydropower Project,82000.0,Solukhumbu,Province 1,27.5222,86.5758,river,"on Solu Khola, nearest Solukhumbu",Solu Khola
 196,Kabeli-3 Cascade HEP,21930.0,Taplejung,Province 1,27.2914,87.6958,river,"on Kabeli, nearest Taplejung",Kabeli
@@ -196,4 +196,4 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 207,Buku Khola HPP,6000.0,Okhaldunga,Province 1,27.3363024,86.4489456,district,district centroid,Okhaldunga
 208,Lower Irkhuwa Khola HPP,14150.0,Bhojpur,Province 1,27.1743038,87.0934775,district,district centroid,Bhojpur
 209,Siddhi Khola HPP,10000.0,Ilam,Province 1,26.8854074,87.9203052,district,district centroid,Ilam
-210,Mewa Khola HPP,50000.0,Taplejung,Province 1,27.3586827,87.6729259,district,district centroid,Taplejung
+210,Mewa Khola HPP,50000.0,Taplejung,Province 1,27.543,87.6186,river,"on Mewa Khola, nearest Taplejung",Mewa Khola

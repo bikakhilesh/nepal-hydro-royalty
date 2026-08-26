@@ -15,7 +15,7 @@
   --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
   --s1-fill:rgba(42,120,214,.16); --s2-fill:rgba(235,104,52,.16);
   --grid:#e6edf0; --warn:#b45309; --warn-bg:#fdf4e7;
-  --river:#8fb8d0; --peak:#a89f92; --peak-ink:#6d6459; --gridline:#8b5fb0;
+  --river:#8fb8d0; --river-ink:#41748f; --peak:#a89f92; --peak-ink:#6d6459; --gridline:#8b5fb0;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -27,7 +27,7 @@
     --s1:#3987e5; --s2:#d95926; --s3:#199e70;
     --s1-fill:rgba(57,135,229,.20); --s2-fill:rgba(217,89,38,.20);
     --grid:#1e2f36; --warn:#e0a355; --warn-bg:#241c10;
-    --river:#37596e; --peak:#5a5348; --peak-ink:#8c8477; --gridline:#a273c9;
+    --river:#37596e; --river-ink:#79a6c2; --peak:#5a5348; --peak-ink:#8c8477; --gridline:#a273c9;
   }
 }
 :root[data-theme="dark"]{
@@ -39,7 +39,7 @@
   --s1:#3987e5; --s2:#d95926; --s3:#199e70;
   --s1-fill:rgba(57,135,229,.20); --s2-fill:rgba(217,89,38,.20);
   --grid:#1e2f36; --warn:#e0a355; --warn-bg:#241c10;
-  --river:#37596e; --peak:#5a5348; --peak-ink:#8c8477; --gridline:#a273c9;
+  --river:#37596e; --river-ink:#79a6c2; --peak:#5a5348; --peak-ink:#8c8477; --gridline:#a273c9;
 }
 *{box-sizing:border-box}
 body{
@@ -289,6 +289,32 @@ tr.qsub .sbar{opacity:.85}
   border:1px solid var(--line);border-radius:4px;padding:3px 9px;cursor:pointer}
 .lyrbtn:hover{border-color:var(--accent)}
 .card.zoomed .lyrbar{flex:none;margin-bottom:8px}
+
+/* ---- the plants on the selected river ---------------------------------- */
+.rvpick{display:flex;align-items:center;gap:10px;margin-top:14px;
+  font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-2)}
+.card.zoomed .rvpick{display:none}
+.rvpanel{margin-top:12px;border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:5px;background:var(--surface-2);padding:10px 12px}
+.rvhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;
+  font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-2)}
+.rvhead b{font-size:13.5px;color:var(--ink);font-weight:600}
+.rvclose{margin-left:auto;font-family:inherit;font-size:11.5px;color:var(--accent);
+  background:transparent;border:1px solid var(--line);border-radius:4px;
+  padding:2px 9px;cursor:pointer}
+.rvclose:hover{border-color:var(--accent)}
+.rvlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.rvitem{display:inline-flex;align-items:baseline;gap:8px;font-family:inherit;font-size:12.5px;
+  color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:4px;
+  padding:5px 10px;cursor:pointer;text-align:left}
+.rvitem:hover{border-color:var(--accent);color:var(--accent)}
+.rvitem:disabled{cursor:default;color:var(--ink-3);opacity:.75}
+.rvitem:disabled:hover{border-color:var(--line);color:var(--ink-3)}
+.rvitem .rvmw{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3)}
+.rvnone{margin-top:8px;font-size:12.5px;color:var(--ink-3)}
+.card.zoomed .rvpanel{position:absolute;left:18px;bottom:16px;z-index:2;max-width:min(560px,58vw);
+  max-height:42vh;overflow:auto;background:var(--surface);box-shadow:0 6px 24px rgba(0,0,0,.18)}
+@media (max-width:700px){ .card.zoomed .rvpanel{display:none} }
 
 /* ---- embedded terrain map ---------------------------------------------- */
 #fig-terrain{margin-top:18px}
@@ -593,6 +619,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     <div class="lyrbar" id="map-layers">
       <label><input type="checkbox" data-lyr="plants" checked> Plants</label>
       <label><input type="checkbox" data-lyr="rivers" checked> Rivers</label>
+      <label><input type="checkbox" data-lyr="rvlab" checked> River names</label>
       <label><input type="checkbox" data-lyr="peaks" checked> Peaks</label>
       <label><input type="checkbox" data-lyr="grid" checked> Built grid</label>
       <label><input type="checkbox" data-lyr="plan" checked> Proposed corridors</label>
@@ -603,12 +630,14 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <button type="button" class="lyrbtn" data-set="none">none</button>
     </div>
     <div class="chart" id="c-map"></div>
+    <div class="rvpick"><span>Plants by river</span><span id="map-rvpick"></span></div>
+    <div class="rvpanel" id="map-river" hidden></div>
     <div class="legend">
       <span><i style="background:var(--s1)"></i>Within first 15 years</span>
       <span><i style="background:var(--s2)"></i>Past 15 years</span>
       <span><i style="background:var(--s1);opacity:.4;border:1px solid var(--s1)"></i>On its named river</span>
       <span><i style="border:1.5px dashed var(--ink-3);background:transparent"></i>District only</span>
-      <span><i style="background:var(--river)"></i>Rivers over 25&nbsp;km</span>
+      <span><i style="background:var(--river)"></i>Rivers over 25&nbsp;km, plus the tributaries the fleet sits on</span>
       <span><i style="background:var(--peak);clip-path:polygon(50% 0,100% 100%,0 100%)"></i>Peaks over 6,800&nbsp;m</span>
       <span><i style="background:var(--gridline);height:3px;border-radius:1px"></i>Built grid 66&ndash;400&nbsp;kV</span>
       <span><i style="background:#c765d9;height:3px;border-radius:1px"></i>Proposed 400&nbsp;kV (RPGCL 2040)</span>
@@ -622,12 +651,15 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <span><i style="background:#c39bd3;transform:rotate(45deg)"></i>Applied / reserved</span>
       <span style="color:var(--ink-3)">Marker area &prop; installed capacity</span>
     </div>
-    <div class="zoomhint">scroll or pinch to zoom &middot; drag to pan &middot; double-click to reset &middot; Esc to close</div>
+    <div class="zoomhint">click a river to list the plants on it &middot; scroll or pinch to zoom &middot;
+      drag to pan &middot; double-click to reset &middot; Esc to close</div>
   </figure>
 
   <div class="note warn"><b>Dashed dots are not plant locations.</b> They sit at their district&rsquo;s
     centroid, spread apart just enough to stay countable, so the cluster shows how many plants a
     district holds &mdash; not where any one of them is. Half-filled dots are on the correct watercourse but at an arbitrary point along it. <span id="map-note"></span></div>
+
+  <div class="note"><b>Which river a plant is on.</b> <span id="map-rivernote"></span></div>
   </div>
 
   <div id="mpanel-3d" role="tabpanel" aria-labelledby="mtab-3d" hidden>
@@ -1268,7 +1300,7 @@ function chartAge(){
 // Held outside chartMap because the map is redrawn on resize and on theme flip;
 // the switches have to survive both, so state lives here and is re-applied to
 // whichever group set the latest draw produced.
-var mapLayers = {outline:1, rivers:1, plan:1, grid:1, pipe:1, subs:1, peaks:1, plants:1};
+var mapLayers = {outline:1, rivers:1, rvlab:1, plan:1, grid:1, pipe:1, subs:1, peaks:1, plants:1};
 var mapG = null;
 
 // ---- the marker for whichever plant the project panel currently shows ---
@@ -1291,6 +1323,104 @@ function applyMapSelection(){
 function setMapSelection(id){
   selectedMapId = id;
   applyMapSelection();
+}
+
+// ---- the watercourse the map currently has selected ----------------------
+// Lives out here for the same reason mapMarks does: chartMap() throws its SVG
+// away on resize and on theme flip, and a selection has to survive that.
+var riverMarks = [];        // per watercourse: {i, rv, els, segs, w, lab}
+var mapAllMarks = [];       // every plotted plant, id or not, for the river rings
+var selectedRiver = null;   // index into D.map.rivers
+var riverRings = [];
+function applyRiverSelection(){
+  riverMarks.forEach(function(m){
+    var on = (selectedRiver === m.i), dim = (selectedRiver !== null && !on);
+    m.els.forEach(function(p){
+      p.setAttribute('stroke', on ? css('--accent') : css('--river'));
+      p.setAttribute('stroke-width', on ? Math.max(2.4, m.w + 1.4) : m.w);
+      p.setAttribute('opacity', dim ? .25 : .85);
+    });
+    if(m.lab){
+      m.lab.setAttribute('fill', on ? css('--accent') : css('--river-ink'));
+      m.lab.setAttribute('font-weight', on ? 700 : 400);
+      m.lab.setAttribute('opacity', dim ? .3 : 1);
+    }
+  });
+  riverRings.forEach(function(e){ e.remove(); }); riverRings = [];
+  if(selectedRiver !== null && mapG && mapG.plants){
+    mapAllMarks.forEach(function(mk){
+      if(mk.p.rv !== selectedRiver) return;
+      var c = el('circle',{cx:mk.x.toFixed(1), cy:mk.y.toFixed(1), r:(mk.r+4.5).toFixed(1),
+        fill:'none', stroke:css('--accent'), 'stroke-width':1.8, opacity:.95});
+      mapG.plants.appendChild(c); riverRings.push(c);
+    });
+  }
+  syncRiverPicker();
+  renderRiverPanel();
+}
+// The picker lists only the drainages something is built on, but the map lets
+// you click any river, and finding out that nothing is built on one is a fair
+// answer to ask for. One reusable option carries whichever river that is, so
+// the two routes never disagree - and the select is never rebuilt underneath
+// the change event that got us here.
+function syncRiverPicker(){
+  var sel = document.querySelector('#map-rvpick select'); if(!sel) return;
+  var want = selectedRiver === null ? '-1' : String(selectedRiver);
+  var tmp = sel.querySelector('option.rvtmp');
+  if(selectedRiver !== null && !sel.querySelector('option[value="'+want+'"]:not(.rvtmp)')){
+    if(!tmp){ tmp = document.createElement('option'); tmp.className = 'rvtmp'; sel.appendChild(tmp); }
+    tmp.value = want;
+    tmp.textContent = (D.map.rivers||[])[selectedRiver].n+'  ·  nothing built on it';
+  } else if(tmp) tmp.remove();
+  sel.value = want;
+}
+function setRiverSelection(i){
+  selectedRiver = (i === selectedRiver ? null : i);
+  applyRiverSelection();
+}
+function renderRiverPanel(){
+  var host = document.getElementById('map-river'); if(!host) return;
+  var rv = selectedRiver === null ? null : (D.map.rivers||[])[selectedRiver];
+  if(!rv){ host.hidden = true; host.innerHTML = ''; return; }
+  var on = D.map.pts.filter(function(p){ return p.rv === selectedRiver; })
+                    .sort(function(a,b){ return (b.mw||0)-(a.mw||0); });
+  var h = '<div class="rvhead"><b>'+rv.n+'</b>'
+        + '<span>'+fmt(rv.km,0)+' km mapped</span>'
+        + (on.length ? '<span>'+on.length+(on.length===1?' plant':' plants')+'</span>' : '')
+        + (rv.mw ? '<span>'+fmt(rv.mw,1)+' MW</span>' : '')
+        + '<button type="button" class="rvclose" id="rv-clear">clear</button></div>';
+  h += on.length
+    ? '<div class="rvlist">' + on.map(function(p){
+        return '<button type="button" class="rvitem"'+(p.id!=null?' data-pid="'+p.id+'"':' disabled')+'>'
+             + p.n + '<span class="rvmw">'+(p.mw!=null?fmt(p.mw,1)+' MW':'—')+'</span></button>';
+      }).join('') + '</div>'
+    : '<div class="rvnone">No plant in the register names this river.</div>';
+  host.innerHTML = h; host.hidden = false;
+}
+// Clicking a thin line is fiddly at national scale, and the plainest rivers are
+// the short ones with no room for a label - so the same selection is reachable
+// from a list, ordered by how much of the fleet each drainage carries.
+function fillRiverPicker(){
+  var rv = D.map.rivers || [];
+  var opts = [[-1, 'Pick a river…']].concat(
+    rv.map(function(x, i){ return [i, x]; })
+      .filter(function(p){ return p[1].np; })
+      .sort(function(a, b){ return (b[1].np - a[1].np) || (b[1].mw - a[1].mw); })
+      .map(function(p){ return [p[0], p[1].n+'  ·  '+p[1].np+(p[1].np===1?' plant':' plants')
+                                      +'  ·  '+fmt(p[1].mw,1)+' MW']; }));
+  selectRow('map-rvpick', opts, selectedRiver === null ? -1 : selectedRiver, function(k){
+    selectedRiver = (+k < 0 ? null : +k);   // a picker sets, it does not toggle
+    applyRiverSelection();
+  });
+}
+function wireRiverPanel(){
+  var host = document.getElementById('map-river'); if(!host) return;
+  host.addEventListener('click', function(e){
+    if(e.target.closest('#rv-clear')){ setRiverSelection(null); return; }
+    var b = e.target.closest('.rvitem'); if(!b) return;
+    var pid = b.getAttribute('data-pid');
+    if(pid != null && pid !== '') selectProject(+pid, true);
+  });
 }
 function applyLayers(G){
   mapG = G || mapG;
@@ -1327,7 +1457,7 @@ function chartMap(){
   // One group per switchable layer, appended in draw order so z-order is
   // unchanged: toggling is then a display flip rather than a redraw.
   var G = {};
-  ['outline','rivers','plan','grid','pipe','subs','peaks','plants'].forEach(function(k){
+  ['outline','rivers','plan','grid','pipe','subs','peaks','rvlab','plants'].forEach(function(k){
     G[k] = el('g',{'data-lyr':k}); svg.appendChild(G[k]);
   });
   applyLayers(G);
@@ -1346,13 +1476,35 @@ function chartMap(){
   });
 
   // ---- rivers: the drainages the fleet is built on -----------------------
-  (M.rivers||[]).forEach(function(rv){
+  // Each watercourse keeps its projected vertices, so the shared hit layer can
+  // find the nearest one, and its paths, so selecting it restyles them in place
+  // rather than redrawing the map. A drainage carrying plants is drawn a shade
+  // heavier than its length alone would earn: on this map it is the subject.
+  riverMarks = [];
+  // Label boxes already claimed, shared by the peaks and rivers passes. A box is
+  // kept as its axis-aligned extent so a rotated river name and a level peak name
+  // can be compared without either pass knowing how the other is set.
+  var placed = [];
+  function labBox(cx, cy, w, h, deg){
+    var a = deg*Math.PI/180, c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a));
+    return {x:cx, y:cy, hx:(w*c + h*s)/2, hy:(w*s + h*c)/2};
+  }
+  function hits(b){
+    return placed.some(function(q){
+      return Math.abs(q.x-b.x) < q.hx+b.hx && Math.abs(q.y-b.y) < q.hy+b.hy; });
+  }
+  (M.rivers||[]).forEach(function(rv, i){
     var w = rv.km >= 200 ? 1.5 : (rv.km >= 100 ? 1.1 : (rv.km >= 50 ? 0.8 : 0.55));
+    if(rv.np) w = Math.max(w, 1);
+    var els = [], segs = [];
     rv.segs.forEach(function(seg){
-      var dd = seg.map(function(p,i){ return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); }).join('');
-      G.rivers.appendChild(el('path',{d:dd, fill:'none', stroke:css('--river'), 'stroke-width':w,
-        'stroke-linecap':'round', 'stroke-linejoin':'round', opacity:.85}));
+      var xy = seg.map(function(p){ return [X(p[0]), Y(p[1])]; });
+      var dd = xy.map(function(p,j){ return (j?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1); }).join('');
+      var pe = el('path',{d:dd, fill:'none', stroke:css('--river'), 'stroke-width':w,
+        'stroke-linecap':'round', 'stroke-linejoin':'round', opacity:.85});
+      G.rivers.appendChild(pe); els.push(pe); segs.push(xy);
     });
+    riverMarks.push({i:i, rv:rv, els:els, segs:segs, w:w});
   });
 
   // ---- RPGCL planned 2040 corridors, beneath the built network -----------
@@ -1397,7 +1549,8 @@ function chartMap(){
   });
 
   // ---- peaks: a triangle glyph reads as relief without a raster ----------
-  var placed = [];
+  // Named before the rivers are, so an eight-thousander never loses its label
+  // to a tributary.
   (M.peaks||[]).forEach(function(pk){
     var x = X(pk.lo), y = Y(pk.la);
     var s = pk.e >= 8000 ? 6.5 : (pk.e >= 7500 ? 5 : 3.8);
@@ -1405,16 +1558,58 @@ function chartMap(){
       'L'+(x-s*0.92)+' '+(y+s*0.72)+'Z', fill:css('--peak'),
       opacity: pk.e >= 8000 ? .95 : .6}));
     if(pk.e < 8000) return;                    // label the eight-thousanders only
-    var lw = pk.n.length*5.4 + 6, lx = x, ly = y - s - 5;
-    var clash = placed.some(function(q){
-      return Math.abs(q.x-lx) < (q.w+lw)/2 && Math.abs(q.y-ly) < 11; });
-    if(clash) ly = y + s + 12;
-    if(placed.some(function(q){
-      return Math.abs(q.x-lx) < (q.w+lw)/2 && Math.abs(q.y-ly) < 11; })) return;
-    placed.push({x:lx, y:ly, w:lw});
+    var lx = x, ly = y - s - 5, box = labBox(lx, ly, pk.n.length*5.4 + 6, 11, 0);
+    if(hits(box)){ ly = y + s + 12; box = labBox(lx, ly, pk.n.length*5.4 + 6, 11, 0); }
+    if(hits(box)) return;
+    placed.push(box);
     var tx = el('text',{x:lx, y:ly, 'text-anchor':'middle', fill:css('--peak-ink'),
       'font-size':9.5, 'font-weight':600, 'font-family':'IBM Plex Mono, monospace'});
     tx.textContent = pk.n.replace(/^Mount /,''); G.peaks.appendChild(tx);
+  });
+
+  // ---- river names -------------------------------------------------------
+  // Ordered by how much of the fleet a drainage carries, then by length, and a
+  // name that collides with one already placed is dropped rather than nudged:
+  // twenty rivers named legibly beat sixty overlapping. Every river still gives
+  // its name on hover, so nothing is unreachable for having lost the contest.
+  riverMarks.slice().sort(function(a,b){
+    return (b.rv.np - a.rv.np) || (b.rv.km - a.rv.km);
+  }).forEach(function(m){
+    var best = null, bl = 0;
+    m.segs.forEach(function(xy){
+      var L = 0;
+      for(var j=1;j<xy.length;j++) L += Math.hypot(xy[j][0]-xy[j-1][0], xy[j][1]-xy[j-1][1]);
+      if(L > bl){ bl = L; best = xy; }
+    });
+    if(!best || bl < 26) return;              // too short on screen to carry a name
+    // walk to the halfway point by arc length: the middle of a river's longest
+    // limb is the one spot on it guaranteed to be clear of both its ends
+    var half = bl/2, acc = 0, k = 1;
+    for(; k < best.length-1; k++){
+      var d = Math.hypot(best[k][0]-best[k-1][0], best[k][1]-best[k-1][1]);
+      if(acc + d >= half) break;
+      acc += d;
+    }
+    var p0 = best[k-1], p1 = best[k];
+    var mx = (p0[0]+p1[0])/2, my = (p0[1]+p1[1])/2;
+    var ang = Math.atan2(p1[1]-p0[1], p1[0]-p0[0]) * 180/Math.PI;
+    if(ang > 90) ang -= 180; else if(ang < -90) ang += 180;   // never upside down
+    // The name is set along the river, so its footprint is the rotated box, not
+    // the flat one: a name running up a gorge is tall and narrow, and testing it
+    // as though it were wide and short lets a dozen labels pile up unnoticed.
+    var box = labBox(mx + 6.5*Math.sin(ang*Math.PI/180),
+                     my - 6.5*Math.cos(ang*Math.PI/180),
+                     m.rv.n.length*5.2 + 10, 13, ang);   // 13 = 8.5px type + its halo
+    if(hits(box)) return;
+    placed.push(box);
+    var t = el('text',{x:mx.toFixed(1), y:(my-3.5).toFixed(1), 'text-anchor':'middle',
+      fill:css('--river-ink'), 'font-size':8.5, 'font-family':'IBM Plex Mono, monospace',
+      'paint-order':'stroke', stroke:css('--surface-2'), 'stroke-width':2.4,
+      'stroke-linejoin':'round', class:'rvlab',
+      transform:'rotate('+ang.toFixed(1)+' '+mx.toFixed(1)+' '+my.toFixed(1)+')'});
+    t.textContent = m.rv.n;
+    G.rvlab.appendChild(t);
+    m.lab = t;
   });
 
   function R(mw){ return Math.min(16, 2 + 0.75*Math.sqrt(mw||0.5)); }
@@ -1437,6 +1632,7 @@ function chartMap(){
     marks.push({x:cx, y:cy, r:r, p:p, el:c});
     if(p.id != null) mapMarks[p.id] = {x:cx, y:cy, r:r, el:c};
   });
+  mapAllMarks = marks;      // the river rings need the unlinked plants too
 
   // size key
   // size key sits in the empty south-west, clear of the fleet and the border
@@ -1468,37 +1664,103 @@ function chartMap(){
     var q = svg.createSVGPoint(); q.x = e.clientX; q.y = e.clientY;
     return q.matrixTransform(m.inverse());
   }
-  hit.addEventListener('mousemove', function(e){
-    if(!mapLayers.plants){ clear(); hideTip(); return; }   // switched off: nothing to point at
-    var q0 = local(e), mx = q0.x, my = q0.y;
+  // Nearest plant, else nearest river: a marker is the smaller target and sits on
+  // top, so it wins wherever the two overlap - which on this map is everywhere a
+  // plant is drawn, since the plant is on the river by construction.
+  function nearPlant(mx, my){
+    if(!mapLayers.plants) return null;
     var best=null, bd=1e9;
     marks.forEach(function(m){
       var d=Math.hypot(m.x-mx, m.y-my) - m.r;
       if(d<bd){ bd=d; best=m; }
     });
-    if(!best || bd>14){ clear(); hideTip(); return; }
-    if(active!==best){ clear(); active=best;
-      best.el.setAttribute('stroke', css('--ink')); best.el.setAttribute('stroke-width','2'); }
-    var p=best.p;
-    var rows=[(p.mw!=null?p.mw+' MW':'capacity n/a')+(p.gwh!=null?'  \u00b7  '+fmt(p.gwh)+' GWh lifetime':'')];
-    if(p.co) rows.push(p.co);
-    if(p.cod) rows.push('COD '+p.cod+(p.age!=null?'  ('+p.age+(p.age===1?' yr)':' yrs)'):''));
-    rows.push('Position: '+(p.src||'unknown')+
-      (p.p === 2 ? '' : (p.p === 1 ? ' \u2014 on-river, approximate' : ' \u2014 approximate')));
-    showTip(e, p.n, rows);
-  });
-  hit.addEventListener('mouseleave', function(){ clear(); hideTip(); });
-  hit.addEventListener('click', function(e){
-    if(!mapLayers.plants) return;
-    var q1 = local(e), mx = q1.x, my = q1.y;
+    return bd > 14 ? null : best;
+  }
+  function segDist(px, py, x1, y1, x2, y2){
+    var dx=x2-x1, dy=y2-y1, L=dx*dx+dy*dy;
+    var t = L ? Math.max(0, Math.min(1, ((px-x1)*dx + (py-y1)*dy)/L)) : 0;
+    return Math.hypot(px-(x1+t*dx), py-(y1+t*dy));
+  }
+  function nearRiver(mx, my){
+    if(!mapLayers.rivers) return null;
     var best=null, bd=1e9;
-    marks.forEach(function(mk){
-      var dd = Math.hypot(mk.x-mx, mk.y-my) - mk.r;
-      if(dd<bd){ bd=dd; best=mk; }
+    riverMarks.forEach(function(m){
+      m.segs.forEach(function(xy){
+        for(var j=1;j<xy.length;j++){
+          var d = segDist(mx, my, xy[j-1][0], xy[j-1][1], xy[j][0], xy[j][1]);
+          if(d<bd){ bd=d; best=m; }
+        }
+      });
     });
-    if(!best || bd>14 || best.p.id==null || dragged) return;
-    hideTip();
-    selectProject(best.p.id, true);
+    return bd > 7 ? null : best;
+  }
+  // A river's own name is the one target on it that is unambiguously the river
+  // and not something built on it, so the label wins over a marker underneath.
+  // Markers sit on their river by construction, and the biggest ones cover a
+  // good stretch of it - without this the obvious places to click are all taken.
+  function labelAt(cx, cy){
+    if(!mapLayers.rvlab || !mapLayers.rivers) return null;
+    for(var i=0;i<riverMarks.length;i++){
+      var m = riverMarks[i]; if(!m.lab) continue;
+      var b = m.lab.getBoundingClientRect();
+      if(cx >= b.left && cx <= b.right && cy >= b.top && cy <= b.bottom) return m;
+    }
+    return null;
+  }
+  var hoverRiver = null;
+  function clearRiver(){
+    if(hoverRiver === null) return;
+    var m = riverMarks[hoverRiver];
+    if(m && selectedRiver !== m.i) m.els.forEach(function(p){
+      p.setAttribute('stroke-width', m.w); });
+    hoverRiver = null;
+  }
+  hit.addEventListener('mousemove', function(e){
+    var q0 = local(e), mx = q0.x, my = q0.y;
+    var best = labelAt(e.clientX, e.clientY) ? null : nearPlant(mx, my);
+    if(best){
+      clearRiver();
+      hit.style.cursor = best.p.id != null ? 'pointer' : 'crosshair';
+      if(active!==best){ clear(); active=best;
+        best.el.setAttribute('stroke', css('--ink')); best.el.setAttribute('stroke-width','2'); }
+      var p=best.p;
+      var rows=[(p.mw!=null?p.mw+' MW':'capacity n/a')+(p.gwh!=null?'  \u00b7  '+fmt(p.gwh)+' GWh lifetime':'')];
+      if(p.co) rows.push(p.co);
+      if(p.cod) rows.push('COD '+p.cod+(p.age!=null?'  ('+p.age+(p.age===1?' yr)':' yrs)'):''));
+      if(p.rv != null && (D.map.rivers||[])[p.rv]) rows.push('On the '+D.map.rivers[p.rv].n);
+      rows.push('Position: '+(p.src||'unknown')+
+        (p.p === 2 ? '' : (p.p === 1 ? ' \u2014 on-river, approximate' : ' \u2014 approximate')));
+      showTip(e, p.n, rows);
+      return;
+    }
+    clear();
+    var rm = labelAt(e.clientX, e.clientY) || nearRiver(mx, my);
+    hit.style.cursor = rm ? 'pointer' : 'crosshair';
+    if(!rm){ clearRiver(); hideTip(); return; }
+    if(hoverRiver !== rm.i){
+      clearRiver(); hoverRiver = rm.i;
+      if(selectedRiver !== rm.i) rm.els.forEach(function(p){
+        p.setAttribute('stroke-width', Math.max(2, rm.w + 1.1)); });
+    }
+    var rr = rm.rv;
+    var rrows = [fmt(rr.km,0)+' km mapped'+(rr.sm?'  \u00b7  tributary':'')];
+    if(rr.np){ rrows.push(rr.np+(rr.np===1?' plant':' plants')+'  \u00b7  '+fmt(rr.mw,1)+' MW');
+               rrows.push('Click to list them'); }
+    else rrows.push('No plant in the register names it');
+    showTip(e, rr.n, rrows);
+  });
+  hit.addEventListener('mouseleave', function(){
+    clear(); clearRiver(); hideTip(); hit.style.cursor = 'crosshair'; });
+  hit.addEventListener('click', function(e){
+    if(dragged) return;
+    var lm = labelAt(e.clientX, e.clientY);
+    if(lm){ hideTip(); setRiverSelection(lm.i); return; }
+    var q1 = local(e), mx = q1.x, my = q1.y;
+    var best = nearPlant(mx, my);
+    if(best && best.p.id != null){ hideTip(); selectProject(best.p.id, true); return; }
+    if(best) return;                       // a plant with no ledger page: not a river click
+    var rm = nearRiver(mx, my);
+    setRiverSelection(rm ? rm.i : null);
   });
 
   // ---- pan and zoom, live only while the card is expanded -----------------
@@ -1585,6 +1847,7 @@ function chartMap(){
   svg.addEventListener('touchcancel', function(){ tp = null; });
 
   applyMapSelection();     // reapply after a redraw wiped the ring along with the svg
+  applyRiverSelection();
 
   document.getElementById('map-sub').textContent =
     M.pts.length+' of '+M.n_total+' plants placed \u00b7 '+fmt(M.mw_located)+' MW of '+fmt(M.mw_total)+' MW';
@@ -1592,11 +1855,20 @@ function chartMap(){
     M.n_exact+' plants matched a surveyed position in OpenStreetMap or Wikidata; '+
     (M.n_river||0)+' sit on the river the register names for them, at the point nearest their '+
     'district centre; '+M.n_district+' are placed by district centroid alone; '+M.n_none+' carry neither a match nor a district and are left off the map. '+
-    'Select any marker to open that project\u2019s full record below.';
+    'Select any marker to open that project\u2019s full record below, or any river to list what is built on it.';
   var rv = (M.rivers||[]).length, pk = (M.peaks||[]).length;
+  var rvp = (M.rivers||[]).filter(function(x){ return x.np; }).length;
+  var rnote = document.getElementById('map-rivernote');
+  if(rnote) rnote.textContent =
+    (M.n_onriver||0)+' of the '+M.pts.length+' plotted plants are matched to a named watercourse, '+
+    'spread across '+rvp+' of them \u2014 by the river the register names for the plant, or failing that '+
+    'by the plant\u2019s own name, since a station is almost always named for the water it sits on. '+
+    'The rest name a khola OpenStreetMap has not mapped, or sit on a reservoir rather than a river.';
   var terr = document.getElementById('map-terrain');
   if(terr && rv) terr.textContent =
-    'The basemap carries '+rv+' named rivers of 25\u00a0km or more and '+pk+
+    'The basemap carries '+rv+' named watercourses \u2014 every river of 25\u00a0km or more, plus '+
+    'the smaller kholas the fleet is actually built on, which OpenStreetMap tags as streams and '+
+    'a river query never returns \u2014 and '+pk+
     ' summits above 6,800\u00a0m, both from OpenStreetMap \u2014 the drainages and the '+
     'relief that put the fleet where it is. Violet is the transmission network the fleet has '+
     'to reach: '+((M.lines||[]).length)+' lines from 66 to 400 kV and '+((M.subs||[]).length)+
@@ -4254,6 +4526,7 @@ if(!D.co){
 stats(); transTable(); reconTable(); wireTable(); renderPlants();
 wireListed(); wireBTabs(); drawAll(); buildTableViews();
 wireMapExpand('map-exp'); wireMapExpand('ter-exp'); wireTerrain(); wireLayers(); wireMTabs();
+wireRiverPanel(); fillRiverPicker();
 wireSortableTables(); wireDataTip();
 
 // redraw on theme flip so colors resolve against the new tokens
