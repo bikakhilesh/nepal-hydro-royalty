@@ -59,7 +59,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 68,Hewa Khola A,14900.0,,,27.185555555,87.827777777,exact,Wikidata,Hewa Khola-A Hydroelectric Project
 69,Dwari Khola SHP,3750.0,Dailekh,Karnali,28.8380316,81.7106443,district,district centroid,Dailekh
 70,Upper Mai -C,6100.0,Ilam,Province 1,27.0,87.969166666,exact,Wikidata,Upper Mai-C Hydropower Station
-71,Sabha Khola HPP,4000.0,,,,,none,,
+71,Sabha Khola HPP,4000.0,,,27.31694,87.20222,plus,"cited: DoED cancelled-application coordinates, Bala/Syabun, Sankhuwasabha",
 72,Thapa Khola HPP,13600.0,,,,,none,,
 73,Chake Khola SHPP,2830.0,,,,,none,,
 74,Sardi Khola HPP,4000.0,,,,,none,,
@@ -69,7 +69,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 78,Molun Khola SHP,7000.0,,Province 1,,,none,,
 79,Puwa Khola-1,4000.0,,Province 1,,,none,,
 80,Chameliya Khola,30000.0,,Province 1,29.6850142,80.649753,exact,OSM,Chameliya hydropower plant
-81,Jhyari Khola,2000.0,,Province 1,,,none,,
+81,Jhyari Khola,2000.0,,Province 1,27.75903,85.67736,plus,"cited: DoED cancelled-application coordinates, Sanusiruwari, Sindhupalchok",
 82,Phawa khola,5000.0,Taplejung,Province 1,27.280888,87.756828,plus,"Google Maps 7QJ4+9P4, Unnamed Road, Thechambu 57500",
 83,Madkyu Khola,13000.0,Kaski,Gandaki,28.3663,84.12392,exact,Wikidata,Madkyu Khola Hydropower Station
 84,Mai Sana Cascade HPP,8000.0,,Province 1,,,none,,
@@ -177,7 +177,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 188,Jogmai Cascade HPP,5200.0,Ilam,Province 1,26.897738,87.994422,plus,"Google Maps VXXV+3QV, Namsaling 57300",
 189,Rele Khola HPP,6000.0,Myagdi,Gandaki,28.530188,83.679813,plus,"Google Maps GMJH+3W, Narchyang 33200",
 190,Madhya Bhotekoshi HPP,102000.0,,Province 1,,,none,,
-191,Sagu khola 1 HPP,5500.0,Dolakha,Bagmati,27.6329785,86.2324209,district,district centroid,Dolakha
+191,Sagu khola 1 HPP,5500.0,Dolakha,Bagmati,27.7883,86.0931,plus,cited: operator-reported site coordinates,
 192,Sagu Khola HEP,20000.0,Dolakha,Bagmati,27.788113,86.115547,plus,"Google Maps Q4Q8+66V, 45500",
 193,Upper Tadi,11000.0,Nuwakot,Bagmati,27.973012,85.436922,plus,"Google Maps XCFP+6Q3, Ghyangphedi 44900",
 194,Rahughat Mangale,37000.0,Myagdi,Bagmati,28.475562,83.518422,plus,"Google Maps FGG9+69F, Sisneri, Pakhapani 33200",
@@ -194,6 +194,6 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 205,Hidi Khola HEP,6820.0,Lamjung,Gandaki,28.226562,84.110062,plus,"Google Maps 64G6+J2, Saimarang 33700",
 206,Mathillo Thulo Khola A HEP,22500.0,Myagdi,Gandaki,28.581937,83.537562,plus,"Google Maps HGJQ+Q2, Chimkhola 33200",
 207,Buku Khola HPP,6000.0,Okhaldunga,Province 1,27.523687,86.350812,plus,"Google Maps G9F2+F8, Rawadolu",
-208,Lower Irkhuwa Khola HPP,14150.0,Bhojpur,Province 1,27.1743038,87.0934775,district,district centroid,Bhojpur
+208,Lower Irkhuwa Khola HPP,14150.0,Bhojpur,Province 1,27.4156,87.114,plus,cited: gem.wiki + nhpcl.com,
 209,Siddhi Khola HPP,10000.0,Ilam,Province 1,26.833613,88.157672,plus,"Google Maps R5M5+C3V, Jirmale 57300",
 210,Mewa Khola HPP,50000.0,Taplejung,Province 1,27.416162,87.614484,plus,"Google Maps CJ87+FQ9, 57500",

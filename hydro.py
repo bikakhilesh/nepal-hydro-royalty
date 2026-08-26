@@ -905,6 +905,31 @@ DISTRICT_FIX = {
     "Thulo Khola HPP":  "Myagdi",
 }
 
+# The register's own Rivers field is blank for these three; supplied by hand.
+# Filling it in does not by itself move the marker -- the snap still needs the
+# named stream in OpenStreetMap, and for two of these three it is not there --
+# but it corrects the register data itself and whatever reads Rivers directly
+# (the "which river is this on" attribution, a future rebuild if OSM catches up).
+RIVER_FIX = {
+    "Rukum gad":                 "Rukum Gad",
+    "Upper Machha Khola Small":  "Machha Khola",
+    "Upper Chhandi Khola Small": "Chhandi Khola",
+}
+
+
+def _fix_rivers(m):
+    """Apply RIVER_FIX in place; returns how many rows filled."""
+    if "PlantName" not in m.columns: return 0
+    if "Rivers" not in m.columns: m["Rivers"] = None
+    key = m.PlantName.astype(str).str.strip()
+    n = 0
+    for name, riv in RIVER_FIX.items():
+        hit = key == name
+        if hit.any() and m.loc[hit, "Rivers"].isna().all():
+            m.loc[hit, "Rivers"] = riv
+            n += int(hit.sum())
+    return n
+
 
 # Positions the author looked up on Google Maps, one plant at a time, and gave
 # as plus codes. They are the only locations here that a person checked against
@@ -988,6 +1013,24 @@ PLUS_FIX = {
     "Yambaling Khola": (27.951038, 85.790641, "XQ2R+C76", ""),
 }
 
+# Same idea as PLUS_FIX -- a checked position outranks the matcher -- but sourced
+# from named citations rather than a Google Maps lookup. name -> (lat, lon, cite).
+CITED_FIX = {
+    "Lower Irkhuwa Khola HPP": (27.4156, 87.1140, "gem.wiki + nhpcl.com"),
+    "Sagu khola 1 HPP": (27.7883, 86.0931, "operator-reported site coordinates"),
+    # DoED's cancelled-survey-licence list (doed.gov.np/pages/canceled_hydro)
+    # carries a coordinate bounding box per application; matched here only where
+    # the core name, cascade qualifier (Upper/Lower/ordinal) AND capacity all
+    # agree within 12%/300 kW - most of the 49 unlocated plants had a same-named
+    # candidate somewhere in that list, but a generic Nepali river name repeats
+    # in unrelated districts often enough that name-only matching is not safe:
+    # Rukum gad's only hit sat in Rukum but named "Lower Rukum Gad" (a different
+    # cascade stage); Seti Khola HPP's hit was in Kaski, not Parbat; Upper Piluwa
+    # 3 HPP's was 475 km away in Sankhuwasabha. Skipped rather than guessed.
+    "Sabha Khola HPP": (27.31694, 87.20222, "DoED cancelled-application coordinates, Bala/Syabun, Sankhuwasabha"),
+    "Jhyari Khola": (27.75903, 85.67736, "DoED cancelled-application coordinates, Sanusiruwari, Sindhupalchok"),
+}
+
 
 def _fix_districts(m):
     """Apply DISTRICT_FIX in place; returns how many rows moved."""
@@ -1012,6 +1055,8 @@ def resolve_coords():
     m = pd.read_csv(P("rms_plants_meta.csv"), dtype=str).replace(r"^\s*$", np.nan, regex=True)
     moved = _fix_districts(m)
     if moved: print(f"  district corrected on {moved} plant(s) filed under their office")
+    filled = _fix_rivers(m)
+    if filled: print(f"  river filled in on {filled} plant(s) missing it in the register")
     m["PlantId"] = m.Id.astype(int)
     m["Cap_kW"] = pd.to_numeric(m.PlantCapacity, errors="coerce")
     if "Rivers" not in m.columns: m["Rivers"] = None
@@ -1028,11 +1073,15 @@ def resolve_coords():
         rec = {"PlantId": t.PlantId, "PlantName": t.PlantName, "Cap_kW": t.Cap_kW,
                "District": t.DistrictId, "Province": t.ProvinceId}
         pf = PLUS_FIX.get(t.PlantName)
+        cf = CITED_FIX.get(t.PlantName)
         if pf:
             # a person checked this one against imagery; nothing here beats that
             rec |= {"lat": pf[0], "lon": pf[1], "precision": "plus",
                     "source": "Google Maps " + pf[2] + (", " + pf[3] if pf[3] else ""),
                     "matched_to": None}
+        elif cf:
+            rec |= {"lat": cf[0], "lon": cf[1], "precision": "plus",
+                    "source": "cited: " + cf[2], "matched_to": None}
         elif hits:
             hits.sort(key=lambda c: c["src"] != "OSM")
             rec |= {"lat": hits[0]["lat"], "lon": hits[0]["lon"], "precision": "exact",
@@ -1318,6 +1367,7 @@ def load():
     s = pd.read_csv(P("rms_summary_clean.csv"))
     m = pd.read_csv(P("rms_plants_meta.csv"), dtype=str).replace(r"^\s*$", np.nan, regex=True)
     _fix_districts(m)
+    _fix_rivers(m)
     m["PlantId"]   = m.Id.astype(int)
     m["PlantName"] = m.PlantName.str.replace(r"\s+", " ", regex=True).str.strip()
     m["CodBsYear"] = m.MitiofOperation.map(bs_year)

@@ -8841,7 +8841,7 @@
 <circle cx="544.4" cy="370.3" r="6.3" fill="#eb6834" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="768.4" cy="384.8" r="6.3" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="768.4" cy="408.1" r="6.2" fill="none" stroke="#2a78d6" stroke-width="1.4" stroke-opacity=".6" stroke-dasharray="3 2.4"/>
-<circle cx="1019.9" cy="544.6" r="6.2" fill="none" stroke="#2a78d6" stroke-width="1.4" stroke-opacity=".6" stroke-dasharray="3 2.4"/>
+<circle cx="1028.0" cy="510.0" r="6.2" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="738.4" cy="437.5" r="6.2" fill="#eb6834" fill-opacity=".38" stroke="#eb6834" stroke-width="1.4"/>
 <circle cx="730.5" cy="500.6" r="6.2" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="530.3" cy="336.6" r="6.2" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
@@ -8898,7 +8898,7 @@
 <circle cx="535.6" cy="328.3" r="4.9" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="918.5" cy="492.3" r="4.9" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="1121.4" cy="525.8" r="4.9" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
-<circle cx="902.5" cy="485.8" r="4.8" fill="none" stroke="#2a78d6" stroke-width="1.4" stroke-opacity=".6" stroke-dasharray="3 2.4"/>
+<circle cx="881.6" cy="449.2" r="4.8" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="1154.2" cy="594.4" r="4.8" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="630.7" cy="372.7" r="4.7" fill="none" stroke="#2a78d6" stroke-width="1.4" stroke-opacity=".6" stroke-dasharray="3 2.4"/>
 <circle cx="771.5" cy="427.4" r="4.7" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
@@ -8928,6 +8928,7 @@
 <circle cx="672.5" cy="426.8" r="4.6" fill="none" stroke="#2a78d6" stroke-width="1.4" stroke-opacity=".6" stroke-dasharray="3 2.4"/>
 <circle cx="643.0" cy="350.0" r="4.6" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="836.1" cy="441.4" r="4.5" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
+<circle cx="1040.6" cy="526.0" r="4.5" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="619.1" cy="380.3" r="4.5" fill="none" stroke="#2a78d6" stroke-width="1.4" stroke-opacity=".6" stroke-dasharray="3 2.4"/>
 <circle cx="262.0" cy="266.6" r="4.5" fill="none" stroke="#2a78d6" stroke-width="1.4" stroke-opacity=".6" stroke-dasharray="3 2.4"/>
 <circle cx="248.1" cy="273.4" r="4.5" fill="none" stroke="#2a78d6" stroke-width="1.4" stroke-opacity=".6" stroke-dasharray="3 2.4"/>
@@ -8951,6 +8952,7 @@
 <circle cx="638.3" cy="351.7" r="4.1" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="499.4" cy="321.3" r="3.9" fill="none" stroke="#eb6834" stroke-width="1.4" stroke-opacity=".6" stroke-dasharray="3 2.4"/>
 <circle cx="636.8" cy="388.6" r="3.9" fill="none" stroke="#2a78d6" stroke-width="1.4" stroke-opacity=".6" stroke-dasharray="3 2.4"/>
+<circle cx="822.0" cy="454.0" r="3.9" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="626.9" cy="414.7" r="3.9" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="858.7" cy="435.5" r="3.9" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="855.4" cy="433.8" r="3.9" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
@@ -8959,5 +8961,5 @@
 <circle cx="518.6" cy="366.7" r="3.8" fill="none" stroke="#2a78d6" stroke-width="1.4" stroke-opacity=".6" stroke-dasharray="3 2.4"/>
 <circle cx="577.5" cy="385.0" r="3.6" fill="#eb6834" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="521.5" cy="443.1" r="3.5" fill="#eb6834" fill-opacity=".38" stroke="#eb6834" stroke-width="1.4"/>
-<text x="24" y="684" fill="#5f7883" font-size="12">178 plants · 213 rivers · 52 peaks · 409 grid lines · DoED RMS + OpenStreetMap</text>
+<text x="24" y="684" fill="#5f7883" font-size="12">180 plants · 213 rivers · 52 peaks · 409 grid lines · DoED RMS + OpenStreetMap</text>
 </svg>
