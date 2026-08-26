@@ -3587,7 +3587,7 @@ function cohortMiniDot(m, better, tipLabel, fmtf){
 // did not close on its own. Neither bar-building function needs to know how
 // any of that gets drawn.
 function cascadeSvg(bars, ariaLabel){
-  var W = 1020, H = 300, m = {t:16,r:16,b:64,l:56};
+  var W = 1020, H = 360, m = {t:16,r:16,b:64,l:56};
   var iw = W-m.l-m.r, ih = H-m.t-m.b;
   var lo = 0, hi = 0;
   bars.forEach(function(b){ lo = Math.min(lo,b.from,b.to); hi = Math.max(hi,b.from,b.to); });
@@ -3996,8 +3996,8 @@ function renderOne(){
     cascCard = '<figure class="card">'
       + '<figcaption><div class="ctitle">'+cascTitle+'</div>'
       + '<div class="csub">'+cascSub+'</div></figcaption>'
-      + '<div class="btnrow" id="oneFallBtns"></div>'
-      + '<div class="btnrow" id="oneCascBtns"></div>'
+      + '<div class="btnrow" style="align-items:flex-start">'
+      + '<div id="oneFallBtns"></div><div id="oneCascBtns"></div></div>'
       + (cascadeChart ? '<div class="chart">'+cascadeChart+'</div>'
           : '<p class="csub" style="margin:12px 0 0">'+cascFallback+'</p>')
       + '</figure>';
