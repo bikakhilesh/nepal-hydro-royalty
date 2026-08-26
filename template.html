@@ -242,6 +242,7 @@ table.mtab tr:last-child td{border-bottom:none}
 .maplink:hover{border-color:var(--accent)}
 tr.qsub td{font-weight:600;border-top:1.5px solid var(--line);background:var(--surface-2)}
 th.qflag{color:var(--warn);cursor:help}
+th.qaudit{color:var(--ok);cursor:help}
 td.spark-cell{padding:4px 10px}
 .spark{display:block;overflow:visible}
 .sbar{fill:var(--accent);opacity:.55}
@@ -3695,9 +3696,11 @@ function sparkbars(vals){
 // marked noPct (L[4]) is exempt even in common-size mode: EPS and book value
 // are per-share figures, and dividing one by revenue produces a number that
 // is not wrong so much as meaningless, so those rows stay in NPR throughout.
-function oneQuarterTable(qs, lines, label, nd, flagKey, baseKey){
-  if(!qs.length) return '';
-  var cols = qs.slice(-8);   // hydro.py already caps _quarters() at 8; this just stops re-cropping it to 5
+// cols is pre-sliced by the caller -- quarterly and annual records share this
+// renderer but come from different arrays, so slicing here would only ever
+// know how to crop one of them.
+function oneQuarterTable(cols, lines, label, nd, flagKey, baseKey){
+  if(!cols.length) return '';
   var body = lines.filter(function(L){
     return cols.some(function(q){ return q[L[0]] != null; });
   }).map(function(L){
@@ -3736,15 +3739,21 @@ function oneQuarterTable(qs, lines, label, nd, flagKey, baseKey){
     + '<th>Line</th>'
     + cols.map(function(q){
         var flag = flagKey && q[flagKey];
-        return '<th class="n'+(flag?' qflag':'')+'"'+
-          (flag ? ' data-tip="Filed energy sales this quarter ('+fmt(q.EnergySales,1)+
+        // Annual columns carry no quarter number -- that absence is the
+        // signal this is a full year, not one more thing to branch on.
+        var audited = q.q == null && q.src === 'Audited';
+        var hdrTxt = (q.q == null ? q.y : q.y+' Q'+q.q) + (flag?' ⚠':(audited?' ✓':''));
+        var tip = flag ? 'Filed energy sales this quarter ('+fmt(q.EnergySales,1)+
             ' NPR m) is far from what the register shows for this company’s own '+
             'plants over the same months ('+fmt(q.rms_es,1)+' NPR m). Likely an error '+
             'in the source filing, not in this dashboard’s calculation -- check the '+
             'primary statement before relying on this quarter. Every line below runs '+
-            'off the same filed figure, so treat the whole column with the same caution."'
-            : '')+
-          '>'+q.y+' Q'+q.q+(flag?' ⚠':'')+'</th>';
+            'off the same filed figure, so treat the whole column with the same caution.'
+          : (audited ? 'Audited year-end figures -- a restatement of what this company '+
+            'originally filed for its fourth quarter, not the figure as first published.'
+          : '');
+        return '<th class="n'+(flag?' qflag':(audited?' qaudit':''))+'"'+
+          (tip ? ' data-tip="'+tip+'"' : '')+'>'+hdrTxt+'</th>';
       }).join('')
     + '<th class="n">Trend</th>'
     + '</tr></thead><tbody>'+body+'</tbody></table>';
@@ -3804,35 +3813,49 @@ function renderOne(){
   // "_cum" one (EnergySales_cum, the figure exactly as filed, year to date) --
   // the toggle below just picks which key each row reads, not two tables.
   var cSuf = oneIncView === 'c' ? '_cum' : '';
-  // EPSann is not part of the toggle -- it is a third framing, not a choice
-  // between the other two, so it shows the same in both views.
-  var incLines = D.co.cascade.map(function(c){ return [c[0]+cSuf, c[2], c[1]===0]; })
-    .concat([['EPSq'+cSuf, oneIncView==='c' ? 'EPS, Cumulative (non-annualized)'
-                                             : 'EPS, Qtr Only (non-annualized)', false, 2, true],
-              ['EPSann', 'EPS, Annualized (naive)', false, 2, true]]);
+  // Annual has no discrete/cumulative choice -- Q4's cumulative already is
+  // the year, so it reads off the same unsuffixed keys 'Qtr only' does, just
+  // from D.co.annual instead of D.co.q. EPSann is filed as a run-rate
+  // projection and, at Q4, already equals the year's own EPS to the
+  // rounding -- showing it alongside EPSyr would be the same number twice,
+  // so annual gets EPSyr alone rather than the quarterly view's two framings.
+  var incCols = oneIncView === 'a' ? ((D.co.annual && D.co.annual[oneTk]) || []).slice(-8)
+                                    : qs.slice(-8);
+  var epsLines = oneIncView === 'a'
+    ? [['EPSyr', 'EPS (non-annualized)', false, 2, true]]
+    : [['EPSq'+cSuf, oneIncView==='c' ? 'EPS, Cumulative (non-annualized)'
+                                       : 'EPS, Qtr Only (non-annualized)', false, 2, true],
+       ['EPSann', 'EPS, Annualized (naive)', false, 2, true]];
+  var incLines = D.co.cascade.map(function(c){ return [c[0]+cSuf, c[2], c[1]===0]; }).concat(epsLines);
   var bsLines = D.co.bs.concat([['BookValue', 'Book Value per Share', false, 2, true]]);
   var incUnitLabel = oneUnit==='pct' ? '% of revenue' : 'NPR million';
   var bsUnitLabel = oneUnit==='pct' ? '% of total assets' : 'NPR million';
-  var inc = oneQuarterTable(qs, incLines,
-                            (oneIncView==='c'
-                              ? 'Income statement, year to date as filed, '+incUnitLabel
-                              : 'Income statement, discrete quarters, '+incUnitLabel),
+  var incPeriodLabel = oneIncView === 'a' ? 'by fiscal year'
+                     : oneIncView === 'c' ? 'year to date as filed' : 'discrete quarters';
+  var inc = oneQuarterTable(incCols, incLines,
+                            'Income statement, '+incPeriodLabel+', '+incUnitLabel,
                             1, 'es_suspect', 'EnergySales'+cSuf);
-  var bs  = oneQuarterTable(qs, bsLines, 'Balance sheet as filed, '+bsUnitLabel, 0, null, 'TotalFunds');
+  var bs  = oneQuarterTable(oneIncView === 'a' ? incCols : qs.slice(-8), bsLines,
+                            'Balance sheet as filed, '+bsUnitLabel, 0, null, 'TotalFunds');
   if(inc || bs)
     out.push('<div class="card" style="margin-top:18px">'
-      + '<div class="ctitle">Eight quarters, as filed and as differenced</div>'
+      + '<div class="ctitle">'+(oneIncView==='a' ? 'Eight years' : 'Eight quarters')
+      + ', as filed'+(oneIncView==='a'?'':' and as differenced')+'</div>'
       + '<div class="csub">Balance-sheet lines are always point in time, shown as filed. '
       + 'Income lines the register carries cumulative, year to date, resetting at Q1 -- '
       + '<b>Qtr only</b> differences them to what that quarter alone earned (blank where '
       + 'the preceding quarter is missing, rather than showing the cumulative figure in '
       + 'its place); <b>Cumulative</b> shows the running year-to-date total exactly as '
-      + 'filed, the same number on the primary statement. <b>EPS, Annualized</b> is filed '
-      + 'too, not recomputed here: year-to-date EPS scaled by 4/quarter to a full-year '
-      + 'run rate. Read it carefully on this fleet &mdash; hydro revenue is heavily '
-      + 'seasonal within a year, so annualizing a wet quarter overstates the year and a '
-      + 'dry one understates it. <b>Common size</b> restates every line as a share of '
-      + 'that quarter&rsquo;s own base &mdash; revenue on the income statement, total '
+      + 'filed, the same number on the primary statement; <b>Annual</b> shows the full '
+      + 'year, Q4&rsquo;s cumulative figure with nothing left to difference. A '
+      + '<b><span class="qaudit" style="cursor:default">&check;</span> marks a year '
+      + 'restated by its own audit</b> rather than the figure as first published -- '
+      + 'unmarked years have not been audited yet, not filed wrong. <b>EPS, Annualized</b> '
+      + 'is filed too, not recomputed here: year-to-date EPS scaled by 4/quarter to a '
+      + 'full-year run rate. Read it carefully on this fleet &mdash; hydro revenue is '
+      + 'heavily seasonal within a year, so annualizing a wet quarter overstates the year '
+      + 'and a dry one understates it. <b>Common size</b> restates every line as a share of '
+      + 'that period&rsquo;s own base &mdash; revenue on the income statement, total '
       + 'assets on the balance sheet &mdash; so a company can be read against its own '
       + 'history, or against another company regardless of scale, without the NPR '
       + 'figures getting in the way. EPS and book value stay in rupees throughout: '
@@ -3964,7 +3987,7 @@ function renderOne(){
            function(k){ oneFallIx = k; renderOne(); });
     btnRow('oneCascBtns', [['single','This quarter'],['delta','Quarter on quarter']], oneCascView,
            function(k){ oneCascView = k; renderOne(); });
-    btnRow('oneIncBtns', [['q','Qtr only'],['c','Cumulative']], oneIncView,
+    btnRow('oneIncBtns', [['q','Qtr only'],['c','Cumulative'],['a','Annual']], oneIncView,
            function(k){ oneIncView = k; renderOne(); });
     btnRow('oneUnitBtns', [['abs','NPR million'],['pct','Common size']], oneUnit,
            function(k){ oneUnit = k; renderOne(); });

@@ -1802,6 +1802,49 @@ def _quarters(rows):
     return out
 
 
+def _annual(rows, q):
+    """One row per fiscal year, full statements rather than a quarter of one.
+
+    Q4's cumulative figure already is the year's total, so there is nothing to
+    difference the way a discrete quarter needs -- this reads straight off q,
+    the same Audited-preferred, Published-fallback selection _co_payload
+    already built for its own register cross-check (Quarter == 4, sorted so
+    an audited restatement wins a duplicate over the year's original
+    published filing). Reused rather than reselected, so "this year's
+    audited figure" means the same row wherever it is read from.
+    """
+    cols = [c for c, _, _ in CASCADE] + [c for c, _, _ in BS_LINES]
+    cols = [c for c in dict.fromkeys(cols) if c in q.columns]
+    out = {}
+    tickers = {x["tk"] for x in rows}
+    for tk, g in q.groupby("Ticker"):
+        if tk not in tickers: continue
+        yrs = []
+        for t in g.itertuples():
+            rec = {"y": t.Year, "src": t.DataSource}
+            for c in cols:
+                cum = pd.to_numeric(getattr(t, c, np.nan), errors="coerce")
+                rec[c] = None if not np.isfinite(cum) else r(float(cum)/1e3, 2)
+            # Same coalesce _quarters() makes: the filing splits book value
+            # across two columns depending on statement type, at most one
+            # populated on a given row.
+            bv = pd.to_numeric(getattr(t, "BookValuePerShare", np.nan), errors="coerce")
+            if not np.isfinite(bv):
+                bv = pd.to_numeric(getattr(t, "NetWorthPerShare", np.nan), errors="coerce")
+            if np.isfinite(bv): rec["BookValue"] = r(float(bv), 2)
+            # Full-year EPS from this row's own Net Profit and share count --
+            # not EpsAnnualized, which at Q4 is the cumulative figure times
+            # 4/4 and so already equals this to the rounding, but is filed as
+            # a run-rate projection, not booked as the year's actual EPS.
+            shares = pd.to_numeric(getattr(t, "OrdinaryShares", np.nan), errors="coerce")
+            pat = rec.get("ProfitAfterTax")
+            if pat is not None and np.isfinite(shares) and shares:
+                rec["EPSyr"] = r(pat * 1000 / float(shares), 2)
+            yrs.append({k: v for k, v in rec.items() if v is not None})
+        out[tk] = yrs[-8:]
+    return out
+
+
 def _quarter_check(quarters, d, cmap):
     """Flag a discrete quarter whose filed energy sales does not look like the
     register's own revenue for the same plants over the same months.
@@ -2137,11 +2180,12 @@ def _co_payload(d, m):
     quarters = _quarters(rows)
     _quarter_check(quarters, d, cmap)
     _growth(rows, quarters)
+    annual = _annual(rows, q)
 
     order = sorted(fleet, key=lambda y: int(str(y).split("/")[0]))
     paid = [x for x in rows if x["div_n"]]
     return {"rows": rows, "agree": agree, "divYear": div_year,
-            "mkt": mkt, "q": quarters,
+            "mkt": mkt, "q": quarters, "annual": annual,
             "cascade": [[c, s, lab] for c, s, lab in CASCADE],
             "bs": [[c, lab, sub] for c, lab, sub in BS_LINES],
             "n_div": len(paid),
