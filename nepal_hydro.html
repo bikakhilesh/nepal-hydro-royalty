@@ -356,6 +356,11 @@ details.tv th{cursor:default}
 .pillbtn:hover{color:var(--ink);border-color:var(--ink-3)}
 .pillbtn.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 .pillbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pillsel{font:inherit;font-size:12px;font-family:"IBM Plex Mono",monospace;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:99px;
+  padding:4px 11px;cursor:pointer;color:var(--ink-2)}
+.pillsel:hover{color:var(--ink);border-color:var(--ink-3)}
+.pillsel:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #t-tech td:nth-child(2),#t-screen td:nth-child(2),#t-ratio td:nth-child(2){
   max-width:200px;overflow:hidden;text-overflow:ellipsis}
 #c-plf svg{min-width:430px}
@@ -2997,6 +3002,22 @@ function btnRow(mount, opts, cur, onPick){
     host.appendChild(b);
   });
 }
+// same job as btnRow, one <select> instead of a row of buttons -- for a
+// choice with enough options that pills would wrap or crowd the row above it.
+function selectRow(mount, opts, cur, onPick){
+  var host = document.getElementById(mount); if(!host) return;
+  host.innerHTML = '';
+  var sel = document.createElement('select');
+  sel.className = 'pillsel';
+  opts.forEach(function(o){
+    var op = document.createElement('option');
+    op.value = o[0]; op.textContent = o[1];
+    if(o[0] === cur) op.selected = true;
+    sel.appendChild(op);
+  });
+  sel.addEventListener('change', function(){ onPick(sel.value); });
+  host.appendChild(sel);
+}
 function tile(k, v, sub){
   return '<div class="tile"><div class="tk">'+k+'</div><div class="tv">'+v+'</div>'
        + (sub ? '<div class="ts">'+sub+'</div>' : '') + '</div>';
@@ -3763,6 +3784,7 @@ var oneFallIx = null;
 var oneIncView = 'q';         // 'q' = discrete quarter, 'c' = year-to-date as filed
 var oneUnit = 'abs';          // 'abs' = NPR million, 'pct' = common size
 var oneCascView = 'single';   // 'single' = one quarter's cascade, 'delta' = bridged against the last
+var oneQMode = 'q';           // 'q' = discrete quarters, 'qnq' = quarter on quarter change, 'a' = annual
 function renderOne(){
   var host = document.getElementById('oneBody'); if(!host) return;
   if(!oneTk){ host.innerHTML = ''; return; }
@@ -3917,10 +3939,15 @@ function renderOne(){
   // to half size (the viewBox is fixed and fills whatever width it is given).
   var oneqCard = '';
   if(qs.length >= 3){
+    var oneqSub = oneQMode === 'a'
+      ? 'Full fiscal years, the same figures the statement tables&rsquo; Annual view shows. NPR million.'
+      : oneQMode === 'qnq'
+      ? 'Change from the quarter before, so a bar can run either side of zero. NPR million.'
+      : 'Discrete quarters, not the cumulative figures as filed. NPR million.';
     oneqCard = '<figure class="card">'
       + '<figcaption><div class="ctitle">Eight quarters of its own</div>'
-      + '<div class="csub">Discrete quarters, not the cumulative figures as filed. '
-      + 'NPR million.</div></figcaption>'
+      + '<div class="csub">'+oneqSub+'</div></figcaption>'
+      + '<div class="btnrow" id="oneQBtns"></div>'
       + '<div class="chart" id="c-oneq"></div>'
       + '<div class="legend"><span><i style="background:var(--s1)"></i>Energy sales</span>'
       + '<span><i style="background:var(--s3)"></i>Operating profit</span>'
@@ -3981,12 +4008,16 @@ function renderOne(){
     + '</div>');
 
   host.innerHTML = out.join('');
-  if(qs.length >= 3) chartOneQ(qs);
+  if(qs.length >= 3){
+    chartOneQ(qs, oneQMode);
+    selectRow('oneQBtns', [['q','Discrete quarters'],['qnq','Quarter on quarter'],['a','Annual']], oneQMode,
+              function(k){ oneQMode = k; renderOne(); });
+  }
   if(qs.length){
     btnRow('oneFallBtns', qs.map(function(q,i){ return [i, q.y+' Q'+q.q]; }), ix,
            function(k){ oneFallIx = k; renderOne(); });
-    btnRow('oneCascBtns', [['single','This quarter'],['delta','Quarter on quarter']], oneCascView,
-           function(k){ oneCascView = k; renderOne(); });
+    selectRow('oneCascBtns', [['single','This quarter'],['delta','Quarter on quarter']], oneCascView,
+              function(k){ oneCascView = k; renderOne(); });
     btnRow('oneIncBtns', [['q','Qtr only'],['c','Cumulative'],['a','Annual']], oneIncView,
            function(k){ oneIncView = k; renderOne(); });
     btnRow('oneUnitBtns', [['abs','NPR million'],['pct','Common size']], oneUnit,
@@ -3997,13 +4028,44 @@ function renderOne(){
       + ' of ' + D.co.rows.length;
 }
 
-function chartOneQ(qs){
-  var f = frame('c-oneq',{w:1020,h:280,m:{t:16,r:16,b:40,l:58},
-    label:'Energy sales, operating profit and profit after tax by discrete quarter'});
-  if(!f) return;
+// mode picks both the data and how each column reads: 'q' discrete quarters
+// as filed, 'qnq' the change from the quarter before (so a bar can go
+// negative -- the drawing code below already handles that, unchanged),
+// 'a' full fiscal years off the same annual data the statement tables use.
+function chartOneQ(qs, mode){
   var KEYS = [['EnergySales','--s1'],['OperatingProfit','--s3'],['ProfitAfterTax','--s2']];
+  var cols, xLab, tipLab, ariaLab;
+  if(mode === 'a'){
+    cols = ((D.co.annual && D.co.annual[oneTk]) || []).slice(-8);
+    xLab = function(q){ return q.y; };
+    tipLab = function(q){ return q.y+' — fiscal year'; };
+    ariaLab = 'by fiscal year';
+  } else if(mode === 'qnq'){
+    var base = qs.slice(-8);
+    cols = [];
+    base.forEach(function(q,i){
+      var p = base[i-1]; if(!p) return;
+      var rec = {y:q.y, q:q.q};
+      KEYS.forEach(function(k){
+        var cur = q[k[0]], prev = p[k[0]];
+        if(cur != null && prev != null) rec[k[0]] = cur - prev;
+      });
+      cols.push(rec);
+    });
+    xLab = function(q){ return q.y+' Q'+q.q; };
+    tipLab = function(q){ return q.y+' Q'+q.q+' — change from the previous quarter'; };
+    ariaLab = 'quarter on quarter change';
+  } else {
+    cols = qs.slice(-8);
+    xLab = function(q){ return q.y+' Q'+q.q; };
+    tipLab = function(q){ return q.y+' Q'+q.q+' — discrete quarter'; };
+    ariaLab = 'by discrete quarter';
+  }
+  var f = frame('c-oneq',{w:1020,h:280,m:{t:16,r:16,b:40,l:58},
+    label:'Energy sales, operating profit and profit after tax '+ariaLab});
+  if(!f || !cols.length) return;
   var lo = 0, hi = 0;
-  qs.forEach(function(q){ KEYS.forEach(function(k){
+  cols.forEach(function(q){ KEYS.forEach(function(k){
     var v = q[k[0]]; if(v != null){ lo = Math.min(lo,v); hi = Math.max(hi,v); } }); });
   if(hi === lo) return;
   var pad = (hi-lo)*0.08; hi += pad; lo -= pad;
@@ -4016,8 +4078,8 @@ function chartOneQ(qs){
       'font-size':10,'font-family':'IBM Plex Mono, monospace'});
     t.textContent = fmt(gv,0); f.svg.appendChild(t);
   }
-  var gw = f.iw/qs.length, bw = Math.min(20, (gw-10)/3);
-  qs.forEach(function(q,i){
+  var gw = f.iw/cols.length, bw = Math.min(20, (gw-10)/3);
+  cols.forEach(function(q,i){
     var x0 = f.m.l + i*gw + (gw - 3*bw - 4)/2;
     KEYS.forEach(function(k,j){
       var v = q[k[0]]; if(v == null) return;
@@ -4025,10 +4087,10 @@ function chartOneQ(qs){
       f.svg.appendChild(el('rect',{x:x0+j*(bw+2),y:Math.min(y0,y1),width:bw,
         height:Math.max(1.5,Math.abs(y1-y0)),fill:css(k[1]),rx:2}));
     });
-    xLabel(f, f.m.l+i*gw+gw/2, q.y+' Q'+q.q);
+    xLabel(f, f.m.l+i*gw+gw/2, xLab(q));
     var hit = el('rect',{x:f.m.l+i*gw,y:f.m.t,width:gw,height:f.ih,class:'hit'});
     hit.addEventListener('mousemove',function(e){
-      showTip(e, q.y+' Q'+q.q+' — discrete quarter', KEYS.map(function(k){
+      showTip(e, tipLab(q), KEYS.map(function(k){
         return k[0].replace(/([A-Z])/g,' $1').trim()+' <b>'
              + (q[k[0]]==null?'—':fmt(q[k[0]],1))+'</b>'; }));
     });
