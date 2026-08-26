@@ -752,30 +752,17 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
   </div>
   <div id="lpanel-reg" role="tabpanel" aria-labelledby="ltab-reg">
     <p class="sdek" id="co-lede" style="max-width:80ch;margin:0 0 20px"></p>
-    <div class="grid2">
-      <figure class="card">
-        <figcaption><div class="ctitle">The meter against the accounts</div>
-        <div class="csub">One dot per company-year. Horizontal: what the register billed the
-          company&rsquo;s plants. Vertical: the energy-sales line in its own filing. Both NPR
-          million, both log.</div></figcaption>
-        <div class="chart" id="c-agree"></div>
-        <div class="legend">
-          <span><i style="background:var(--s1)"></i>Company-year</span>
-          <span><i style="background:var(--accent);height:2px;border-radius:0"></i>Parity: the two sources agree</span>
-        </div>
-      </figure>
-      <figure class="card">
-        <figcaption><div class="ctitle">Why the twelve months you pick matter</div>
-        <div class="csub">Register billing over reported sales, same company-years counted
-          twice: once on the register&rsquo;s own Asar&ndash;Jestha year, once re-cut onto the
-          Shrawan&ndash;Asar accounting year.</div></figcaption>
-        <div class="chart" id="c-cut"></div>
-        <div class="legend">
-          <span><i style="background:var(--s1)"></i>Accounting year (Shrawan&ndash;Asar)</span>
-          <span><i style="background:var(--s2)"></i>Register year (Asar&ndash;Jestha)</span>
-        </div>
-      </figure>
-    </div>
+    <figure class="card">
+      <figcaption><div class="ctitle">The meter against the accounts</div>
+      <div class="csub">One dot per company-year. Horizontal: what the register billed the
+        company&rsquo;s plants. Vertical: the energy-sales line in its own filing. Both NPR
+        million, both log.</div></figcaption>
+      <div class="chart" id="c-agree"></div>
+      <div class="legend">
+        <span><i style="background:var(--s1)"></i>Company-year</span>
+        <span><i style="background:var(--accent);height:2px;border-radius:0"></i>Parity: the two sources agree</span>
+      </div>
+    </figure>
 
     <div class="grid2" style="margin-top:18px">
       <figure class="card">
@@ -2637,53 +2624,6 @@ function chartAgree(){
   ly.textContent = 'Reported energy sales, NPR million'; f.svg.appendChild(ly);
 }
 
-// ---- what the cut of the year is worth ----------------------------------
-function chartCut(){
-  if(!D.co) return;
-  var a = D.co.agree, f = frame('c-cut',{w:520,h:400,m:{t:16,r:16,b:52,l:46},
-    label:'Distribution of register billing over reported sales, on two cuts of the year'});
-  if(!f) return;
-  var max = 0;
-  a.acct.concat(a.regfy).forEach(function(b){ if(b.n > max) max = b.n; });
-  if(!max) return;
-  var step = Math.pow(10, Math.floor(L10(max/4)));
-  [1,2,2.5,5,10].some(function(k){ if(step*k*4 >= max){ step *= k; return true; } });
-  max = step*4;
-  yAxis(f, max, 4);
-  var bw = f.iw/a.acct.length;
-  // the register's own cut sits behind as an outline, the re-cut as solid bars,
-  // so the collapse onto parity reads as a before and an after
-  var d = 'M'+f.m.l+' '+(f.m.t+f.ih);
-  a.regfy.forEach(function(b,i){
-    var y = f.m.t+f.ih-(b.n/max)*f.ih;
-    d += 'L'+(f.m.l+i*bw)+' '+y+'L'+(f.m.l+(i+1)*bw)+' '+y;
-  });
-  d += 'L'+(f.m.l+f.iw)+' '+(f.m.t+f.ih);
-  f.svg.appendChild(el('path',{d:d,fill:css('--s2'),opacity:.16}));
-  f.svg.appendChild(el('path',{d:d,fill:'none',stroke:css('--s2'),'stroke-width':1.6}));
-
-  a.acct.forEach(function(b,i){
-    var h = (b.n/max)*f.ih, x = f.m.l+i*bw;
-    if(b.n > 0) bar(f, x+1, f.m.t+f.ih-h, bw-2, h, css('--s1'));
-    var hit = el('rect',{x:x,y:f.m.t,width:bw,height:f.ih,class:'hit'});
-    hit.addEventListener('mousemove',function(e){
-      showTip(e, 'Register is '+((b.x-1)*100>=0?'+':'')+((b.x-1)*100).toFixed(0)+'% against the filing',
-        ['<b>'+b.n+'</b> company-years on the accounting year',
-         '<b>'+a.regfy[i].n+'</b> on the register year']);
-    });
-    hit.addEventListener('mouseleave', hideTip); f.svg.appendChild(hit);
-  });
-  // parity
-  var px = f.m.l + ((1.00-0.70)/0.60)*f.iw;
-  f.svg.appendChild(el('line',{x1:px,x2:px,y1:f.m.t,y2:f.m.t+f.ih,
-    stroke:css('--ink-3'),'stroke-width':1,'stroke-dasharray':'3 3'}));
-  [[0.80,'−20%'],[0.90,'−10%'],[1.00,'parity'],[1.10,'+10%'],[1.20,'+20%']]
-    .forEach(function(t){ xLabel(f, f.m.l+((t[0]-0.70)/0.60)*f.iw, t[1]); });
-  var ly = el('text',{x:f.m.l+f.iw/2,y:f.H-6,'text-anchor':'middle',fill:css('--ink-3'),
-    'font-size':10.5}); ly.textContent = 'Company-years, '+a.n_both+' counted on both cuts';
-  f.svg.appendChild(ly);
-}
-
 // ---- promised against delivered -----------------------------------------
 function chartPlf(){
   if(!D.co) return;
@@ -4127,7 +4067,7 @@ function showLTab(which){
 // tokens, since only the open one is redrawn.
 function drawLTab(){
   if(!D.co) return;
-  if(lTab === 'reg'){ renderCo(); chartAgree(); chartCut(); chartPlf(); chartVal(); }
+  if(lTab === 'reg'){ renderCo(); chartAgree(); chartPlf(); chartVal(); }
   else if(lTab === 'mkt'){ scrNote(); mkTiles(); chartRet(); chartRisk();
                            renderTech(); renderScreen(); }
   else if(lTab === 'val'){ chartCapFit(); chartPbRoe(); chartGap();

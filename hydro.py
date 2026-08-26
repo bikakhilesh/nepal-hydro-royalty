@@ -2150,23 +2150,10 @@ def _co_payload(d, m):
     if not any(x["st"] == "ok" for x in rows): return None
 
     # ── how close the two sources land, on each cut of the year
-    def hbin(vals):
-        lo, hi, w = 0.70, 1.30, 0.02
-        out = [{"x": r(lo+w*i+w/2, 3), "n": 0} for i in range(int((hi-lo)/w))]
-        under = over = 0
-        for v in vals:
-            if v is None: continue
-            if v < lo: under += 1
-            elif v >= hi: over += 1
-            else: out[min(len(out)-1, int((v-lo)/w))]["n"] += 1
-        return out, under, over
     A = [x["a"] for x in ratios]
-    ha, ua, oa = hbin(A)
-    hf, uf, of_ = hbin([x["f"] for x in ratios])
     both = [(x["a"], x["f"]) for x in ratios if x["f"] is not None]
     within = lambda v, e: sum(1 for x in v if abs(x-1) <= e)
     agree = {
-        "acct": ha, "regfy": hf, "under": ua, "over": oa, "under_f": uf, "over_f": of_,
         "n": len(A), "n_both": len(both), "tickers": len({x["tk"] for x in ratios}),
         "med": r(float(np.median(A)), 4),
         "p25": r(float(np.percentile(A, 25)), 3), "p75": r(float(np.percentile(A, 75)), 3),
