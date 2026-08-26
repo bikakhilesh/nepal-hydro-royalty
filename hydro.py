@@ -1768,6 +1768,9 @@ def _map_payload(d, m, c, plants):
             "plan_plants": plan.get("plants", []),
             "plan_plant_labels": plan.get("plant_labels", {}),
             "plan_sub_labels": plan.get("sub_labels", {}),
+            "plan_clusters": plan.get("clusters", []),
+            "plan_cluster_label": plan.get("cluster_label"),
+            "plan_source": plan.get("source"),
             "n_exact": int((c.precision == "exact").sum()),
             "n_plus": int((c.precision == "plus").sum()),
             "n_river": int((c.precision == "river").sum()),
@@ -2567,16 +2570,25 @@ def export_map_svg(path="nepal_fleet_map.svg", light=True):
             d = "".join(("L" if i else "M")+f"{X(p[0]):.1f} {Y(p[1]):.1f}" for i, p in enumerate(seg))
             out.append(f'<path d="{d}" fill="none" stroke="{C["river"]}" stroke-width="{w}" '
                        f'stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>')
-    # RPGCL's planned 2040 corridors, drawn first so the built network sits on top.
-    # These arrive as dash segments and are left that way - planned should look planned.
-    PLAN_C = {"proposed_400": "#c765d9", "proposed_220": "#6d8fd6", "existing_400": "#9a4fc4"}
+    # RPGCL's own corridors, drawn first so the OSM-built network sits on top.
+    # These arrive as dash segments and are left that way - planned should look
+    # planned. Every class here is read off the sheet's own ArcMap layer tag
+    # (see extract_rpgcl.py), not guessed from colour, which is the only way
+    # its 132 kV existing/under-construction/proposed corridors can be told
+    # apart at all - the source PDF draws all three in the same red.
+    PLAN_STY = {
+        "existing_400":     ("#9a4fc4", 1.9, .85), "cross_border_400": ("#e0507a", 1.8, .85),
+        "proposed_400":     ("#c765d9", 1.4, .65), "existing_220":     ("#3f6fc9", 1.5, .85),
+        "uc_220":           ("#5a93d6", 1.3, .72), "proposed_220":     ("#6d8fd6", 1.05, .6),
+        "existing_132":     ("#c9822e", 1.25, .85), "uc_132":          ("#d99a4e", 1.1, .7),
+        "proposed_132":     ("#e8b073", 0.85, .5),
+    }
     for ln in M.get("plan", []):
-        cc = PLAN_C.get(ln["c"], "#b07cd8")
-        w  = 2.0 if ln["c"] != "proposed_220" else 1.3
+        cc, w, op = PLAN_STY.get(ln["c"], ("#b07cd8", 1.3, .7))
         d = "".join(("L" if i else "M")+f"{X(p[0]):.1f} {Y(p[1]):.1f}"
                     for i, p in enumerate(ln["pts"]))
         out.append(f'<path d="{d}" fill="none" stroke="{cc}" stroke-width="{w}" '
-                   f'stroke-linecap="round" opacity=".8"/>')
+                   f'stroke-linecap="round" opacity="{op}"/>')
 
     # transmission network: violet keeps it clear of the blue rivers, the grey
     # peaks and the blue/orange plant markers
@@ -2604,6 +2616,15 @@ def export_map_svg(path="nepal_fleet_map.svg", light=True):
         out.append(f'<path d="M{x:.1f} {y-r0:.1f}L{x+r0:.1f} {y:.1f}'
                    f'L{x:.1f} {y+r0:.1f}L{x-r0:.1f} {y:.1f}Z" fill="{cc}" '
                    f'fill-opacity=".55" stroke="{cc}" stroke-width="1"/>')
+
+    # small-hydro clusters: a downward triangle, so it is never confusable with
+    # the pipeline diamonds, the plant circles or the peaks' upward triangles.
+    for cl in M.get("plan_clusters", []):
+        x, y = X(cl["lo"]), Y(cl["la"])
+        r0 = min(11, 2.8 + (0.46 * math.sqrt(cl["mw"]) if cl.get("mw") else 0))
+        out.append(f'<path d="M{x-r0:.1f} {y-r0*.7:.1f}L{x+r0:.1f} {y-r0*.7:.1f}'
+                   f'L{x:.1f} {y+r0*.85:.1f}Z" fill="#0d7bd9" fill-opacity=".45" '
+                   f'stroke="#0d7bd9" stroke-width="1"/>')
 
     # RPGCL substations, filled squares coloured by build status as on the sheet
     SUB_C = {"existing": "#d94a4a", "under_construction": "#27b34a", "future": "#3b7fe0"}
@@ -2676,6 +2697,7 @@ def export_map3d(path="nepal_fleet_3d.html", tpl="map3d.tpl.html"):
     plan   = M.get("plan", [])
     psubs  = M.get("plan_subs", [])
     pplants= M.get("plan_plants", [])
+    pclus  = M.get("plan_clusters", [])
     J = lambda o: json.dumps(o, separators=(",", ":"))
     html = (open(P(tpl), encoding="utf-8").read()
             .replace("__PLANTS__", J(pts))
@@ -2686,7 +2708,9 @@ def export_map3d(path="nepal_fleet_3d.html", tpl="map3d.tpl.html"):
             .replace("__PLAN__", J(plan))
             .replace("__PSUBS__", J(psubs))
             .replace("__PPLANTS__", J(pplants))
+            .replace("__PCLUS__", J(pclus))
             .replace("__NPP__", str(len(pplants)))
+            .replace("__NPC__", str(len(pclus)))
             .replace("__NPS__", str(len(psubs)))
             .replace("__NL__", str(len(lines)))
             .replace("__N__", str(len(pts)))

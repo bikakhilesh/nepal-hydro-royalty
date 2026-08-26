@@ -47,19 +47,24 @@
     title="Collapse the panel">&minus;</button>
   <h1>Nepal hydropower fleet</h1>
   <p>__N__ located plants on real Himalayan elevation, over __NR__ rivers, __NP__ peaks,
-     __NL__ built transmission lines, and RPGCL&rsquo;s proposed corridors and __NPS__ substations
-     to 2040, plus __NPP__ pipeline projects.
+     __NL__ built transmission lines, and RPGCL&rsquo;s own 132/220/400&nbsp;kV corridors and
+     __NPS__ substations &mdash; from a 2022 sheet, its newest public one &mdash; plus __NPP__
+     pipeline projects and __NPC__ small-hydro clusters.
      Drag to pan, right-drag to tilt and orbit.</p>
   <div class="row"><i style="background:#3987e5"></i>Within first 15 years</div>
   <div class="row"><i style="background:#d95926"></i>Past 15 years</div>
   <div class="row"><i style="background:#3987e5;opacity:.45;border:1px solid #3987e5"></i>On its named river</div>
   <div class="row"><i style="border:1.5px solid #7b939d"></i>District centroid only</div>
   <div class="row"><i style="background:#b07cd8;border-radius:1px;height:3px"></i>Built grid 66&ndash;400&nbsp;kV</div>
-  <div class="row"><i style="background:#c765d9;border-radius:1px;height:3px"></i>Proposed 400&nbsp;kV (RPGCL 2040)</div>
+  <div class="row"><i style="background:linear-gradient(90deg,#9a4fc4,#c765d9);border-radius:1px;height:3px"></i>RPGCL 400&nbsp;kV: existing/UC, proposed</div>
+  <div class="row"><i style="background:#e0507a;border-radius:1px;height:3px"></i>Cross-border 400&nbsp;kV (India)</div>
+  <div class="row"><i style="background:linear-gradient(90deg,#3f6fc9,#5a93d6,#6d8fd6);border-radius:1px;height:3px"></i>RPGCL 220&nbsp;kV: existing, UC, proposed</div>
+  <div class="row"><i style="background:linear-gradient(90deg,#c9822e,#d99a4e,#e8b073);border-radius:1px;height:3px"></i>RPGCL 132&nbsp;kV: existing, UC, proposed</div>
   <div class="row"><i style="background:#d94a4a;border-radius:2px"></i>Substation: existing</div>
   <div class="row"><i style="background:#27b34a;border-radius:2px"></i>&hellip; under construction</div>
   <div class="row"><i style="background:#3b7fe0;border-radius:2px"></i>&hellip; future</div>
   <div class="row"><i style="background:#6fa8dc"></i>Pipeline project (not yet operating)</div>
+  <div class="row"><i style="background:#0d7bd9;opacity:.5"></i>Small-hydro cluster (&lt;20&nbsp;MW each)</div>
   <div class="ctl">
     <label><input type="checkbox" id="pt" checked> Plants</label>
     <label><input type="checkbox" id="sb" checked> Substations</label>
@@ -70,6 +75,7 @@
     <label><input type="checkbox" id="gr" checked> Built grid</label>
     <label><input type="checkbox" id="pl" checked> Proposed corridors (2040)</label>
     <label><input type="checkbox" id="pp" checked> Pipeline projects</label>
+    <label><input type="checkbox" id="pc" checked> Small-hydro clusters</label>
   </div>
 </div>
 <script>
@@ -81,6 +87,7 @@ const SUBS   = __SUBS__;
 const PLAN   = __PLAN__;
 const PSUBS  = __PSUBS__;
 const PPLANTS= __PPLANTS__;
+const PCLUS  = __PCLUS__;
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -137,10 +144,20 @@ map.on('style.load', () => {
               9, ['case',['>=',['get','km'],200],3.2,['case',['>=',['get','km'],100],2.2,1.4]],
               13,['case',['>=',['get','km'],200],7,  ['case',['>=',['get','km'],100],5,  3]]] } });
 
-  // ---- RPGCL planned corridors to 2040, under the built network ---------
-  const PLAN_STYLE = { proposed_400:['#c765d9',[0.8,1.8,3.4]],
-                       proposed_220:['#6d8fd6',[0.5,1.1,2.2]],
-                       existing_400:['#9a4fc4',[0.9,2.0,3.8]] };
+  // ---- RPGCL's own corridors, under the built network --------------------
+  // Every class is read off the sheet's own ArcMap layer tag (see
+  // extract_rpgcl.py), not guessed from colour - the only way to tell its
+  // 132 kV existing / under-construction / proposed corridors apart, since
+  // the source PDF draws all three in the same red at the same width.
+  const PLAN_STYLE = { existing_400:['#9a4fc4',[0.9,2.0,3.8]],
+                       cross_border_400:['#e0507a',[0.8,1.9,3.6]],
+                       proposed_400:['#c765d9',[0.7,1.6,3.0]],
+                       existing_220:['#3f6fc9',[0.7,1.5,2.8]],
+                       uc_220:['#5a93d6',[0.6,1.3,2.4]],
+                       proposed_220:['#6d8fd6',[0.5,1.0,2.0]],
+                       existing_132:['#c9822e',[0.6,1.2,2.4]],
+                       uc_132:['#d99a4e',[0.5,1.05,2.0]],
+                       proposed_132:['#e8b073',[0.35,0.75,1.5]] };
   Object.keys(PLAN_STYLE).forEach(function(cid){
     const feats = PLAN.filter(l => l.c === cid).map(l => ({ type:'Feature',
       geometry:{ type:'LineString', coordinates:l.pts }, properties:{ c:cid } }));
@@ -178,6 +195,29 @@ map.on('style.load', () => {
             'circle-stroke-width':1.2,
             'circle-stroke-color':['match',['get','tier'],
               'built','#2f9e44','licensed','#74c476','survey','#6fa8dc','applied','#c39bd3','#999'] } });
+
+  // small-hydro clusters: several sub-20 MW projects too close together at this
+  // scale to plot individually, so the sheet plots one point labelled with
+  // their combined capacity. Diamond-adjacent but distinct (triangle) so it
+  // does not read as a single pipeline project.
+  map.addSource('pclus', { type:'geojson', data:{ type:'FeatureCollection',
+    features: PCLUS.map(p => ({ type:'Feature',
+      geometry:{ type:'Point', coordinates:[p.lo, p.la] }, properties:p })) } });
+  map.addLayer({ id:'pclus', type:'circle', source:'pclus',
+    paint:{ 'circle-radius':['interpolate',['linear'],['zoom'],
+              6, ['+',2,['*',0.05,['sqrt',['max',['coalesce',['get','mw'],1],1]]]],
+              10,['+',4,['*',0.3,['sqrt',['max',['coalesce',['get','mw'],1],1]]]]],
+            'circle-color':'#0d7bd9', 'circle-opacity':0.4,
+            'circle-stroke-width':1.2, 'circle-stroke-color':'#0d7bd9' } });
+  map.on('mousemove','pclus', e => {
+    map.getCanvas().style.cursor='pointer';
+    const p = e.features[0].properties;
+    spop.setLngLat(e.lngLat).setHTML(
+      '<b>'+(p.n || 'Small-hydro cluster')+'</b><br>'+
+      (p.mw ? p.mw+' MW combined<br>' : '')+
+      '<span class="pk">several projects under 20 MW each &middot; RPGCL 2040 map</span>').addTo(map);
+  });
+  map.on('mouseleave','pclus', () => { map.getCanvas().style.cursor=''; spop.remove(); });
 
   const PLAN_IDS = Object.keys(PLAN_STYLE).map(c => 'plan_'+c).filter(id => map.getLayer(id));
 
@@ -317,6 +357,8 @@ map.on('style.load', () => {
 
   document.getElementById('pp').onchange = e =>
     map.setLayoutProperty('pplants','visibility', e.target.checked ? 'visible' : 'none');
+  document.getElementById('pc').onchange = e =>
+    map.setLayoutProperty('pclus','visibility', e.target.checked ? 'visible' : 'none');
   document.getElementById('pl').onchange = e => {
     const v = e.target.checked ? 'visible' : 'none';
     PLAN_IDS.forEach(id => map.setLayoutProperty(id, 'visibility', v));

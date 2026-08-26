@@ -24,8 +24,11 @@ collected — royalty is verified at exactly 2.00% of the revenue base, and
 `Previous Due + Energy + Capacity − Received = Balance` holds to the paisa,
 which is what makes it safe to build on.
 
-Alongside it, from the RPGCL 2040 network sheet: 187 substations, the planned
-400/220 kV corridors, and 248 pipeline projects totalling **19,756 MW** against
+Alongside it, from RPGCL's own network sheet (4 Sep 2022, its newest public
+version): 188 substations, its 132/220/400 kV corridors by build status —
+existing, under construction and proposed all read off the sheet's own layer
+tags, not guessed from colour — cross-border interconnection to India, 96
+small-hydro clusters, and 248 pipeline projects totalling **19,756 MW** against
 a built fleet of **3,758 MW**.
 
 ## Install
@@ -264,18 +267,30 @@ official record — read it against the source before relying on a number.
   and the qualifier set must agree, and a candidate claimed by two plants is
   demoted. A loose fuzzy match silently invents locations.
 - **Revenue can be negative.** Billing credits appear as negative months.
-- **The RPGCL 2040 map georeferences exactly — its planned corridors are usable.**
-  `extract_rpgcl.py` reads the projection the sheet prints (MUTM Everest 1830,
-  TM, CM 84E, k=0.9999, FE 500,000) and fits the printed coordinate graticule:
-  141.11 m/pt, worst residual **14.5 m** on a 1:400,000 sheet. Classification is
-  by (stroke colour, stroke width) read from the legend's own swatches by row.
-  Only unique pairs are exported — proposed 400 kV, proposed 220 kV, existing/UC
-  400 kV. **The 132 kV family is deliberately excluded**: `132 kV HTLS`,
-  `PROPOSED 132 kV` and `Underconstruction_132kV` are all pure red at one width,
-  separated only by dash pattern, and the PDF renders dashes as many short *solid*
-  segments — so the distinction is unrecoverable. Guessing would label built lines
-  as planned. Validation: extracted corridors pass through Lapsiphedi, Hetauda,
-  Dhalkebar, Butwal and Duhabi, Nepal's real 400 kV nodes.
+- **The RPGCL 2040 map georeferences exactly, and every feature on it carries its
+  own classification — read from the sheet itself, not guessed.** `extract_rpgcl.py`
+  reads the printed projection (MUTM Everest 1830, TM, CM 84E, k=0.9999, FE
+  500,000) and fits the printed coordinate graticule: 141.11 m/pt, worst residual
+  **14.5 m** on a 1:400,000 sheet. The PDF is an ArcMap export, and PyMuPDF
+  exposes the ArcMap layer name on every drawn path (`get_drawings()`) and every
+  text/marker glyph (`get_texttrace()`) as `"layer"` — so a corridor's kV and
+  build status, and a marker's category, come from that name directly. This
+  replaced an earlier version that matched on (stroke colour, stroke width)
+  instead, which could not tell the 132 kV family apart at all — existing, under
+  construction and proposed all draw in the same red at the same width, and the
+  colour approach left the whole family out. Layer-based extraction recovers it:
+  **existing 190, under construction 489, proposed 2,566 segments**, plus 465
+  segments of cross-border 400 kV interconnection to India (`cross_border_line_400kv`),
+  also previously unhandled. A corridor is still drawn twice within its own layer —
+  ArcMap's usual halo-plus-centreline symbol — so only the dominant (colour, width)
+  pair per layer is kept, same exactness as the old approach, just auto-detected
+  per layer instead of hand-picked once for the whole page. That also fixed a real
+  misattribution: ~19 segments near Bajhang sat on an unnamed ArcMap layer
+  ("Other 5") that happened to share proposed-400's exact colour and width, and
+  the old colour-only match counted them as proposed 400 kV corridor when the
+  sheet's own legend makes no such claim for them. Validation: extracted 400 kV
+  corridors still pass through Lapsiphedi, Hetauda, Dhalkebar, Butwal and Duhabi,
+  Nepal's real 400 kV nodes.
 - **Only the PIPELINE is taken from the RPGCL sheet, never operating plants.**
   248 projects that do not yet generate — 126 survey licence, 40 government
   reserved, 33 construction-licence application, 27 construction licence, 20 under
@@ -284,23 +299,41 @@ official record — read it against the source before relying on a number.
   that does not generate pays no royalty. Capacity is parsed from the sheet's own
   "Name (MW)" labels for 168 of them. The 355 IN OPERATION markers are excluded:
   see below.
+- **A small-hydro cluster is a different thing from a pipeline project, and the
+  sheet marks it as one.** 96 points on the `HPP_CLUSTER_BELOW_20_MW` layer, each
+  a *group* of several sub-20 MW projects too close together at this map's scale
+  to plot individually — labelled with the group's **combined** capacity, not one
+  project's. Missed entirely before this pass; now its own marker (a downward
+  triangle, so it is never mistaken for one project).
 - **The RPGCL sheet's OPERATING plants are deliberately NOT merged.** It carries
   355 markers for plants in operation, but the sheet is dated Sep 2022 while the
   RMS register runs to FY 082/83 and is the authoritative royalty source. The
   overlap is also poor: georeferenced, only 42 of 355 land within 3 km of an RMS
   plant and only 29 of 178 RMS plants find a match — merging them would have put
   two near-duplicate sets of dots on the map at inconsistent positions.
-- **Substations come from the same sheet as ESRI marker glyphs.** They are `"`
-  characters in the `ESRIDefaultMarker` font, coloured exactly as the legend
-  shows: red existing (74), green under construction (25), blue future (88) —
-  187 in total, against OSM's 107. Names are the nearest label line on the sheet
-  and are **best-effort**: where several markers share one nearest label (dense
-  Kathmandu), the name is kept only for the closest and dropped for the rest, so
-  168 of 187 carry a name and none is duplicated across distinct substations.
+- **Substations come from the same sheet, matched by layer rather than colour and
+  position.** They are `"` characters in the `ESRIDefaultMarker` font, on one of
+  three layers named exactly for their status — `EXISTING_S/S`, `UNDER_CONSTRUCTION_S/S`,
+  `FUTURE_S/S` — so no legend-swatch position filter is needed at all: a swatch
+  never carries a real layer name. Switching from `get_text("dict")` to
+  `get_texttrace()` for this pass fixed a real, confirmed drop: one future
+  substation near Nepal's eastern border (26.65°N, 88.40°E) was silently missing
+  from the `dict` extraction — `get_texttrace()` decomposes to one entry per
+  glyph and never merges markers into a shared span the way `dict` occasionally
+  does. Counts: red existing (74), green under construction (25), blue future
+  (**89**, was 88) — **188** in total, against OSM's 107. Names are the nearest
+  label line on the sheet and are **best-effort**: where several markers share
+  one nearest label (dense Kathmandu), the name is kept only for the closest and
+  dropped for the rest, so 168 of 188 carry a name and none is duplicated across
+  distinct substations.
 - **The RPGCL map is still a picture for everything else.** `rpgcl.com`'s network
   PDF (5904x3456 pt, 713 image objects) names substations but carries no
   coordinates, so grid geometry comes from OpenStreetMap `power=line` /
   `power=substation` instead — 409 lines (400/220/132/66 kV) and 107 substations.
+- **The sheet is dated 4 Sep 2022 and is the newest public version RPGCL has
+  published.** Anything commissioned, reconductored (HTLS) or re-routed since
+  then will not show on it; the dashboard's own map note says so explicitly
+  rather than let the vintage go unstated.
 - **USD takes precedence in the revenue waterfall.** On a mixed invoice
   *Invoice to NEA (NRS)* holds only the NPR *portion*; letting it win reports a
   fraction of the month (Upper Bhotekoshi showed NPR 11.8m against a USD 2.94m

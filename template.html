@@ -625,6 +625,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <label><input type="checkbox" data-lyr="plan" checked> Proposed corridors</label>
       <label><input type="checkbox" data-lyr="subs" checked> Substations</label>
       <label><input type="checkbox" data-lyr="pipe" checked> Pipeline projects</label>
+      <label><input type="checkbox" data-lyr="clu" checked> Small-hydro clusters</label>
       <span class="lyrsep"></span>
       <button type="button" class="lyrbtn" data-set="all">all</button>
       <button type="button" class="lyrbtn" data-set="none">none</button>
@@ -640,8 +641,11 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <span><i style="background:var(--river)"></i>Rivers over 25&nbsp;km, plus the tributaries the fleet sits on</span>
       <span><i style="background:var(--peak);clip-path:polygon(50% 0,100% 100%,0 100%)"></i>Peaks over 6,800&nbsp;m</span>
       <span><i style="background:var(--gridline);height:3px;border-radius:1px"></i>Built grid 66&ndash;400&nbsp;kV</span>
-      <span><i style="background:#c765d9;height:3px;border-radius:1px"></i>Proposed 400&nbsp;kV (RPGCL 2040)</span>
-      <span><i style="background:#6d8fd6;height:3px;border-radius:1px"></i>Proposed 220&nbsp;kV</span>
+      <span><i style="background:linear-gradient(90deg,#9a4fc4,#c765d9);height:3px;border-radius:1px"></i>RPGCL 400&nbsp;kV: existing/UC, proposed</span>
+      <span><i style="background:#e0507a;height:3px;border-radius:1px"></i>Cross-border 400&nbsp;kV (India)</span>
+      <span><i style="background:linear-gradient(90deg,#3f6fc9,#5a93d6,#6d8fd6);height:3px;border-radius:1px"></i>RPGCL 220&nbsp;kV: existing, UC, proposed</span>
+      <span><i style="background:linear-gradient(90deg,#c9822e,#d99a4e,#e8b073);height:3px;border-radius:1px"></i>RPGCL 132&nbsp;kV: existing, UC, proposed</span>
+      <span><i style="background:#0d7bd9;opacity:.55;clip-path:polygon(0 25%,100% 25%,50% 100%)"></i>Small-hydro cluster (&lt;20&nbsp;MW each)</span>
       <span><i style="background:#d94a4a;border-radius:1px"></i>Substation, existing</span>
       <span><i style="background:#27b34a;border-radius:1px"></i>Substation, under construction</span>
       <span><i style="background:#3b7fe0;border-radius:1px"></i>Substation, future</span>
@@ -1300,7 +1304,7 @@ function chartAge(){
 // Held outside chartMap because the map is redrawn on resize and on theme flip;
 // the switches have to survive both, so state lives here and is re-applied to
 // whichever group set the latest draw produced.
-var mapLayers = {outline:1, rivers:1, rvlab:1, plan:1, grid:1, pipe:1, subs:1, peaks:1, plants:1};
+var mapLayers = {outline:1, rivers:1, rvlab:1, plan:1, grid:1, pipe:1, clu:1, subs:1, peaks:1, plants:1};
 var mapG = null;
 
 // ---- the marker for whichever plant the project panel currently shows ---
@@ -1457,7 +1461,7 @@ function chartMap(){
   // One group per switchable layer, appended in draw order so z-order is
   // unchanged: toggling is then a display flip rather than a redraw.
   var G = {};
-  ['outline','rivers','plan','grid','pipe','subs','peaks','rvlab','plants'].forEach(function(k){
+  ['outline','rivers','plan','grid','pipe','clu','subs','peaks','rvlab','plants'].forEach(function(k){
     G[k] = el('g',{'data-lyr':k}); svg.appendChild(G[k]);
   });
   applyLayers(G);
@@ -1507,12 +1511,30 @@ function chartMap(){
     riverMarks.push({i:i, rv:rv, els:els, segs:segs, w:w});
   });
 
-  // ---- RPGCL planned 2040 corridors, beneath the built network -----------
-  var PLAN_C = {proposed_400:'#c765d9', proposed_220:'#6d8fd6', existing_400:'#9a4fc4'};
+  // ---- RPGCL corridors, beneath the built network -------------------------
+  // Every class here comes off the sheet's own ArcMap layer tag, not a colour
+  // guess - which is what makes the 132 kV family paintable at all: existing,
+  // under construction and proposed all draw in the same red at the same width,
+  // and the layer name is the only thing that tells them apart. Three colour
+  // families by kV (magenta 400, blue 220, amber 132), each running solid ->
+  // faint from existing -> under construction -> proposed, since that is the
+  // order of how sure the sheet is that the corridor is really there.
+  var PLAN_STY = {
+    existing_400:      {c:'#9a4fc4', w:1.5,  op:.85},
+    cross_border_400:  {c:'#e0507a', w:1.4,  op:.85},
+    proposed_400:      {c:'#c765d9', w:1.1,  op:.65},
+    existing_220:      {c:'#3f6fc9', w:1.15, op:.85},
+    uc_220:            {c:'#5a93d6', w:1.0,  op:.72},
+    proposed_220:      {c:'#6d8fd6', w:0.8,  op:.6},
+    existing_132:      {c:'#c9822e', w:0.95, op:.85},
+    uc_132:            {c:'#d99a4e', w:0.85, op:.7},
+    proposed_132:      {c:'#e8b073', w:0.65, op:.5}
+  };
   (M.plan||[]).forEach(function(ln){
+    var st = PLAN_STY[ln.c] || {c:'#b07cd8', w:1, op:.7};
     var dd = ln.pts.map(function(p,i){ return (i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); }).join('');
-    G.plan.appendChild(el('path',{d:dd, fill:'none', stroke:(PLAN_C[ln.c]||'#b07cd8'),
-      'stroke-width':(ln.c==='proposed_220'?0.8:1.25), 'stroke-linecap':'round', opacity:.8}));
+    G.plan.appendChild(el('path',{d:dd, fill:'none', stroke:st.c,
+      'stroke-width':st.w, 'stroke-linecap':'round', opacity:st.op}));
   });
 
   // ---- transmission grid: violet, clear of the blue rivers and the markers
@@ -1534,6 +1556,17 @@ function chartMap(){
       'L'+(x+r0).toFixed(1)+' '+y.toFixed(1)+'L'+x.toFixed(1)+' '+(y+r0).toFixed(1)+
       'L'+(x-r0).toFixed(1)+' '+y.toFixed(1)+'Z',
       fill:cc, 'fill-opacity':.5, stroke:cc, 'stroke-width':.9}));
+  });
+  // small-hydro clusters: several sub-20 MW projects too close together at this
+  // scale to plot one by one, so the sheet plots one point for the group and
+  // labels it with their COMBINED capacity. A downward triangle keeps it clear
+  // of the plant circles, the pipeline diamonds and the peaks' upward triangles.
+  (M.plan_clusters||[]).forEach(function(cl){
+    var x=X(cl.lo), y=Y(cl.la);
+    var r0=Math.min(11, 2.6 + (cl.mw ? 0.42*Math.sqrt(cl.mw) : 0));
+    G.clu.appendChild(el('path',{d:'M'+(x-r0).toFixed(1)+' '+(y-r0*0.7).toFixed(1)+
+      'L'+(x+r0).toFixed(1)+' '+(y-r0*0.7).toFixed(1)+'L'+x.toFixed(1)+' '+(y+r0*0.85).toFixed(1)+'Z',
+      fill:'#0d7bd9', 'fill-opacity':.45, stroke:'#0d7bd9', 'stroke-width':.9}));
   });
 
   var SUB_C = {existing:'#d94a4a', under_construction:'#27b34a', future:'#3b7fe0'};
@@ -1867,23 +1900,33 @@ function chartMap(){
     'The rest name a khola OpenStreetMap has not mapped, or sit on a reservoir rather than a river.';
   var terr = document.getElementById('map-terrain');
   if(terr && rv) terr.textContent =
-    'The basemap carries '+rv+' named watercourses \u2014 every river of 25\u00a0km or more, plus '+
+    'The basemap carries '+rv+' named watercourses — every river of 25 km or more, plus '+
     'the smaller kholas the fleet is actually built on, which OpenStreetMap tags as streams and '+
-    'a river query never returns \u2014 and '+pk+
-    ' summits above 6,800\u00a0m, both from OpenStreetMap \u2014 the drainages and the '+
+    'a river query never returns — and '+pk+
+    ' summits above 6,800 m, both from OpenStreetMap — the drainages and the '+
     'relief that put the fleet where it is. Violet is the transmission network the fleet has '+
     'to reach: '+((M.lines||[]).length)+' lines from 66 to 400 kV and '+((M.subs||[]).length)+
-    ' substations — geometry from OpenStreetMap, since the RPGCL network map is a rendered '+
-    'PDF carrying no coordinates \u2014 though its planned corridors are recoverable: the sheet '+
-    'prints its projection and a coordinate graticule, so it georeferences to within 15\u00a0m. '+
-    'The magenta and pale-blue dashes are RPGCL\u2019s proposed 400 and 220\u00a0kV routes to 2040, '+
-    'lifted from that map. Its 132\u00a0kV classes are all one red at one width, separable only by '+
-    'dash pattern the PDF does not preserve, so they are left out rather than guessed. '+
+    ' substations — geometry from OpenStreetMap, since RPGCL’s own sheet '+
+    '('+(M.plan_source||'the RPGCL network map')+') is a rendered PDF carrying no coordinates '+
+    'of its own — though it georeferences exactly: '+
+    'the sheet prints its projection and a coordinate graticule, fitting to within 15 m. '+
+    'That PDF is an ArcMap export, and every corridor, substation and project marker on it '+
+    'carries the name of the ArcMap layer it was drawn from, read directly rather than guessed '+
+    'from colour — the only way to tell its 132 kV existing, under-construction and '+
+    'proposed corridors apart, since all three draw in the same red at the same width. The '+
+    'magenta, blue and amber lines are its own existing, under-construction and proposed '+
+    '400/220/132 kV — solid for what is already built, paler for what is only proposed — '+
+    'plus '+((M.plan||[]).filter(function(l){return l.c==='cross_border_400';}).length)+
+    ' segments of cross-border 400 kV interconnection to India, in pink. '+
     'Its '+((M.plan_subs||[]).length)+' substations come across too, coloured red / green / blue '+
     'for existing, under construction and future. The green and blue diamonds are the '+
-    ((M.plan_plants||[]).length)+' pipeline projects the sheet carries \u2014 licensed, surveyed or '+
-    'applied-for, and so absent from a royalty register that only sees plants which generate. '+
-    'Operating plants are NOT taken from the sheet: the register is three years newer and locates them better.';
+    ((M.plan_plants||[]).length)+' pipeline projects the sheet carries — licensed, surveyed or '+
+    'applied-for, and so absent from a royalty register that only sees plants which generate — '+
+    'plus '+((M.plan_clusters||[]).length)+' triangles marking a cluster of several sub-20 MW '+
+    'projects too close together to plot individually, labelled with the group’s combined capacity. '+
+    'Operating plants are NOT taken from the sheet: the register is three years newer and locates '+
+    'them better. The sheet itself is dated 4 Sep 2022 — the newest public version RPGCL '+
+    'has published — so anything commissioned, upgraded or re-routed since then will not show here.';
 }
 
 // ---- 11. licensing pipeline ---------------------------------------------
