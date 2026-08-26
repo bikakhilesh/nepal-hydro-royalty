@@ -745,11 +745,6 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     <button role="tab" id="ltab-one" aria-controls="lpanel-one" aria-selected="false" tabindex="-1">
       By company</button>
   </div>
-  <div class="ctl">
-    <input type="search" id="cq" placeholder="Search ticker, company, plant or district&hellip;"
-           aria-label="Search companies">
-    <span class="count" id="ccnt"></span>
-  </div>
   <div id="lpanel-reg" role="tabpanel" aria-labelledby="ltab-reg">
     <p class="sdek" id="co-lede" style="max-width:80ch;margin:0 0 20px"></p>
     <figure class="card">
@@ -2774,7 +2769,7 @@ function coHist(r){
 }
 function renderCo(){
   if(!D.co) return;
-  var rows = coFiltered();
+  var rows = D.co.rows;
   rows = rows.slice().sort(function(a,b){
     var x = coVal(a, coSort), y = coVal(b, coSort);
     if(x === null || x === undefined) return 1;
@@ -2815,9 +2810,6 @@ function renderCo(){
     return out;
   }).join('');
   document.querySelector('#t-co tbody').innerHTML = body;
-  var c = document.getElementById('ccnt');
-  if(c) c.textContent = rows.length + ' of ' + D.co.rows.length + ' tickers';
-  
 }
 function coDetail(r){
   var bits = [];
@@ -3361,14 +3353,6 @@ function rankBars(mount, key, lab, aria, filter){
 }
 
 // ---- the three screen tables ---------------------------------------------
-function coSearch(){ var q = document.getElementById('cq');
-  return q ? q.value.trim().toLowerCase() : ''; }
-function coFiltered(rows){
-  var q = coSearch();
-  return (rows || D.co.rows).filter(function(r){
-    return !q || (r.tk+' '+r.name+' '+(r.pnames||'')+' '+(r.dist||'')).toLowerCase().indexOf(q) >= 0;
-  });
-}
 function sortRows(rows, key, dir){
   return rows.slice().sort(function(a,b){
     var x = a[key], y = b[key];
@@ -3383,7 +3367,7 @@ var techSort = 'rsi', techDir = -1, scrSort = 'mcap', scrDir = -1,
 
 function renderTech(){
   var t = document.querySelector('#t-tech tbody'); if(!t) return;
-  t.innerHTML = sortRows(coFiltered(scrRows()), techSort, techDir).map(function(r){
+  t.innerHTML = sortRows(scrRows(), techSort, techDir).map(function(r){
     return '<tr><td><b>'+r.tk+'</b></td><td title="'+r.name.replace(/"/g,'&quot;')+'">'+r.name+'</td>'
       + '<td class="n">'+num(r.px,1)+'</td>'
       + '<td class="n">'+num(r.rsi,1)+'</td>'
@@ -3397,7 +3381,7 @@ function renderTech(){
 }
 function renderScreen(){
   var t = document.querySelector('#t-screen tbody'); if(!t) return;
-  t.innerHTML = sortRows(coFiltered(scrRows()), scrSort, scrDir).map(function(r){
+  t.innerHTML = sortRows(scrRows(), scrSort, scrDir).map(function(r){
     return '<tr><td><b>'+r.tk+'</b></td><td title="'+r.name.replace(/"/g,'&quot;')+'">'+r.name+'</td>'
       + '<td class="n">'+num(r.mw,1)+'</td><td class="n">'+num(r.px,1)+'</td>'
       + '<td class="n">'+num(r.mcap,0)+'</td><td class="n">'+num(r.pe,1)+'</td>'
@@ -3411,13 +3395,10 @@ function renderScreen(){
       + '<td class="n '+signCls(r.chg4w)+'">'+(r.chg4w==null?'—':pct(r.chg4w,1))+'</td>'
       + '<td class="n '+signCls(r.chg1y)+'">'+(r.chg1y==null?'—':pct(r.chg1y,1))+'</td></tr>';
   }).join('');
-  var c = document.getElementById('ccnt');
-  if(c) c.textContent = coFiltered(scrRows()).length + ' of ' + MK().n_scr
-      + ' screened \u00b7 ' + D.co.rows.length + ' listed';
 }
 function renderRatio(){
   var t = document.querySelector('#t-ratio tbody'); if(!t) return;
-  t.innerHTML = sortRows(coFiltered(), ratSort, ratDir).map(function(r){
+  t.innerHTML = sortRows(D.co.rows, ratSort, ratDir).map(function(r){
     return '<tr><td><b>'+r.tk+'</b></td><td title="'+r.name.replace(/"/g,'&quot;')+'">'+r.name+'</td>'
       + '<td class="n">'+num(r.mw,1)+'</td><td class="n">'+num(r.mcap_mw,0)+'</td>'
       + '<td class="n '+(r.cap_gap==null?'':(r.cap_gap>0?'stat-crit':'stat-good'))+'">'
@@ -4090,9 +4071,6 @@ function wireListed(){
       document.getElementById('ltab-'+lTab).focus();
     });
   }
-  var q = document.getElementById('cq');
-  if(q) q.addEventListener('input', drawLTab);
-
   [['#t-co th','c',function(k,d){ coSort=k; coDir=d; renderCo(); },
     function(k){ return k==='tk'||k==='name'||k==='fy'; }],
    ['#t-tech th','m',function(k,d){ techSort=k; techDir=d; renderTech(); },
