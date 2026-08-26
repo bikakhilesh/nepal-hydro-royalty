@@ -621,11 +621,11 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
       <label><input type="checkbox" data-lyr="rivers" checked> Rivers</label>
       <label><input type="checkbox" data-lyr="rvlab" checked> River names</label>
       <label><input type="checkbox" data-lyr="peaks" checked> Peaks</label>
-      <label><input type="checkbox" data-lyr="grid" checked> Built grid</label>
-      <label><input type="checkbox" data-lyr="plan" checked> Proposed corridors</label>
-      <label><input type="checkbox" data-lyr="subs" checked> Substations</label>
-      <label><input type="checkbox" data-lyr="pipe" checked> Pipeline projects</label>
-      <label><input type="checkbox" data-lyr="clu" checked> Small-hydro clusters</label>
+      <label><input type="checkbox" data-lyr="grid"> Built grid</label>
+      <label><input type="checkbox" data-lyr="plan"> Proposed corridors</label>
+      <label><input type="checkbox" data-lyr="subs"> Substations</label>
+      <label><input type="checkbox" data-lyr="pipe"> Pipeline projects</label>
+      <label><input type="checkbox" data-lyr="clu"> Small-hydro clusters</label>
       <span class="lyrsep"></span>
       <button type="button" class="lyrbtn" data-set="all">all</button>
       <button type="button" class="lyrbtn" data-set="none">none</button>
@@ -1304,7 +1304,11 @@ function chartAge(){
 // Held outside chartMap because the map is redrawn on resize and on theme flip;
 // the switches have to survive both, so state lives here and is re-applied to
 // whichever group set the latest draw produced.
-var mapLayers = {outline:1, rivers:1, rvlab:1, plan:1, grid:1, pipe:1, clu:1, subs:1, peaks:1, plants:1};
+// Grid, corridors, substations and pipeline/cluster markers start off: a first
+// load with everything on is too dense to read, and the fleet itself - the
+// dashboard's actual subject - is what should be visible before anyone has
+// touched a switch.
+var mapLayers = {outline:1, rivers:1, rvlab:1, plan:0, grid:0, pipe:0, clu:0, subs:0, peaks:1, plants:1};
 var mapG = null;
 
 // ---- the marker for whichever plant the project panel currently shows ---
