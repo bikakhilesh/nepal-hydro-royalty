@@ -577,6 +577,12 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     a filled dot is a surveyed position, a hollow one is only district-accurate. The rivers and
     peaks behind them are the reason the fleet sits where it does.</p>
 
+  <div class="tabs" role="tablist" aria-label="Fleet map views">
+    <button role="tab" id="mtab-2d" aria-controls="mpanel-2d" aria-selected="true">Map</button>
+    <button role="tab" id="mtab-3d" aria-controls="mpanel-3d" aria-selected="false" tabindex="-1">Terrain</button>
+  </div>
+
+  <div id="mpanel-2d" role="tabpanel" aria-labelledby="mtab-2d">
   <figure class="card">
     <figcaption><div class="caphead">
       <div><div class="ctitle">Nepal&rsquo;s licensed hydropower fleet</div>
@@ -619,6 +625,12 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
     <div class="zoomhint">scroll or pinch to zoom &middot; drag to pan &middot; double-click to reset &middot; Esc to close</div>
   </figure>
 
+  <div class="note warn"><b>Dashed dots are not plant locations.</b> They sit at their district&rsquo;s
+    centroid, spread apart just enough to stay countable, so the cluster shows how many plants a
+    district holds &mdash; not where any one of them is. Half-filled dots are on the correct watercourse but at an arbitrary point along it. <span id="map-note"></span></div>
+  </div>
+
+  <div id="mpanel-3d" role="tabpanel" aria-labelledby="mtab-3d" hidden>
   <figure class="card" id="fig-terrain">
     <figcaption><div class="caphead">
       <div><div class="ctitle">The same fleet on real elevation</div>
@@ -637,10 +649,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
   </figure>
 
   <div class="note" id="map-terrain"></div>
-
-  <div class="note warn"><b>Dashed dots are not plant locations.</b> They sit at their district&rsquo;s
-    centroid, spread apart just enough to stay countable, so the cluster shows how many plants a
-    district holds &mdash; not where any one of them is. Half-filled dots are on the correct watercourse but at an arbitrary point along it. <span id="map-note"></span></div>
+  </div>
 </section>
 
 <section>
@@ -4261,6 +4270,41 @@ function wireBTabs(){
   showBTab('season');
 }
 
+// The map tab needs no draw-on-entry the other tab groups do: chartMap()
+// already runs once at boot regardless of which tab is showing (a hidden
+// SVG is still correctly drawn, same reasoning as everywhere else on this
+// page), and the terrain view loads only on its own button click, never
+// automatically -- switching tabs either way has nothing left to trigger.
+var mTab = '2d';
+var M_TABS = ['2d','3d'];
+function showMTab(which){
+  mTab = which;
+  M_TABS.forEach(function(t){
+    var b = document.getElementById('mtab-'+t), p = document.getElementById('mpanel-'+t);
+    if(!b || !p) return;
+    var on = (t === which);
+    b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1;
+    p.hidden = !on;
+  });
+}
+function wireMTabs(){
+  var bar = document.querySelector('.tabs[aria-label="Fleet map views"]');
+  if(bar){
+    bar.addEventListener('click', function(e){
+      var b = e.target.closest('button[role=tab]'); if(!b) return;
+      showMTab(b.id.replace('mtab-',''));
+    });
+    bar.addEventListener('keydown', function(e){
+      if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      var i = M_TABS.indexOf(mTab) + (e.key === 'ArrowRight' ? 1 : -1);
+      showMTab(M_TABS[(i + M_TABS.length) % M_TABS.length]);
+      document.getElementById('mtab-'+mTab).focus();
+    });
+  }
+  showMTab('2d');
+}
+
 function drawAll(){
   chartMap();
   drawBTab();
@@ -4291,7 +4335,7 @@ if(!D.co){
 
 stats(); transTable(); reconTable(); wireTable(); renderPlants();
 wireListed(); wireBTabs(); drawAll(); buildTableViews();
-wireMapExpand('map-exp'); wireMapExpand('ter-exp'); wireTerrain(); wireLayers();
+wireMapExpand('map-exp'); wireMapExpand('ter-exp'); wireTerrain(); wireLayers(); wireMTabs();
 wireSortableTables(); wireDataTip();
 
 // redraw on theme flip so colors resolve against the new tokens
