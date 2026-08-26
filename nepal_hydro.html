@@ -4014,8 +4014,8 @@ function renderOne(){
               function(k){ oneQMode = k; renderOne(); });
   }
   if(qs.length){
-    btnRow('oneFallBtns', qs.map(function(q,i){ return [i, q.y+' Q'+q.q]; }), ix,
-           function(k){ oneFallIx = k; renderOne(); });
+    selectRow('oneFallBtns', qs.map(function(q,i){ return [i, q.y+' Q'+q.q]; }), ix,
+              function(k){ oneFallIx = k; renderOne(); });
     selectRow('oneCascBtns', [['single','This quarter'],['delta','Quarter on quarter']], oneCascView,
               function(k){ oneCascView = k; renderOne(); });
     btnRow('oneIncBtns', [['q','Qtr only'],['c','Cumulative'],['a','Annual']], oneIncView,
