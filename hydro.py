@@ -978,16 +978,19 @@ PLUS_FIX = {
     "Mistry Khola": (28.536962, 83.674422, "GMPF+QQM", "Narchyang 33200"),   # shared point
     "Nilgiri Khola ": (28.578712, 83.692359, "HMHR+FWQ", "Narchyang 33200"),
     "Nilgiri Khola-II cascade Project": (28.536962, 83.674422, "GMPF+QQM", "Narchyang 33200"),   # shared point
+    "Nyadi": (28.327313, 84.422016, "8CGC+WRC", "Bahundanda 33600"),
     "Phawa khola": (27.280888, 87.756828, "7QJ4+9P4", "Unnamed Road, Thechambu 57500"),
     "Pikhuwa Khola": (27.120338, 87.066016, "43C8+4CJ", "Bhojpur 57000"),   # shared point
     "Radhi Small": (28.396613, 84.429172, "9CWH+JMV", "33600"),
     "Rahughat Mangale": (28.475562, 83.518422, "FGG9+69F", "Sisneri, Pakhapani 33200"),
     "Rawa Khola": (27.348187, 86.840063, "8RXR+72", "Sungdel 56200"),
     "Rele Khola HPP": (28.530188, 83.679813, "GMJH+3W", "Narchyang 33200"),
+    "Richet Khola SHP": (28.176312, 84.916063, "7MW65WG8+GC", ""),
     "Rudi A": (28.231262, 84.210547, "66J6+G63", "Madi-9, Baluwabesi"),
     "Sagu Khola HEP": (27.788113, 86.115547, "Q4Q8+66V", "45500"),
     "Sanjen": (28.217937, 85.284312, "679M+5P", "Chilime"),
     "Sapsu Khola Small HP": (27.112838, 86.737766, "4P7Q+44J", "Rajapani 56200"),
+    "Sipring Khola HP": (27.825087, 86.228672, "R6GH+2FM", "Gauri Sankar 45500"),
     "Siddhi Khola HPP": (26.833613, 88.157672, "R5M5+C3V", "Jirmale 57300"),
     "Singati": (27.743687, 86.159188, "P5V5+FM", "Singati 45500"),
     "Super Dordi Kha": (28.271438, 84.532891, "7GCM+H5C", "Tanje 33600"),
@@ -1010,6 +1013,7 @@ PLUS_FIX = {
     "Upper Suri": (27.738437, 86.244062, "P6QV+9J", "Chankhu 45500"),
     "Upper Syange Khola Small": (28.386212, 84.396203, "99PW+FFP", "33600"),
     "Upper Tadi": (27.973012, 85.436922, "XCFP+6Q3", "Ghyangphedi 44900"),
+    "Upper Trishuli 3A": (28.063737, 85.206609, "3674+FJX", "Dandagaun 45000"),
     "Yambaling Khola": (27.951038, 85.790641, "XQ2R+C76", ""),
 }
 
@@ -1029,6 +1033,18 @@ CITED_FIX = {
     # 3 HPP's was 475 km away in Sankhuwasabha. Skipped rather than guessed.
     "Sabha Khola HPP": (27.31694, 87.20222, "DoED cancelled-application coordinates, Bala/Syabun, Sankhuwasabha"),
     "Jhyari Khola": (27.75903, 85.67736, "DoED cancelled-application coordinates, Sanusiruwari, Sindhupalchok"),
+    # Decimal coordinates given directly.
+    "Thulo Khola HPP": (28.5751, 83.5367, "author-supplied decimal coordinates"),
+    "Upper Mailun Khola": (28.0989, 85.1833, "author-supplied decimal coordinates"),
+    # A DMS lat/lon range rather than a point - the plant sits somewhere along a
+    # short reach, same as a plus code's own margin of error, so the midpoint is
+    # taken rather than either end.
+    "Upper Ingwa Khola": (27.284167, 87.897500, "midpoint of author-supplied coordinate range"),
+    "Nau gad khola": (29.706389, 80.608472, "midpoint of author-supplied coordinate range"),
+    "Upper Hewa": (27.337361, 87.360417, "midpoint of author-supplied coordinate range"),
+    "Rudi Khola-B": (28.284722, 84.200000, "midpoint of author-supplied coordinate range"),
+    "Super Hewa HPP": (27.359722, 87.389861, "midpoint of author-supplied coordinate range"),
+    "Siuri HP": (28.345000, 84.472361, "midpoint of author-supplied coordinate range"),
 }
 
 
