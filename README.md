@@ -13,7 +13,6 @@ Two files do everything: **`hydro.py`** (all Python) and **`template.html`**
 | **Dashboard** | https://bikakhilesh.github.io/nepal-hydro-royalty/ |
 | **Terrain map** | https://bikakhilesh.github.io/nepal-hydro-royalty/terrain.html |
 | **Fleet map (SVG)** | https://bikakhilesh.github.io/nepal-hydro-royalty/fleet-map.svg |
-| **Payload (JSON)** | https://bikakhilesh.github.io/nepal-hydro-royalty/dashboard.json |
 
 ## What is in here
 
