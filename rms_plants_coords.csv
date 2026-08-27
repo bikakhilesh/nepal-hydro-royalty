@@ -183,7 +183,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 194,Rahughat Mangale,37000.0,Myagdi,Bagmati,28.475562,83.518422,plus,"Google Maps FGG9+69F, Sisneri, Pakhapani 33200",
 195,Lower Solu Hydropower Project,82000.0,Solukhumbu,Province 1,27.3652,86.6791,river,"on Solu Khola, nearest Solukhumbu",Solu Khola
 196,Kabeli-3 Cascade HEP,21930.0,Taplejung,Province 1,27.3608,87.8612,river,"on Kabeli, nearest Taplejung",Kabeli
-197,Upper Piluwa 3 HPP,4950.0,Rolpa,Province 1,28.3223102,82.6157842,district,district centroid,Rolpa
+197,Upper Piluwa 3 HPP,4950.0,Sankhuwasabha,Province 1,27.298,87.4072,plus,"cited: Piluwa/Sikhuwa Khola confluence (one end of the cited river reach, not the powerhouse)",
 198,Buku-Kapati HPP,5000.0,Okhaldunga,Province 1,27.518512,86.398641,plus,"Google Maps G99X+CF2, Goli 56000",
 199,Upper Rahughat,48500.0,Myagdi,Gandaki,28.376212,83.572359,plus,"Google Maps 9HGC+FWQ, F042, Rakhu Piple 33200",
 200,Upper Gaddi Gad,1550.0,Doti,Sudurpashchim,29.280938,81.058937,plus,"Google Maps 73J5+9H, Sanagaun 10800",

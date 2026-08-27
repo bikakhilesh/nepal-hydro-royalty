@@ -903,6 +903,15 @@ DISTRICT_FIX = {
     "Rahughat Mangale": "Myagdi",
     # 21.3 MW at Kuinemangle, Raghuganga RM-8, Myagdi -- the same municipality.
     "Thulo Khola HPP":  "Myagdi",
+    # Register says Rolpa; two independent sources (investopaper.com,
+    # mabilung.com.np -- the developer's own site) both give Sankhuwasabha,
+    # Siddhakali/Mawadin VDCs, on the Piluwa Khola between its confluences with
+    # the Sikhuwa and Lakhuwa kholas, and both give the exact register capacity
+    # (4.95 MW). mabilung.com.np's own listed office is Kupandol, Lalitpur --
+    # the same office-vs-site pattern as Thulo Khola HPP above. Confirmed
+    # geometrically too: the Sikhuwa/Piluwa confluence sits 2.1 km from "Upper
+    # Piluwa Khola 2", the right spacing for the next cascade stage upstream.
+    "Upper Piluwa 3 HPP": "Sankhuwasabha",
 }
 
 # The register's own Rivers field is blank for these three; supplied by hand.
@@ -1072,14 +1081,20 @@ CITED_FIX = {
     # position, so it is flagged rather than silently corrected here.
     "Solu": (27.445, 86.583333, "author-supplied coordinates - see the Sankhuwasabha/Solukhumbu note above"),
     "Makarigad": (29.79125, 80.85875, "author-supplied decimal coordinates"),
+    # No coordinate was ever given for this one, only a river reach ("along the
+    # Piluwa Khola between its confluence with the Sikhuwa Khola and its
+    # confluence with the Lakhuwa Khola"). Lakhuwa Khola isn't in OpenStreetMap,
+    # but Sikhuwa Khola is, and its confluence with the mapped Piluwa Khola is
+    # a real point on the correct river -- one end of the stated reach, not the
+    # powerhouse itself, and honestly labelled as such below.
+    "Upper Piluwa 3 HPP": (27.2980, 87.4072, "Piluwa/Sikhuwa Khola confluence (one end of the cited river reach, not the powerhouse)"),
 }
 # Not added even though a coordinate was given:
-#   Upper Piluwa 3 HPP (Rolpa) - only a latitude ("roughly 27 17 42 N along the
-#     river system"), no longitude, so no point can be formed.
 #   Hewa Khola HP (Saptari) - given the exact same range as Upper Hewa's, above
 #     (Sankhuwasabha), which is 107 km from Saptari's own district centroid.
-#     Almost certainly copied from the wrong row upstream of here; flagged
-#     rather than guessed which of the two entries is the mistake.
+#     Sent twice, unchanged, and the contradiction is a physical one -- two
+#     differently-capacitied plants (4.5 MW vs 8.5 MW) cannot share one narrow
+#     coordinate box in two different districts. Still flagged, not guessed.
 
 
 def _fix_districts(m):
