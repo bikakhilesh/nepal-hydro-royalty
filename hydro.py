@@ -1045,7 +1045,41 @@ CITED_FIX = {
     "Rudi Khola-B": (28.284722, 84.200000, "midpoint of author-supplied coordinate range"),
     "Super Hewa HPP": (27.359722, 87.389861, "midpoint of author-supplied coordinate range"),
     "Siuri HP": (28.345000, 84.472361, "midpoint of author-supplied coordinate range"),
+    "Rukum gad": (28.623611, 82.632639, "midpoint of author-supplied coordinate range"),
+    "Bhim Khola Small HPP": (28.289861, 83.240556, "author-supplied decimal coordinates"),
+    "Padam Khola SHP": (28.908611, 81.848889, "midpoint of author-supplied coordinate range"),
+    "Bijaypur Khola 2 HPP": (28.16486, 84.03833, "author-supplied decimal coordinates"),
+    # "84 46 60 E" in the range given rolls over to 84 47 00 - a plain arithmetic
+    # midpoint, not a second source.
+    "Upper Machha Khola Small": (28.289861, 84.770139, "midpoint of author-supplied coordinate range"),
+    "Upper Chhandi Khola Small": (28.281944, 84.488194, "midpoint of author-supplied coordinate range"),
+    # Given as N-to-N and E-to-E but with the larger value first in both axes;
+    # min/max is taken regardless of which end was written first, so the
+    # midpoint is unaffected.
+    "Upper Lohore SHP": (28.944722, 81.807361, "midpoint of author-supplied coordinate range"),
+    "Dwari Khola SHP": (28.931667, 81.828472, "midpoint of author-supplied coordinate range"),
+    "Seti Khola HPP": (28.0225, 83.618611, "author-supplied coordinates"),
+    "Bhairav kunda khola Small HP": (27.936389, 85.933889, "author-supplied coordinates"),
+    "Tatopani HP": (28.49, 83.65, "author-supplied decimal coordinates"),
+    "Chhandi Khola": (28.266667, 84.478889, "midpoint of author-supplied coordinate range"),
+    "Theule Khola HPP": (28.179167, 83.620139, "midpoint of author-supplied coordinate range"),
+    # 73.6 km from Sankhuwasabha's own centroid, the district the register lists
+    # -- but 7.8 km from Solukhumbu's, where the register already carries four
+    # other Solu-named plants (Solu Khola (Dudhkoshi), Mid/Upper Solu Khola,
+    # Lower Solu). Very likely the same class of error DISTRICT_FIX already
+    # corrects for Thulo Khola HPP (a company office standing in for the site),
+    # but that is a claim about the register's own DistrictId, not just a
+    # position, so it is flagged rather than silently corrected here.
+    "Solu": (27.445, 86.583333, "author-supplied coordinates - see the Sankhuwasabha/Solukhumbu note above"),
+    "Makarigad": (29.79125, 80.85875, "author-supplied decimal coordinates"),
 }
+# Not added even though a coordinate was given:
+#   Upper Piluwa 3 HPP (Rolpa) - only a latitude ("roughly 27 17 42 N along the
+#     river system"), no longitude, so no point can be formed.
+#   Hewa Khola HP (Saptari) - given the exact same range as Upper Hewa's, above
+#     (Sankhuwasabha), which is 107 km from Saptari's own district centroid.
+#     Almost certainly copied from the wrong row upstream of here; flagged
+#     rather than guessed which of the two entries is the mistake.
 
 
 def _fix_districts(m):
