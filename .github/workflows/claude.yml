@@ -1,0 +1,59 @@
+name: Claude
+
+# Mentioning @claude in an issue, a pull request, or a review comment starts a
+# Claude Code session on this repository. It reads the thread, works on a
+# branch, and opens a pull request with what it changed.
+#
+# This repository is public, so anyone can open an issue here. The action checks
+# permissions before it reads a comment and only accounts with write access can
+# trigger it; allowed_non_write_users is left unset, which is what enforces that.
+#
+# Auth is a Claude Code subscription token rather than an API key. Run
+#   claude setup-token
+# in a terminal and store the result as the CLAUDE_CODE_OAUTH_TOKEN secret. To
+# bill the API instead, swap that line for anthropic_api_key.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+  issues:
+    types: [opened, assigned]
+
+jobs:
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read          # so Claude can read why a scheduled run failed
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      # nepal_hydro.html and the map files are built, never hand-edited, so give
+      # Claude the interpreter the refresh workflow uses. Without it the session
+      # cannot rebuild and therefore cannot check its own work.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --allowedTools "Bash(python hydro.py:*),Bash(python .github/scripts/guard.py),Bash(git diff:*),Bash(git status:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh run view:*)"
