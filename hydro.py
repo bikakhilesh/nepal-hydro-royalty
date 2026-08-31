@@ -1266,13 +1266,14 @@ def plf_refs():
         c = float(t.ContractPLF)/100 if getattr(t, "ContractPLF", "") else None
         cost = float(t.CostPerMW) if getattr(t, "CostPerMW", "") else None
         energy = float(t.ContractEnergy) if getattr(t, "ContractEnergy", "") else None
-        if c is None and cost is None and energy is None: continue
+        d = float(t.DesignPLF)/100 if getattr(t, "DesignPLF", "") else None
+        if c is None and cost is None and energy is None and d is None: continue
         pid = int(t.PlantId)
         prev = out.get(pid, {})
         # A column this row leaves blank keeps whatever the ticker-level entry had,
         # rather than blanking it -- plant-level data being more specific on PLF
         # is not a reason to erase a cost figure it happens not to carry.
-        out[pid] = {"cplf": r(c, 4), "dplf": prev.get("dplf"),
+        out[pid] = {"cplf": r(c, 4), "dplf": r(d, 4) if d is not None else prev.get("dplf"),
                    "cost_mw": r(cost, 1) if cost is not None else prev.get("cost_mw"),
                    "cenergy": r(energy, 3) if energy is not None else prev.get("cenergy"),
                    "psrc": "project file"}
