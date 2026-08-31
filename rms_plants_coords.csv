@@ -176,7 +176,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 187,Karuwa Seti HPP,32000.0,Kaski,Gandaki,28.2088,83.991,river,"on Seti Nadi, nearest Kaski",Seti Nadi
 188,Jogmai Cascade HPP,5200.0,Ilam,Province 1,26.897738,87.994422,plus,"Google Maps VXXV+3QV, Namsaling 57300",
 189,Rele Khola HPP,6000.0,Myagdi,Gandaki,28.530188,83.679813,plus,"Google Maps GMJH+3W, Narchyang 33200",
-190,Madhya Bhotekoshi HPP,102000.0,,Province 1,27.881306,85.9095,plus,cited: author-supplied coordinates,
+190,Madhya Bhotekoshi HPP,102000.0,,Province 1,,,none,,
 191,Sagu khola 1 HPP,5500.0,Dolakha,Bagmati,27.7883,86.0931,plus,cited: operator-reported site coordinates,
 192,Sagu Khola HEP,20000.0,Dolakha,Bagmati,27.788113,86.115547,plus,"Google Maps Q4Q8+66V, 45500",
 193,Upper Tadi,11000.0,Nuwakot,Bagmati,27.973012,85.436922,plus,"Google Maps XCFP+6Q3, Ghyangphedi 44900",
