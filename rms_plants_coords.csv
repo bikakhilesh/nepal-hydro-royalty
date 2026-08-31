@@ -3,15 +3,15 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 5,Piluwa Khola HP,3200.0,Sankhuwasabha,Province 1,27.2675,87.324,river,"on Piluwa Khola, nearest Sankhuwasabha",Piluwa Khola
 6,Ridi Khola HP,2400.0,Palpa,Lumbini,27.9343,83.4402,river,"on Ridi Khola, nearest Palpa",Ridi Khola
 7,Upper Bhotekoshi,45000.0,Sindhupalchok,Bagmati,27.8729,85.8821,river,"on Bhote Koshi, nearest Sindhupalchok",Bhote Koshi
-8,Aandikhola HP,9400.0,,Province 1,,,none,,
+8,Aandikhola HP,9400.0,,Province 1,27.941556,83.663111,plus,"cited: author-supplied coordinates (27°56'29.6""N 83°39'47.2""E)",
 9,Khimti I HP,60000.0,Dolakha,Bagmati,27.5499382,86.1678367,exact,OSM,Khimti I Hydropower Plant
 10,Indrawati 3,7500.0,Sindhupalchok,Province 1,27.8057,85.5754,river,"on Indrawati River, nearest Sindhupalchok",Indrawati River
 12,Chaku Khola  Small HP,3200.0,Sindhupalchok,Province 1,27.875512,85.929516,plus,Google Maps VWGH+6R2,
 13,Sunkoshi Small HP,2600.0,,Province 1,27.78194444,85.91944444,exact,Wikidata,Sunkoshi Small Hydropower Plant
-14,Khudi HP,4000.0,,Province 1,,,none,,
+14,Khudi HP,4000.0,,Province 1,28.335,84.334722,plus,cited: midpoint of author-supplied coordinate range,
 15,Mardi Khola,4800.0,Kaski,Gandaki,28.35538,83.88128,exact,Wikidata,Mardi Khola Hydropower Station
-16,Thoppal Khola HP,1650.0,,Province 1,,,none,,
-17,Ilam Puwa Khola HP,6200.0,,Province 1,,,none,,
+16,Thoppal Khola HP,1650.0,,Province 1,27.85,84.841667,plus,"cited: author-supplied coordinates (27°51'00""N 84°50'30""E)",
+17,Ilam Puwa Khola HP,6200.0,,Province 1,26.986389,87.894167,plus,"cited: author-supplied coordinates (26°59'11""N 87°53'39""E), agrees with the author's own alternate decimal (26.9865, 87.8943)",
 18,Modi  HP,14800.0,Parbat,Province 1,28.272614,83.7413603,exact,OSM,Modi Khola
 19,Kaligandaki 'A' HP,144000.0,,Province 1,27.9310015,83.615009,exact,OSM,Kaligandaki A Hydropower Plant
 20,Middle Marsyangdi HP,70200.0,Lamjung,Province 1,28.188636,84.420104,exact,OSM,Middle Marsyandgi HEP
@@ -50,24 +50,24 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 54,Jiri Khola SHP,2400.0,Dolakha,Province 1,27.585663,86.226672,plus,"Google Maps H6PG+7M7, Jiri 45500",
 55,Mailung Khola,5000.0,Rashuwa,Province 1,28.072513,85.209172,plus,"Google Maps 36F5+2M3, Mailung Bazzar Bus Stop, Dandagaun 45000",
 61,Nau gad khola,8500.0,Darchula,Sudurpashchim,29.706389,80.608472,plus,cited: midpoint of author-supplied coordinate range,
-62,Upper Mai,12000.0,,,,,none,,
-63,Khani Khola,2000.0,,,,,none,,
-64,Tungun - Thosne Khola,4360.0,,,,,none,,
-65,Upper Madi,25000.0,,,,,none,,
+62,Upper Mai,12000.0,,,26.9727,87.9636,plus,cited: author-supplied decimal coordinates,
+63,Khani Khola,2000.0,,,27.491388,85.302203,plus,"Google Maps F8R2+HV4, Bhattedanda 44712",
+64,Tungun - Thosne Khola,4360.0,,,27.4875,85.331389,plus,"cited: author-supplied coordinates (27°29'15""N 85°19'53""E)",
+65,Upper Madi,25000.0,,,28.266063,84.081688,plus,"Google Maps 738J+CM, Sildujure 33700",
 66,Daram Khola-A,2500.0,,Province 1,28.2834,83.4185,exact,Wikidata,Daram Khola-A Hydropower Station
 67,Upper Marsyangdi A,50000.0,Lamjung,Gandaki,28.2831726,84.3628215,exact,OSM,Upper Marsyangdi A Hydroelectric Station
 68,Hewa Khola A,14900.0,,,27.185555555,87.827777777,exact,Wikidata,Hewa Khola-A Hydroelectric Project
 69,Dwari Khola SHP,3750.0,Dailekh,Karnali,28.931667,81.828472,plus,cited: midpoint of author-supplied coordinate range,
 70,Upper Mai -C,6100.0,Ilam,Province 1,27.0,87.969166666,exact,Wikidata,Upper Mai-C Hydropower Station
 71,Sabha Khola HPP,4000.0,,,27.31694,87.20222,plus,"cited: DoED cancelled-application coordinates, Bala/Syabun, Sankhuwasabha",
-72,Thapa Khola HPP,13600.0,,,,,none,,
-73,Chake Khola SHPP,2830.0,,,,,none,,
-74,Sardi Khola HPP,4000.0,,,,,none,,
+72,Thapa Khola HPP,13600.0,,,28.70889,83.64778,plus,cited: author-supplied decimal coordinates,
+73,Chake Khola SHPP,2830.0,,,27.620833,86.361667,plus,"cited: author-supplied coordinates (27°37'15""N 86°21'42""E)",
+74,Sardi Khola HPP,4000.0,,,28.333333,84.009722,plus,"cited: author-supplied coordinates (28°20'00""N 84°00'35""E)",
 75,Midim Khola(Karapu) HPP,3000.0,Lamjung,Gandaki,28.2525,84.281,river,"on Midim Khola, nearest Lamjung",Midim Khola
 76,Jogmai Khola,7600.0,Ilam,Province 1,26.913937,88.018797,plus,"Google Maps W279+HGF, Namsaling 57300",
-77,Daraundi A,6000.0,,Province 1,,,none,,
-78,Molun Khola SHP,7000.0,,Province 1,,,none,,
-79,Puwa Khola-1,4000.0,,Province 1,,,none,,
+77,Daraundi A,6000.0,,Province 1,28.108056,84.661944,plus,"cited: author-supplied coordinates (28°06'29""N 84°39'43""E)",
+78,Molun Khola SHP,7000.0,,Province 1,27.333333,86.438611,plus,"cited: author-supplied coordinates (27°20'00""N 86°26'19""E)",
+79,Puwa Khola-1,4000.0,,Province 1,26.917222,87.916667,plus,"cited: author-supplied coordinates (26°55'02""N 87°55'00""E), agrees with the author's own alternate decimal (26.91722, 87.91667)",
 80,Chameliya Khola,30000.0,,Province 1,29.6850142,80.649753,exact,OSM,Chameliya hydropower plant
 81,Jhyari Khola,2000.0,,Province 1,27.75903,85.67736,plus,"cited: DoED cancelled-application coordinates, Sanusiruwari, Sindhupalchok",
 82,Phawa khola,5000.0,Taplejung,Province 1,27.280888,87.756828,plus,"Google Maps 7QJ4+9P4, Unnamed Road, Thechambu 57500",
@@ -126,7 +126,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 137,Lower Likhu,28100.0,Ramechhap,Bagmati,27.3333,86.2156,river,"on Likhu Khola, nearest Ramechhap",Likhu Khola
 138,Chepe Khola,8630.0,Gorkha,Gandaki,28.1,84.5408,river,"on Chepe Khola, nearest Gorkha",Chepe Khola
 139,Solu Khola (Dudhkoshi),86000.0,Solukhumbu,Province 1,27.5222,86.5758,river,"on Solu Khola, nearest Solukhumbu",Solu Khola
-140,Upper Balephi A,36000.0,,Province 1,,,none,,
+140,Upper Balephi A,36000.0,,Province 1,27.922916,85.776388,plus,"cited: midpoint of author-supplied coordinate range (27°53'45""-27°57'00""N, 85°45'30""-85°47'40""E)",
 141,Mid Solu Khola ,9500.0,Solukhumbu,Province 1,27.4461,86.5677,river,"on Solu Khola, nearest Solukhumbu",Solu Khola
 142,Dordi 1,12000.0,Lamjung,Gandaki,28.230812,84.450688,plus,"Google Maps 6FJ2+87, Chiti 33600",
 143,Puwa 2,4960.0,Ilam,Province 1,26.9271,87.9035,river,"on Puwa Khola, nearest Ilam",Puwa Khola
@@ -167,7 +167,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 178,Super Kabeli Khola A HEP,13500.0,Taplejung,Province 1,27.2914,87.6958,river,"on Kabeli, nearest Taplejung",Kabeli
 179,Sanjen,42500.0,Rashuwa,Bagmati,28.217937,85.284312,plus,"Google Maps 679M+5P, Chilime",
 180,Rasuwagadhi HPP,111000.0,Rashuwa,Bagmati,28.1644,85.3413,river,"on Bhote Koshi, nearest Rashuwa",Bhote Koshi
-181,Sanjen Khola HPP,78000.0,,Province 1,,,none,,
+181,Sanjen Khola HPP,78000.0,,Province 1,28.2442,85.2861,plus,cited: author-supplied decimal coordinates,
 182,Lankhuwa Khola HPP,5000.0,Sankhuwasabha,Province 1,27.290312,87.193938,plus,"Google Maps 75RV+4H, Heel 33300",
 183,Super Kabeli Khola HPP,12000.0,Taplejung,Province 1,27.3697,87.8548,river,"on Kabeli, nearest Taplejung",Kabeli
 184,Bhim Khola Small HPP,4960.0,Baglung,Gandaki,28.289861,83.240556,plus,cited: author-supplied decimal coordinates,
@@ -176,7 +176,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 187,Karuwa Seti HPP,32000.0,Kaski,Gandaki,28.2088,83.991,river,"on Seti Nadi, nearest Kaski",Seti Nadi
 188,Jogmai Cascade HPP,5200.0,Ilam,Province 1,26.897738,87.994422,plus,"Google Maps VXXV+3QV, Namsaling 57300",
 189,Rele Khola HPP,6000.0,Myagdi,Gandaki,28.530188,83.679813,plus,"Google Maps GMJH+3W, Narchyang 33200",
-190,Madhya Bhotekoshi HPP,102000.0,,Province 1,,,none,,
+190,Madhya Bhotekoshi HPP,102000.0,,Province 1,27.881306,85.9095,plus,"cited: author-supplied coordinates (27°52'52.7""N 85°54'34.2""E)",
 191,Sagu khola 1 HPP,5500.0,Dolakha,Bagmati,27.7883,86.0931,plus,cited: operator-reported site coordinates,
 192,Sagu Khola HEP,20000.0,Dolakha,Bagmati,27.788113,86.115547,plus,"Google Maps Q4Q8+66V, 45500",
 193,Upper Tadi,11000.0,Nuwakot,Bagmati,27.973012,85.436922,plus,"Google Maps XCFP+6Q3, Ghyangphedi 44900",
