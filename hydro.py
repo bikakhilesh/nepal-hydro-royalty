@@ -958,6 +958,8 @@ PLUS_FIX = {
     "Buku Khola HPP": (27.523687, 86.350812, "G9F2+F8", "Rawadolu"),
     "Buku-Kapati HPP": (27.518512, 86.398641, "G99X+CF2", "Goli 56000"),
     "Chaku Khola  Small HP": (27.875512, 85.929516, "VWGH+6R2", ""),
+    "Khani Khola": (27.491388, 85.302203, "F8R2+HV4", "Bhattedanda 44712"),
+    "Upper Madi": (28.266063, 84.081688, "738J+CM", "Sildujure 33700"),
     "Chatara HP": (26.815963, 87.157203, "R584+9VP", "Barahakshetra 56703"),
     "Dordi 1": (28.230812, 84.450688, "6FJ2+87", "Chiti 33600"),
     "Dordi Khola": (28.170063, 84.442484, "5CCR+2XH", "Unnamed Road, Chiti 33600"),
@@ -1088,7 +1090,30 @@ CITED_FIX = {
     # a real point on the correct river -- one end of the stated reach, not the
     # powerhouse itself, and honestly labelled as such below.
     "Upper Piluwa 3 HPP": (27.2980, 87.4072, "Piluwa/Sikhuwa Khola confluence (one end of the cited river reach, not the powerhouse)"),
+    "Madhya Bhotekoshi HPP": (27.881306, 85.9095, "author-supplied coordinates (27°52'52.7\"N 85°54'34.2\"E)"),
+    "Aandikhola HP": (27.941556, 83.663111, "author-supplied coordinates (27°56'29.6\"N 83°39'47.2\"E)"),
+    "Thoppal Khola HP": (27.85, 84.841667, "author-supplied coordinates (27°51'00\"N 84°50'30\"E)"),
+    "Ilam Puwa Khola HP": (26.986389, 87.894167, "author-supplied coordinates (26°59'11\"N 87°53'39\"E), agrees with the author's own alternate decimal (26.9865, 87.8943)"),
+    "Upper Mai": (26.9727, 87.9636, "author-supplied decimal coordinates"),
+    "Tungun - Thosne Khola": (27.4875, 85.331389, "author-supplied coordinates (27°29'15\"N 85°19'53\"E)"),
+    "Thapa Khola HPP": (28.70889, 83.64778, "author-supplied decimal coordinates"),
+    "Chake Khola SHPP": (27.620833, 86.361667, "author-supplied coordinates (27°37'15\"N 86°21'42\"E)"),
+    "Sardi Khola HPP": (28.333333, 84.009722, "author-supplied coordinates (28°20'00\"N 84°00'35\"E)"),
+    "Daraundi A": (28.108056, 84.661944, "author-supplied coordinates (28°06'29\"N 84°39'43\"E)"),
+    "Molun Khola SHP": (27.333333, 86.438611, "author-supplied coordinates (27°20'00\"N 86°26'19\"E)"),
+    "Puwa Khola-1": (26.917222, 87.916667, "author-supplied coordinates (26°55'02\"N 87°55'00\"E), agrees with the author's own alternate decimal (26.91722, 87.91667)"),
+    "Sanjen Khola HPP": (28.2442, 85.2861, "author-supplied decimal coordinates"),
+    # Two N-values and an extra out-of-sequence E-value given ("84 18 32 E /
+    # 84 19 26 E to 84 20 44 E and 28 18 22 N to 28 21 19 N / 28 21 50 N") --
+    # midpoint of the fuller, clearly-paired range (E 84 19'26"-84 20'44",
+    # N 28 18'22"-28 21'50"), the widest N bound. The lone 84 18'32" E and the
+    # 28 21'19" N alternate are within that box, so the midpoint still holds.
+    "Khudi HP": (28.335, 84.334722, "midpoint of author-supplied coordinate range"),
+    "Upper Balephi A": (27.922916, 85.776388, "midpoint of author-supplied coordinate range (27°53'45\"-27°57'00\"N, 85°45'30\"-85°47'40\"E)"),
 }
+# Given but not usable: Mai Sana Cascade HPP -- only a latitude range was sent
+# (26°45'57"N to 26°47'39.78"N), no longitude at all, so no point can be
+# placed from it. Flagged back rather than guessed.
 # Not added even though a coordinate was given:
 #   Hewa Khola HP (Saptari) - given the exact same range as Upper Hewa's, above
 #     (Sankhuwasabha), which is 107 km from Saptari's own district centroid.
