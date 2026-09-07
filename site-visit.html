@@ -249,7 +249,7 @@
   <div id="panel-head">
     <h1>Analyst panel</h1>
     <div id="head-right">
-      <a id="back-link" href="index.html" hidden>&#8592;&nbsp;Ledger</a>
+      <a id="back-link" href="https://bikakhilesh.github.io/nepal-hydro-royalty/" hidden>&#8592;&nbsp;Ledger</a>
       <button id="panel-toggle" aria-label="Collapse panel" aria-expanded="true">&#8722;</button>
     </div>
   </div>
@@ -1278,7 +1278,9 @@ function renderFlags(){
 /* ============================== init ============================== */
 let FLEET = null;
 try { FLEET = JSON.parse(document.getElementById("fleet").textContent); } catch(e) {}
-// inside the ledger's iframe the link would be a link back to the page you are on
+// Absolute, so the link works from the deployed site, from a local file open and
+// from an Artifact copy alike. Hidden inside the ledger's own iframe, where it
+// would only be a link back to the page you are already on.
 if(window.top === window.self) document.getElementById("back-link").hidden = false;
 applyPlantType("RoR");
 applySeason(5);
