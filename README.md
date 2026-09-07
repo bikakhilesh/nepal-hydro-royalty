@@ -4,13 +4,16 @@ Scrapes the Department of Electricity Development's Royalty Management System
 (`rmsdoed.gov.np`), reconciles it, and renders an interactive dashboard.
 
 Two files do everything: **`hydro.py`** (all Python) and **`template.html`**
-(all markup, CSS and JavaScript).
+(all markup, CSS and JavaScript). A third, **`site_visit.tpl.html`**, is the
+standalone explainer embedded as section 01 — it holds no register data of its
+own, only a few medians injected at build time.
 
 ## Live
 
 | | |
 |---|---|
 | **Dashboard** | https://bikakhilesh.github.io/nepal-hydro-royalty/ |
+| **Site visit** | https://bikakhilesh.github.io/nepal-hydro-royalty/site-visit.html |
 | **Terrain map** | https://bikakhilesh.github.io/nepal-hydro-royalty/terrain.html |
 | **Fleet map (SVG)** | https://bikakhilesh.github.io/nepal-hydro-royalty/fleet-map.svg |
 
@@ -50,8 +53,12 @@ Reads the CSVs, recomputes every figure, and writes `nepal_hydro.html` by
 substituting the JSON payload into `template.html`'s `__PAYLOAD__` placeholder.
 No network access. Byte-identical across runs.
 
+The same run writes `site-visit.html` from `site_visit.tpl.html`, injecting the
+fleet medians its calculator quotes. That page is the copy published as an
+Artifact too, so edit the template and rebuild rather than editing either output.
+
 **Edit the page in `template.html`, never in `nepal_hydro.html`** — the latter is
-generated and overwritten on every build.
+generated and overwritten on every build. Same rule for `site-visit.html`.
 
 ### Map exports
 
@@ -377,7 +384,9 @@ action and CSRF token are untouched. Nominatim is called at most once per second
 ```
 hydro.py          everything: scrape, clean, geo, match, payload, render
 template.html     page markup, CSS, JS; __PAYLOAD__ is substituted at build
+site_visit.tpl.html  the guided site visit; __FLEET__ is substituted at build
 nepal_hydro.html  generated — do not edit
+site-visit.html   generated — do not edit
 dashboard.json    generated payload, handy for inspection
 rms_*.csv         scraped and cleaned data
 np_*.json         districts and national outline

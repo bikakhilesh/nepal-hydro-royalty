@@ -2864,6 +2864,51 @@ def export_map3d(path="nepal_fleet_3d.html", tpl="map3d.tpl.html"):
     return path
 
 
+# ══════════════════════════════════════════ site visit (how a scheme works) ══
+# The dry season as the standard Option 1 PPA cuts it: Mangsir through Chaitra plus
+# Baisakh. The same six months the site-visit page's own season dial calls dry, so
+# the fleet figure and the page's worked model are answering one question.
+DRY_BS_MONTHS = (1, 8, 9, 10, 11, 12)
+
+
+def export_site_visit(path="site-visit.html", tpl="site_visit.tpl.html", pl=None):
+    """The guided site visit, written from site_visit.tpl.html.
+
+    An explainer rather than a view of the data: it walks a generic scheme from
+    catchment to metering point and carries its own PPA arithmetic. The only thing
+    injected is a handful of register medians, so the worked example can be read
+    against the fleet it exists to explain. Deployed as site-visit.html and embedded
+    by section 01 of the dashboard, and served under the same name locally so the
+    embed works from a plain file open as well as from the deployed site.
+    """
+    if pl is None:
+        pl = json.load(open(P("dashboard.json"), encoding="utf-8"))
+    plants = pl["plants"]
+    cf   = [q["cf"]   for q in plants if q.get("cf")]
+    cplf = [q["cplf"] for q in plants if q.get("cplf")]
+    dry  = sum(m["share"] for m in pl["season"] if m["m"] in DRY_BS_MONTHS)
+    fleet = {
+        "n":         pl["stats"]["plants"],
+        "fy":        pl["stats"]["fy_span"],
+        "retrieved": pl["stats"]["retrieved"],
+        "cfMed":     round(float(np.median(cf)) * 100, 1) if cf else None,
+        "cfN":       len(cf),
+        "cplfMed":   round(float(np.median(cplf)) * 100, 1) if cplf else None,
+        "cplfN":     len(cplf),
+        "dryShare":  round(dry, 1),
+    }
+    src = open(P(tpl), encoding="utf-8").read()
+    if "__FLEET__" not in src:
+        raise SystemExit(f"{tpl} has no __FLEET__ placeholder")
+    html = src.replace("__FLEET__", json.dumps(fleet, separators=(",", ":")))
+    open(P(path), "w", encoding="utf-8").write(html)
+    print(f"wrote {path} ({len(html.encode('utf-8')):,} bytes, contract PLF median"
+          f" {fleet['cplfMed']}% on {fleet['cplfN']} plants vs achieved"
+          f" {fleet['cfMed']}% on {fleet['cfN']})")
+    return path
+
+
+
 # ═══════════════════════════════════════════════════════════════════ render ══
 def cmd_build(write=True):
     pl = build_payload()
@@ -2891,6 +2936,7 @@ def cmd_build(write=True):
     json.dump(pl, open(P("dashboard.json"), "w", encoding="utf-8"),
               separators=(",", ":"), ensure_ascii=False)
     print(f"\nwrote nepal_hydro.html ({len(html.encode('utf-8')):,} bytes)")
+    export_site_visit(pl=pl)
     return pl
 
 

@@ -15,6 +15,7 @@ on:
     paths:
       - nepal_hydro.html
       - nepal_fleet_3d.html
+      - site-visit.html
       - nepal_fleet_map.svg
       - .github/workflows/pages.yml
 
@@ -57,6 +58,7 @@ jobs:
           mkdir -p site
           cp nepal_hydro.html    site/index.html
           cp nepal_fleet_3d.html site/terrain.html
+          cp site-visit.html     site/site-visit.html
           cp nepal_fleet_map.svg site/fleet-map.svg
           cp dashboard.json      site/dashboard.json
 
