@@ -316,6 +316,16 @@ tr.qsub .sbar{opacity:.85}
   max-height:42vh;overflow:auto;background:var(--surface);box-shadow:0 6px 24px rgba(0,0,0,.18)}
 @media (max-width:700px){ .card.zoomed .rvpanel{display:none} }
 
+/* ---- embedded site visit ------------------------------------------------ */
+/* Its own page inside the frame, so it brings its own layout; all this side has to
+   do is give it a box with real height. 420px is the floor at which its control
+   strip and the stage below it both still have room. */
+#fig-visit{margin-top:18px}
+#c-visit{position:relative;aspect-ratio:16/9;min-height:420px;overflow:hidden;
+  border-radius:4px;background:var(--surface-2)}
+#c-visit iframe{width:100%;height:100%;border:0;display:block}
+.card.zoomed #c-visit{aspect-ratio:auto;border-radius:0}
+
 /* ---- embedded terrain map ---------------------------------------------- */
 #fig-terrain{margin-top:18px}
 #c-terrain{position:relative;aspect-ratio:16/9;min-height:300px;overflow:hidden;
@@ -423,8 +433,43 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 
 <div class="wrap">
 
+<section id="sec-visit">
+  <div class="shead"><span class="snum">01</span><h2>How a scheme makes its money</h2></div>
+  <p class="sdek">Everything below this section is meters and money. This one is the machine
+    that produces them: a longitudinal profile of a generic Nepali scheme from catchment to
+    the NEA metering point, with the three plant types the tariff schedule distinguishes
+    &mdash; run-of-river, peaking run-of-river and storage &mdash; drawn as the different
+    layouts they actually are. Move the Bikram Sambat season dial and the river, the head and
+    the tariff column all move with it. <b>It carries its own PPA arithmetic</b>, so the terms
+    the rest of the page reports &mdash; net head, plant load factor, dry-energy share,
+    escalation, royalty tier &mdash; can be worked through on a plant you control before you
+    meet them on plants you do not.</p>
+
+  <figure class="card" id="fig-visit">
+    <figcaption><div class="caphead">
+      <div><div class="ctitle">Guided site visit</div>
+      <div class="csub">Seven stops from catchment to meter &middot; schematic, not to scale</div></div>
+      <button class="expbtn" id="vis-exp" type="button" aria-expanded="false"
+        aria-controls="c-visit" hidden><span class="x">&#10530;</span><span class="lbl">Expand</span></button>
+    </div></figcaption>
+    <div class="chart" id="c-visit">
+      <div class="terload" id="vis-load">
+        <button class="terbtn" id="vis-go" type="button">Open the site visit</button>
+        <p>A separate page, loaded on request. It is a teaching diagram, not a survey: the
+          vertical is exaggerated so that gross head can be drawn at all, and no dimension on
+          it should be read as engineering.</p>
+      </div>
+    </div>
+  </figure>
+
+  <div class="note"><b>The calculator is seeded from this register.</b> Its PLF panel carries the
+    fleet&rsquo;s median contracted PLF and its median achieved capacity factor side by side, on
+    the same data as the sections below. The distance between those two numbers is the subject
+    of most of this page.</div>
+</section>
+
 <section id="sec-checks">
-  <div class="shead"><span class="snum">01</span><h2>What the billing data confirms</h2></div>
+  <div class="shead"><span class="snum">02</span><h2>What the billing data confirms</h2></div>
   <p class="sdek">Four checks the monthly billing data holds up against on its own: the seasonal
     shape of generation and price, an age-based rate threshold, a decade of fleet growth, and a
     listed company&rsquo;s own reported revenue. Switch between them below.</p>
@@ -595,7 +640,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section>
-  <div class="shead"><span class="snum">02</span><h2>Where the fleet actually sits</h2></div>
+  <div class="shead"><span class="snum">03</span><h2>Where the fleet actually sits</h2></div>
   <p class="sdek">The register carries a district for most plants but no usable coordinates &mdash;
     every populated latitude field holds the same value, an unedited form default pointing at
     Illinois. Locations here come from OpenStreetMap and Wikidata where a plant can be matched by
@@ -689,7 +734,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section>
-  <div class="shead"><span class="snum">03</span><h2>Plant explorer</h2></div>
+  <div class="shead"><span class="snum">04</span><h2>Plant explorer</h2></div>
   <p class="sdek">Every plant in the register, with lifetime recorded generation, median capacity
     factor and the balance standing on its most recent assessed year. <b>Select any plant to open its
     year-by-year revenue and royalty, then <b>+</b> on any year for its monthly
@@ -765,7 +810,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section id="sec-listed">
-  <div class="shead"><span class="snum">04</span><h2>The companies that own them</h2></div>
+  <div class="shead"><span class="snum">05</span><h2>The companies that own them</h2></div>
   <p class="sdek">One hundred and ten hydropower companies are listed on NEPSE, and
     between them they own most of the register. This section puts the two side by side:
     what the meter recorded and what the accounts say, what the market pays for it, and
@@ -1018,7 +1063,7 @@ footer{padding:38px 0 56px;color:var(--ink-3);font-size:12.5px}
 </section>
 
 <section style="border-bottom:0">
-  <div class="shead"><span class="snum">05</span><h2>Method and caveats</h2></div>
+  <div class="shead"><span class="snum">06</span><h2>Method and caveats</h2></div>
   <div class="grid2">
     <div class="card">
       <div class="ctitle" style="margin-bottom:12px">How this was collected</div>
@@ -2777,6 +2822,34 @@ function wireMapExpand(btnId){
   });
 }
 
+// ---- the site visit, mounted on request ---------------------------------
+// Same shape as the terrain map below: a sibling page, absent from an Artifact
+// copy, so probe for it and say so rather than framing a 404. Unlike the terrain
+// map it needs no external hosts, so wherever the file exists it works.
+var VISIT_SITE = 'https://bikakhilesh.github.io/nepal-hydro-royalty/site-visit.html';
+function wireVisit(){
+  var go = document.getElementById('vis-go'), host = document.getElementById('c-visit'),
+      load = document.getElementById('vis-load'), exp = document.getElementById('vis-exp');
+  if(!go || !host || !load) return;
+  go.addEventListener('click', function(){
+    go.disabled = true; go.textContent = 'Loading…';
+    fetch('site-visit.html', {method:'HEAD'}).then(function(r){
+      if(!r.ok) throw new Error(r.status);
+      var f = document.createElement('iframe');
+      f.src = 'site-visit.html';
+      f.title = 'Guided site visit: how a Nepali hydropower scheme works';
+      f.loading = 'lazy';
+      f.setAttribute('allowfullscreen','');
+      host.innerHTML = ''; host.appendChild(f);
+      if(exp) exp.hidden = false;
+    }).catch(function(){
+      load.innerHTML = '<p class="terfail">The site visit is a separate page that lives ' +
+        'alongside this one on the published site, and it is not reachable from here. ' +
+        '<a href="' + VISIT_SITE + '" target="_blank" rel="noopener">Open it on the site</a>.</p>';
+    });
+  });
+}
+
 // ---- the terrain map, mounted on request --------------------------------
 // terrain.html is a sibling file on the published site. In an Artifact it does
 // not exist and its tile hosts are blocked by CSP either way, so probe for it
@@ -2810,7 +2883,7 @@ function wireTerrain(){
 // ---- listed companies: the register's meter against the companies' books ----
 // Everything below is drawn from D.co, which exists only when the scalper sync
 // has run. Without it the whole tab is removed at startup rather than drawn
-// empty, the same way a missing D.recon takes out just its one tab in section 01.
+// empty, the same way a missing D.recon takes out just its one tab in section 02.
 var L10 = Math.log10 || function(v){ return Math.log(v)/Math.LN10; };
 
 function coPct(v, nd){ return v===null||v===undefined ? '—' : (100*v).toFixed(nd===undefined?1:nd)+'%'; }
@@ -4466,7 +4539,7 @@ function applyHashRoute(){
   if(sec) sec.scrollIntoView();
 }
 
-// ---- section 01's own tabs -------------------------------------------
+// ---- section 02's own tabs -------------------------------------------
 // Each of the four checks draws on entry rather than once at load, same
 // reasoning as drawLTab(): frame() sizes off a fixed viewBox and never
 // measures the DOM, so a hidden chart would still be correct, but a theme
@@ -4573,7 +4646,8 @@ if(!D.co){
 
 stats(); transTable(); reconTable(); wireTable(); renderPlants();
 wireListed(); wireBTabs(); drawAll(); buildTableViews();
-wireMapExpand('map-exp'); wireMapExpand('ter-exp'); wireTerrain(); wireLayers(); wireMTabs();
+wireMapExpand('map-exp'); wireMapExpand('ter-exp'); wireMapExpand('vis-exp');
+wireTerrain(); wireVisit(); wireLayers(); wireMTabs();
 wireRiverPanel(); fillRiverPicker();
 wireSortableTables(); wireDataTip();
 

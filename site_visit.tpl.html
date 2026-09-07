@@ -1,0 +1,1298 @@
+<!doctype html>
+<!-- Built from site_visit.tpl.html by hydro.py; do not edit site-visit.html.
+     This template is the source of truth for the site-visit page, including the copy
+     published as an Artifact -- edit here, rebuild, and republish from the output. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script type="application/json" id="fleet">__FLEET__</script>
+<title>Anatomy of a hydropower scheme · Nepal Hydropower Ledger</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:opsz,wght@12..96,400;12..96,600;12..96,700&display=swap">
+<style>
+  html{color-scheme:light}
+  [hidden]{display:none!important}
+  img{max-width:100%}
+</style>
+<style>
+  :root{
+    --rock:#3E4A52; --river:#4E88A6; --river-lite:#86BBD4; --moss:#4F7A48; --ochre:#C8923A;
+    --concrete:#B9B4A8; --steel:#5C6770; --paper:#F2EEE6; --ink:#1E2226;
+    --paper-2:#E8E2D4; --line:rgba(30,34,38,.22); --accent:var(--river);
+    --accent-soft:rgba(78,136,166,.16); --snow:#EEF3F5;
+    --soil:#6B4F35; --bedrock:#4A3326; --grass:#5C8A4E; --conductor:#E8C55A;
+    --panel-bg:rgba(242,238,230,.94);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);
+    font-family:"Source Sans 3",system-ui,-apple-system,sans-serif;
+    font-variant-numeric:tabular-nums;overflow:hidden}
+  h1,h2,h3{text-wrap:balance;margin:0 0 .35em}
+  p{margin:0 0 .7em;line-height:1.5}
+  button,select,input{font:inherit;color:inherit}
+  ::selection{background:var(--accent-soft)}
+
+  /* The diagram gets its own column: the panel is opaque, and the downstream half of
+     the scheme (powerhouse, switchyard, metering point) was sitting underneath it.
+     The controls used to float on top of the drawing and hid the headworks with it,
+     so they now take a strip of their own above the stage and overlap nothing. */
+  #left{position:fixed;top:0;left:0;bottom:0;right:388px;z-index:0;
+    display:flex;flex-direction:column}
+  #stage{flex:1;min-height:0;position:relative;
+    background:linear-gradient(#DCE7EA,#EFF3F0 62%,#E8E2D4)}
+  #scene{width:100%;height:100%;display:block;
+    background:linear-gradient(#DCE7EA 0%,#E4EBEA 44%,#6B4F35 44%,#5A4029 70%,#4A3326 100%)}
+
+  .surface{background:var(--panel-bg);border:1px solid var(--line);border-radius:6px}
+
+  #controls{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;padding:10px 10px 8px}
+  #controls .ctrl-block{flex:1 1 230px;min-width:0}
+  .ctrl-block{padding:9px 12px}
+  .ctrl-label{font-size:.72rem;font-weight:600;color:var(--rock);margin-bottom:6px;
+    display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .type-switch{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+  .type-switch button{flex:1;background:transparent;border:none;padding:7px 4px;font-size:.82rem;
+    cursor:pointer;border-right:1px solid var(--line)}
+  .type-switch button:last-child{border-right:none}
+  .type-switch button[aria-pressed="true"]{background:var(--accent);color:var(--paper);font-weight:600}
+  .type-switch button:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+
+  #season-dial{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}
+  #season-dial button{background:var(--paper-2);border:1px solid var(--line);border-radius:4px;
+    padding:5px 2px;font-size:.68rem;cursor:pointer;line-height:1.15}
+  #season-dial button[aria-pressed="true"]{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+  #season-dial button:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+  #season-caption{font-size:.72rem;color:var(--rock);margin-top:6px}
+
+  #tod-block{display:none}
+  #tod-block.show{display:block}
+  #tod-cycle{font-size:.72rem;color:var(--rock);margin-top:4px}
+  #tod-slider{width:100%}
+  #tod-readout{font-size:.72rem;color:var(--rock);display:flex;justify-content:space-between}
+
+  #tourbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:5;
+    display:flex;align-items:center;gap:10px;padding:8px 12px;max-width:calc(100vw - 28px)}
+  #tour-steps{display:flex;gap:5px;overflow-x:auto;min-width:0}
+  .tour-dot{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);
+    background:var(--paper-2);font-size:.72rem;cursor:pointer;font-weight:600}
+  .tour-dot[aria-current="true"]{background:var(--rock);color:var(--paper);border-color:var(--rock)}
+  .tour-dot:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  #tourbar .transport{display:flex;gap:4px;border-left:1px solid var(--line);padding-left:10px}
+  #tourbar .transport button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);
+    background:var(--paper-2);cursor:pointer}
+  #tourbar .transport button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  #tour-title{font-size:.76rem;color:var(--rock);min-width:150px}
+
+  #panel{position:fixed;top:14px;right:14px;bottom:14px;width:360px;z-index:6;
+    display:flex;flex-direction:column;overflow:hidden}
+  #panel.collapsed #panel-body,#panel.collapsed #tabs{display:none}
+  #panel-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;
+    border-bottom:1px solid var(--line)}
+  #panel-head h1{font-size:.95rem;font-weight:700}
+  #head-right{display:flex;align-items:center;gap:8px}
+  #back-link{font-size:.72rem;color:var(--rock);text-decoration:none;
+    border:1px solid var(--line);border-radius:5px;padding:4px 8px;white-space:nowrap}
+  #back-link:hover,#back-link:focus-visible{color:var(--ink);border-color:var(--rock)}
+  #panel-toggle{background:none;border:1px solid var(--line);border-radius:5px;width:28px;height:28px;cursor:pointer}
+  #tabs{display:flex;border-bottom:1px solid var(--line)}
+  #tabs button{flex:1;background:none;border:none;padding:9px 4px;font-size:.68rem;font-weight:600;
+    color:var(--rock);cursor:pointer;border-bottom:2px solid transparent}
+  #tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+  #tabs button:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+  #panel-body{flex:1;overflow-y:auto;padding:14px}
+  #panel-body h2{font-size:.85rem}
+  #panel-body h3{font-size:.78rem;margin-top:1.1em}
+  #panel-body p,#panel-body li{font-size:.82rem}
+  #panel-body .why{color:var(--rock);font-size:.78rem}
+
+  .field{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;
+    border-bottom:1px dotted var(--line)}
+  .field label{font-size:.78rem;flex:1}
+  .field input[type=number],.field select{width:92px;padding:4px 6px;border:1px solid var(--line);
+    border-radius:4px;background:var(--paper-2);text-align:right}
+  .field.wide{flex-direction:column;align-items:stretch}
+  .field.wide select{width:100%}
+  .field.wide label{margin-bottom:4px}
+  fieldset{border:1px solid var(--line);border-radius:6px;padding:8px 10px 4px;margin:0 0 12px}
+  legend{font-size:.7rem;font-weight:600;color:var(--rock);padding:0 4px}
+  .radio-row{display:flex;gap:12px;font-size:.78rem;padding:3px 0}
+  .radio-row label{display:flex;gap:5px;align-items:center}
+  .out-line{display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0}
+  .out-line .k{color:var(--rock)}
+  .out-line .v{font-weight:600}
+  .arith{font-size:.72rem;color:var(--rock);background:var(--paper-2);border-radius:4px;
+    padding:5px 7px;margin:2px 0 8px}
+  .flag{font-size:.76rem;padding:6px 8px;border-radius:4px;margin:6px 0}
+  .flag.warn{background:rgba(200,146,58,.18);border:1px solid var(--ochre)}
+  .flag.ok{background:rgba(79,122,72,.14);border:1px solid var(--moss)}
+  .rev-card{border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-bottom:10px}
+  .rev-card h3{margin-top:0}
+  #cmp-chart{width:100%;height:auto;margin:6px 0 10px}
+  #cmp-chart text{fill:var(--ink)}
+  #copy-btn{width:100%;padding:8px;border:1px solid var(--rock);border-radius:5px;background:var(--rock);
+    color:var(--paper);font-weight:600;font-size:.8rem;cursor:pointer;margin-top:6px}
+  #copy-btn[data-done="1"]{background:var(--moss);border-color:var(--moss)}
+  #gloss-search{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:5px;
+    background:var(--paper-2);margin-bottom:10px}
+  .gloss-item{padding:8px 0;border-bottom:1px solid var(--line)}
+  .gloss-item dt{font-weight:700;font-size:.83rem}
+  .gloss-item dd{margin:2px 0 0}
+  table.mini{width:100%;border-collapse:collapse;font-size:.76rem;margin:6px 0 10px}
+  table.mini th,table.mini td{border-bottom:1px solid var(--line);padding:4px 3px;text-align:right}
+  table.mini th:first-child,table.mini td:first-child{text-align:left}
+  table.mini caption{caption-side:top;text-align:left;font-size:.7rem;color:var(--rock);padding-bottom:3px}
+  .season-wet{color:var(--river)}
+  .season-dry{color:var(--ochre)}
+
+  #foot{position:fixed;left:14px;bottom:4px;z-index:4;font-size:.66rem;color:var(--rock);max-width:560px}
+  #foot summary{cursor:pointer;font-weight:600}
+
+  /* ---------- scene ---------- */
+  .edge{stroke:#2C231C;stroke-width:1.6;stroke-linejoin:round}
+  .lbl rect{fill:var(--panel-bg);stroke:var(--line)}
+  .lbl text{font-size:15px;font-weight:600;fill:var(--ink)}
+  .lbl .badge{fill:var(--rock);stroke:none}
+  .lbl .badge-t{fill:var(--paper);font-size:13px;font-weight:700}
+  .lbl{cursor:pointer}
+  .lbl:hover rect,.lbl:focus-visible rect{stroke:var(--accent);stroke-width:2}
+  .dimline{stroke:var(--ink);stroke-width:1.4;stroke-dasharray:6 4}
+  .dimtext{font-size:15px;font-weight:700;fill:var(--ink)}
+  .note{font-size:13px;fill:var(--rock)}
+
+  .flowline{fill:none;stroke-linecap:round;stroke-dasharray:22 16}
+  @keyframes flow{to{stroke-dashoffset:-76}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes pulse{to{stroke-dashoffset:-96}}
+  .flowline{animation:flow 1.5s linear infinite}
+  .flow-slow{animation-duration:2.8s}
+  .spin{animation:spin 2.6s linear infinite;transform-origin:center;transform-box:fill-box}
+  .spin-fast{animation-duration:1.1s}
+  /* PRoR: the pond makes output a function of the hour, so the penstock and the runner
+     visibly speed up through the evening peak block and idle the rest of the day. */
+  #g-penstock .flowline,#g-ph .flowline{animation-duration:var(--fd,1.5s)}
+  #g-ph .spin{animation-duration:var(--sd-gen,2.6s)}
+  #g-ph .spin-fast{animation-duration:var(--sd,1.1s)}
+  .conductor{fill:none;stroke:var(--conductor);stroke-width:3;stroke-dasharray:5 17;
+    animation:pulse 1.9s linear infinite}
+  .dim-out{opacity:.28;transition:opacity .45s}
+  #scene.touring .dimmable{opacity:.3}
+  #scene.touring .focused{opacity:1}
+  .dimmable{transition:opacity .45s}
+
+  @media (prefers-reduced-motion: reduce){
+    .flowline,.spin,.conductor{animation:none}
+    .dimmable,.dim-out{transition:none}
+  }
+  @media (max-width:820px){
+    #panel{left:0;right:0;top:auto;bottom:0;width:auto;height:46%;border-radius:6px 6px 0 0}
+    #left{right:0;bottom:46%}
+    #foot{display:none}
+    #tourbar{bottom:calc(46% + 10px)}
+    /* Stacked, the control blocks ate the whole stage on a narrow pane and the drawing
+       vanished. One scrolling row instead: the strip stays about 80px whatever fits. */
+    #controls{flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:8px}
+    #controls .ctrl-block{flex:0 0 auto;padding:7px 10px}
+    #season-dial{display:flex}
+    #season-dial button{flex:0 0 auto;min-width:34px}
+    #season-caption{font-size:.66rem;margin-top:3px;white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis;max-width:270px}
+    #tod-block.show{min-width:190px}
+    #tod-cycle{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #stage{min-height:190px}
+  }
+  @media (max-width:520px){ #tour-title{display:none} }
+</style>
+
+</head>
+<body>
+<div id="left">
+<div id="controls">
+  <div class="ctrl-block surface" role="group" aria-label="Plant configuration">
+    <div class="ctrl-label">Plant type <span id="cap-readout"></span></div>
+    <div class="type-switch" id="type-switch">
+      <button data-type="RoR" aria-pressed="true">Run-of-river</button>
+      <button data-type="PRoR" aria-pressed="false">Peaking RoR</button>
+      <button data-type="Reservoir" aria-pressed="false">Reservoir</button>
+    </div>
+  </div>
+  <div class="ctrl-block surface" role="group" aria-label="Season">
+    <div class="ctrl-label">Season <span id="season-name"></span></div>
+    <div id="season-dial"></div>
+    <div id="season-caption"></div>
+  </div>
+  <div class="ctrl-block surface" id="tod-block" role="group" aria-label="Time of day">
+    <div class="ctrl-label">Time of day <span id="tod-tariff"></span></div>
+    <input type="range" id="tod-slider" min="0" max="24" step="0.5" value="12"
+           aria-label="Hour of day, dry-season peaking">
+    <div id="tod-readout"><span>00:00</span><span id="tod-now">12:00</span><span>24:00</span></div>
+    <div id="tod-cycle"></div>
+  </div>
+</div>
+<div id="stage">
+  <svg id="scene" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" role="img"
+       aria-label="Longitudinal profile of a Nepali hydropower scheme, from catchment to grid metering point"></svg>
+</div>
+</div>
+
+<div id="tourbar" class="surface">
+  <span id="tour-title">Guided tour</span>
+  <div id="tour-steps"></div>
+  <div class="transport">
+    <button id="tour-prev" title="Previous stop" aria-label="Previous stop">&#8249;</button>
+    <button id="tour-play" title="Play tour" aria-label="Play tour">&#9654;</button>
+    <button id="tour-next" title="Next stop" aria-label="Next stop">&#8250;</button>
+    <button id="tour-out" title="Show whole scheme" aria-label="Show whole scheme">&#9635;</button>
+  </div>
+</div>
+
+<aside id="panel" class="surface" aria-label="Analyst panel">
+  <div id="panel-head">
+    <h1>Analyst panel</h1>
+    <div id="head-right">
+      <a id="back-link" href="https://bikakhilesh.github.io/nepal-hydro-royalty/" hidden>&#8592;&nbsp;Ledger</a>
+      <button id="panel-toggle" aria-label="Collapse panel" aria-expanded="true">&#8722;</button>
+    </div>
+  </div>
+  <div id="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="look">What am I<br>looking at</button>
+    <button role="tab" aria-selected="false" data-tab="calc">Energy &amp;<br>PLF</button>
+    <button role="tab" aria-selected="false" data-tab="ppa">PPA &amp;<br>revenue</button>
+    <button role="tab" aria-selected="false" data-tab="glossary">Glossary</button>
+  </div>
+  <div id="panel-body"></div>
+</aside>
+
+<footer id="foot">
+  <details>
+    <summary>Data as of 2026-09-07 &middot; illustrative scheme, not a specific company</summary>
+    <div id="flags-list" style="margin-top:4px"></div>
+  </details>
+</footer>
+
+<script type="module">
+/* ============================== formulas ============================== */
+const DEFAULTS = {
+  site:{ grossHead:120, headLossFrac:0.06, designQ:10.3, eff:0.88, availability:0.95,
+         dryAvgQ:5.2, wetOutFrac:0.81 },
+  season:{ option:1, dryHours:4368, wetHours:4392, dryDays:182,
+           minDryShare:{1:0.30, 2:0.15} },
+  tariff:{ ror:{dry:8.40, wet:4.80},
+           pror:{peakByHours:{"1":8.50,"2":8.80,"3":9.40,"4to6":10.55}, wet:4.80, offPeakDry:8.40},
+           reservoir:{legacy:{dry:12.40,wet:7.10}, erc2082:{dry:14.80,wet:8.45}} },
+  escalation:{ rateSimple:0.03, count:8 },
+  pror:{ peakHours:6, premiumAllDry:true, incrementalPondCr:20 },
+  royalty:{ first15:{ "1to10":[100,0.0175], "10to100":[150,0.0185], "above100":[200,0.02] },
+            after15:{ "1to10":[1000,0.10], "10to100":[1200,0.10], "above100":[1500,0.10] } },
+  reservoir:{ installedMw:100, annualGwh:380, dryShareFrac:0.50 }
+};
+
+const clamp = (v,a,b)=> Math.min(Math.max(v,a),b);
+const lerp = (a,b,t)=> a+(b-a)*t;
+const netHead = (H,loss)=> H*(1-loss);
+const powerKw = (Q,H,eff)=> 9.81*Q*H*eff;
+const installedMwFromQ = (Q,H,eff)=> Math.round(powerKw(Q,H,eff)/100)/10;
+function siteEnergy(inp){
+  const Hn = netHead(inp.grossHead, inp.headLossFrac);
+  const instMw = installedMwFromQ(inp.designQ, Hn, inp.eff);
+  const dryKw = powerKw(inp.dryAvgQ, Hn, inp.eff);
+  const dryE = dryKw * DEFAULTS.season.dryHours * inp.availability;
+  const wetE = instMw*1000 * inp.wetOutFrac * DEFAULTS.season.wetHours * inp.availability;
+  const annual = dryE + wetE;
+  const plf = annual / (instMw*1000*8760);
+  const dryShare = annual>0 ? dryE/annual : 0;
+  return { netHead:Hn, installedMw:instMw, dryKw, dryEnergyKwh:dryE, wetEnergyKwh:wetE,
+           annualEnergyKwh:annual, plf, dryShare };
+}
+const tariffInYear = (base, year)=> base*(1 + DEFAULTS.escalation.rateSimple *
+  Math.min(Math.max(year-1,0), DEFAULTS.escalation.count));
+const revenueRor = (dryE,wetE,tar,year)=>
+  dryE*tariffInYear(tar.dry,year) + wetE*tariffInYear(tar.wet,year);
+function revenuePror(dryE, wetE, instMw, tar, year, blockOnly){
+  const peakRate = tariffInYear(tar.dry,year), wetRate = tariffInYear(tar.wet,year),
+        offRate = tariffInYear(DEFAULTS.tariff.pror.offPeakDry,year);
+  if(!blockOnly) return dryE*peakRate + wetE*wetRate;
+  const peakKwh = instMw*1000*DEFAULTS.pror.peakHours*DEFAULTS.season.dryDays*DEFAULTS.site.availability;
+  const pk = Math.min(peakKwh, dryE);
+  return pk*peakRate + (dryE-pk)*offRate + wetE*wetRate;
+}
+function royaltyFor(instMw, revenue, after15){
+  const tier = instMw<=10 ? "1to10" : (instMw<=100 ? "10to100" : "above100");
+  const table = after15 ? DEFAULTS.royalty.after15 : DEFAULTS.royalty.first15;
+  const [capRate, pct] = table[tier];
+  return instMw*1000*capRate + pct*revenue;
+}
+function shortfallComp(dryShare, minShare, dryE, annualE, wetRate){
+  if(dryShare >= minShare) return 0;
+  return Math.max(0, annualE - dryE/minShare) * wetRate;
+}
+const gwh = kwh => kwh/1e6;
+const cr  = npr => npr/1e7;
+
+(function selfCheck(){
+  const e = siteEnergy(DEFAULTS.site);
+  const rev1 = revenueRor(e.dryEnergyKwh, e.wetEnergyKwh, DEFAULTS.tariff.ror, 1);
+  console.log("[hydro] netHead", e.netHead.toFixed(1), "installedMw", e.installedMw,
+    "dryGWh", gwh(e.dryEnergyKwh).toFixed(2), "wetGWh", gwh(e.wetEnergyKwh).toFixed(2),
+    "PLF%", (e.plf*100).toFixed(1), "dryShare%", (e.dryShare*100).toFixed(1),
+    "rev1 Cr", cr(rev1).toFixed(2), "blended", (rev1/e.annualEnergyKwh).toFixed(2));
+})();
+
+/* ============================== app state ============================== */
+const APP = {
+  plantType:"RoR", season:5, tod:12, tourIndex:-1, tourPlaying:false, panelTab:"look",
+  calc:{...DEFAULTS.site},
+  ppa:{ seasonOption:1, prorPeakHours:"4to6", prorBlockOnly:false,
+        reservoirRegime:"erc2082", escYear:1, reservoirDryGwh:190, reservoirWetGwh:190 },
+};
+const BS_MONTHS = ["Baisakh","Jestha","Asar","Shrawan","Bhadra","Asoj",
+  "Kartik","Mangsir","Poush","Magh","Falgun","Chaitra"];
+const BS_GREG = ["mid-Apr\u2013mid-May","mid-May\u2013mid-Jun","mid-Jun\u2013mid-Jul","mid-Jul\u2013mid-Aug",
+  "mid-Aug\u2013mid-Sep","mid-Sep\u2013mid-Oct","mid-Oct\u2013mid-Nov","mid-Nov\u2013mid-Dec",
+  "mid-Dec\u2013mid-Jan","mid-Jan\u2013mid-Feb","mid-Feb\u2013mid-Mar","mid-Mar\u2013mid-Apr"];
+function seasonWetness(i){
+  const dist = Math.min(Math.abs(i-3.5), 12-Math.abs(i-3.5));
+  return clamp(1 - dist/6, 0, 1);
+}
+function isDryMonth(i){ return DEFAULTS.season.option===1 ? !(i>=1&&i<=6) : (i>=8&&i<=11); }
+const prefersReducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ============================== scene geometry ==============================
+   A longitudinal profile, the way every hydropower scheme is actually drawn:
+   upstream left and high, downstream right and low. The river falls steadily
+   left to right; the headrace leaves the same water level and stays nearly
+   flat. The vertical gap that opens between those two lines IS the gross head,
+   and drawing it flat is the whole reason this is a 2D diagram and not a 3D
+   scene -- in perspective that gap is the one thing you can never read. */
+const SVG_NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("scene");
+const VB = {x:0,y:0,w:1600,h:900};
+
+// river bed profile, upstream -> downstream
+const BED = [[250,392],[430,432],[640,486],[860,556],[1060,632],[1210,700],[1400,736],[1600,752]];
+function bedY(x){
+  if(x<=BED[0][0]) return BED[0][1];
+  for(let i=0;i<BED.length-1;i++){
+    const [x0,y0]=BED[i],[x1,y1]=BED[i+1];
+    if(x>=x0 && x<=x1) return lerp(y0,y1,(x-x0)/(x1-x0));
+  }
+  return BED[BED.length-1][1];
+}
+const pathFrom = pts => pts.map((p,i)=>(i?"L":"M")+p[0]+" "+p[1]).join(" ");
+
+const WEIR_X=300, INTAKE_X=336, DESANDER_X=430, FOREBAY_X=930,
+      PENSTOCK_TOP=[952,404], PENSTOCK_BOT=[1196,676],
+      PH_X=1196, PH_Y=664, PH_W=176, PH_H=104,
+      TAIL_X=1372, SWITCH_X=1330, TOWER_X=[1436,1524], METER_X=1566;
+const HR_Y0=388, HR_Y1=404;                       // headrace: near level, slight fall
+const headraceY = x => lerp(HR_Y0, HR_Y1, clamp((x-INTAKE_X)/(FOREBAY_X-INTAKE_X),0,1));
+// Reservoir variant. The dam sits mid-valley rather than hard against the left edge,
+// so the lake it impounds actually fills the upstream half of the drawing -- which is
+// both what a storage scheme looks like and what stops the frame reading bottom-heavy.
+const DAM_X=600, DAM_CREST=214, DAM_TOE=676, DAM_BASE=476;
+const RES_PH_X=690, RES_PH_Y=406, RES_PH_W=150, RES_PH_H=92;
+const FSL=236, MOL=344;              // full supply level, minimum operating level
+const RES_SILL=402;                  // intake sill: everything below is dead storage
+const RES_HEAD_X=900;
+
+function el(tag, attrs={}, parent=svg){
+  const n = document.createElementNS(SVG_NS, tag);
+  for(const [k,v] of Object.entries(attrs)) n.setAttribute(k, v);
+  parent.appendChild(n);
+  return n;
+}
+function group(id, parent=svg, cls){ const g = el("g", cls?{id,class:cls}:{id}, parent); return g; }
+
+/* ---- static backdrop: sky ridges, earth mass, bedrock ---- */
+const gBack = group("g-back");
+el("path",{d:"M0 470 L150 250 L250 330 L360 190 L470 300 L560 236 L660 330 L760 268 L860 350 L960 300 L1100 380 L1240 330 L1400 400 L1600 356 L1600 470 Z",
+  fill:"#B9C4C6", opacity:".55"}, gBack);
+el("path",{d:"M120 300 L150 250 L186 300 Z", fill:"var(--snow)"}, gBack);
+el("path",{d:"M322 244 L360 190 L400 250 Z", fill:"var(--snow)"}, gBack);
+el("path",{d:"M528 288 L560 236 L596 292 Z", fill:"var(--snow)"}, gBack);
+
+// earth mass under the river line, with a soil band over bedrock
+const earthTop = [[0,352],[120,368]].concat(BED);
+el("path",{d:pathFrom(earthTop)+" L1600 900 L0 900 Z", fill:"var(--soil)", class:"edge"}, gBack);
+el("path",{d:pathFrom(earthTop.map(([x,y])=>[x,y+54]))+" L1600 900 L0 900 Z", fill:"var(--bedrock)"}, gBack);
+// vegetation skin on the upper surface
+el("path",{d:pathFrom(earthTop), fill:"none", stroke:"var(--grass)", "stroke-width":"13",
+  "stroke-linecap":"round"}, gBack);
+// scattered cobbles in the soil band, so the cut face reads as ground and not a flat fill
+for(const [cx,cy,r] of [[330,470,7],[520,520,6],[700,596,8],[900,660,6],[1100,724,7],[1300,772,6],[180,432,6],[1480,800,7]])
+  el("ellipse",{cx,cy,rx:r,ry:r*0.72, fill:"#8A6A4C"}, gBack);
+
+/* ---- river ---- */
+const gRiver = group("g-river");
+const riverPath = el("path",{d:pathFrom(BED), fill:"none", stroke:"var(--river)",
+  "stroke-width":"16", "stroke-linecap":"round"}, gRiver);
+const riverFlow = el("path",{d:pathFrom(BED), fill:"none", stroke:"var(--river-lite)",
+  "stroke-width":"5", class:"flowline"}, gRiver);
+// upstream reach above the weir (the catchment's water arriving)
+el("path",{d:"M0 356 L120 372 L250 392", fill:"none", stroke:"var(--river)", "stroke-width":"14",
+  "stroke-linecap":"round"}, gRiver);
+el("path",{d:"M0 356 L120 372 L250 392", fill:"none", stroke:"var(--river-lite)", "stroke-width":"4",
+  class:"flowline flow-slow"}, gRiver);
+
+/* ---- RoR / PRoR headworks ---- */
+const gWeir = group("g-weir", svg, "dimmable");
+el("path",{d:`M${WEIR_X-34} 400 L${WEIR_X-34} 372 Q ${WEIR_X} 356 ${WEIR_X+30} 396 L${WEIR_X+30} 410 Z`,
+  fill:"var(--concrete)", class:"edge"}, gWeir);
+const spill = el("path",{d:`M${WEIR_X-30} 366 Q ${WEIR_X+6} 356 ${WEIR_X+28} 392 L${WEIR_X+34} 404`,
+  fill:"none", stroke:"var(--river-lite)", "stroke-width":"7", class:"flowline"}, gWeir);
+// intake + trash rack
+el("rect",{x:INTAKE_X, y:366, width:40, height:34, fill:"var(--concrete)", class:"edge"}, gWeir);
+for(let i=0;i<5;i++) el("line",{x1:INTAKE_X+6+i*7, y1:370, x2:INTAKE_X+6+i*7, y2:396,
+  stroke:"var(--steel)", "stroke-width":"2.4"}, gWeir);
+
+const gDesander = group("g-desander", svg, "dimmable");
+el("rect",{x:DESANDER_X, y:372, width:120, height:26, fill:"var(--concrete)", class:"edge"}, gDesander);
+el("line",{x1:DESANDER_X, y1:385, x2:DESANDER_X+120, y2:385, stroke:"#8E8879", "stroke-width":"2"}, gDesander);
+el("path",{d:`M${DESANDER_X+18} 398 l0 16 M${DESANDER_X+86} 398 l0 16`, stroke:"var(--steel)",
+  "stroke-width":"3"}, gDesander);
+
+/* ---- headrace ---- */
+const gHeadrace = group("g-headrace", svg, "dimmable");
+const hrPts = [[INTAKE_X+40, headraceY(INTAKE_X+40)],[600,headraceY(600)],[FOREBAY_X,HR_Y1]];
+el("path",{d:pathFrom(hrPts), fill:"none", stroke:"var(--concrete)", "stroke-width":"24",
+  "stroke-linecap":"butt", class:"edge"}, gHeadrace);
+el("path",{d:pathFrom(hrPts), fill:"none", stroke:"var(--river)", "stroke-width":"13"}, gHeadrace);
+el("path",{d:pathFrom(hrPts), fill:"none", stroke:"var(--river-lite)", "stroke-width":"4",
+  class:"flowline flow-slow"}, gHeadrace);
+
+/* ---- forebay (RoR) / daily pond (PRoR) ---- */
+const gForebay = group("g-forebay", svg, "dimmable");
+const fbW = el("rect",{x:FOREBAY_X-6, y:392, width:56, height:34, fill:"var(--river)"}, gForebay);
+el("path",{d:`M${FOREBAY_X-6} 384 l0 52 l56 0 l0 -52`, fill:"none", stroke:"var(--concrete)",
+  "stroke-width":"9", class:"edge"}, gForebay);
+/* ---- daily pond (PRoR only) ----
+   A forebay is a surge buffer a few minutes deep; a daily pond holds four to six hours
+   of the plant's own discharge. Drawn at that size on purpose: at the old size PRoR was
+   indistinguishable from RoR, which is exactly the point the type switch has to make. */
+const gPond = group("g-pond", svg, "dimmable");   // PRoR only
+const POND_X0=690, POND_X1=968, POND_CREST=352, POND_FLOOR=452;
+const POND_FSL=364, POND_MOL=418;    // full supply level and the evening drawdown floor
+const bankL = y => POND_X0 + 26*(y-POND_CREST)/(POND_FLOOR-POND_CREST);
+const bankR = y => POND_X1 - 26*(y-POND_CREST)/(POND_FLOOR-POND_CREST);
+const pondBasin = `M${POND_X0} ${POND_CREST} L${bankL(POND_FLOOR)} ${POND_FLOOR} `+
+                  `L${bankR(POND_FLOOR)} ${POND_FLOOR} L${POND_X1} ${POND_CREST}`;
+el("path",{d:pondBasin+" Z", fill:"#CFC7B6", stroke:"none"}, gPond);
+const pondWater = el("path",{d:"", fill:"var(--river)"}, gPond);
+const pondSurf = el("path",{d:"", fill:"none", stroke:"var(--river-lite)", "stroke-width":"4",
+  class:"flowline flow-slow"}, gPond);
+el("path",{d:pondBasin, fill:"none", stroke:"var(--concrete)", "stroke-width":"11", class:"edge"}, gPond);
+// the two levels the licence actually fixes, and the band the plant trades between them
+for(const [y,txt] of [[POND_FSL,"full supply level"],[POND_MOL,"minimum operating level"]]){
+  el("line",{x1:bankL(y)-20, y1:y, x2:bankR(y)+64, y2:y, stroke:"var(--ochre)",
+    "stroke-width":"1.6", "stroke-dasharray":"8 6"}, gPond);
+  el("text",{x:bankR(y)+70, y:y+5, class:"note", fill:"var(--ochre)"}, gPond).textContent=txt;
+}
+// the band between them is the live storage: the only part of the pond that is tradable
+el("path",{d:`M${POND_X0+30} ${POND_FSL} L${POND_X0+30} ${POND_MOL} `+
+             `M${POND_X0+22} ${POND_FSL} L${POND_X0+38} ${POND_FSL} `+
+             `M${POND_X0+22} ${POND_MOL} L${POND_X0+38} ${POND_MOL}`,
+  stroke:"var(--ochre)", "stroke-width":"2", fill:"none"}, gPond);
+el("text",{x:POND_X0+44, y:(POND_FSL+POND_MOL)/2+5, class:"note", fill:"var(--ochre)"}, gPond)
+  .textContent="live storage";
+// offtake to the penstock, low enough to stay submerged at minimum operating level
+el("rect",{x:POND_X1-46, y:396, width:34, height:30, fill:"var(--concrete)", class:"edge"}, gPond);
+const PN_X=POND_X0+4, PN_Y=POND_CREST-14;
+const pondNote = el("text",{x:PN_X, y:PN_Y, class:"dimtext", fill:"var(--ink)",
+  "font-size":"17"}, gPond);
+
+/* ---- penstock ---- */
+const gPenstock = group("g-penstock", svg, "dimmable");
+const penD = `M${PENSTOCK_TOP[0]} ${PENSTOCK_TOP[1]} L${PENSTOCK_BOT[0]} ${PENSTOCK_BOT[1]}`;
+el("path",{d:penD, fill:"none", stroke:"#CFCabc", "stroke-width":"30", "stroke-linecap":"round",
+  class:"edge"}, gPenstock);
+el("path",{d:penD, fill:"none", stroke:"var(--river)", "stroke-width":"17", "stroke-linecap":"round"}, gPenstock);
+el("path",{d:penD, fill:"none", stroke:"var(--river-lite)", "stroke-width":"6", class:"flowline"}, gPenstock);
+// flange rings, the detail that makes a pale pipe read as a penstock
+{
+  const dx=PENSTOCK_BOT[0]-PENSTOCK_TOP[0], dy=PENSTOCK_BOT[1]-PENSTOCK_TOP[1];
+  const len=Math.hypot(dx,dy), nx=-dy/len*17, ny=dx/len*17;
+  for(let i=1;i<8;i++){
+    const t=i/8, cx=PENSTOCK_TOP[0]+dx*t, cy=PENSTOCK_TOP[1]+dy*t;
+    el("line",{x1:cx-nx, y1:cy-ny, x2:cx+nx, y2:cy+ny, stroke:"#8E8879", "stroke-width":"3"}, gPenstock);
+  }
+}
+
+/* ---- powerhouse, cutaway ---- */
+function buildPowerhouse(g, x, y, w, h){
+  el("rect",{x, y, width:w, height:h, fill:"#DAD5C7", class:"edge"}, g);
+  el("path",{d:`M${x-8} ${y} L${x+w/2} ${y-26} L${x+w+8} ${y} Z`, fill:"var(--concrete)", class:"edge"}, g);
+  // water in: from penstock, through the runner, out the draft tube
+  el("path",{d:`M${x} ${y+26} L${x+w*0.42} ${y+26} L${x+w*0.42} ${y+h*0.52}`, fill:"none",
+    stroke:"var(--river)", "stroke-width":"13"}, g);
+  el("path",{d:`M${x} ${y+26} L${x+w*0.42} ${y+26} L${x+w*0.42} ${y+h*0.52}`, fill:"none",
+    stroke:"var(--river-lite)", "stroke-width":"4.5", class:"flowline"}, g);
+  // generator: stator block with a spinning rotor disc
+  el("rect",{x:x+w*0.28, y:y+14, width:w*0.30, height:24, fill:"var(--steel)", class:"edge"}, g);
+  el("circle",{cx:x+w*0.43, cy:y+26, r:9, fill:"#9AA3A8", class:"edge spin"}, g);
+  el("line",{x1:x+w*0.43, y1:y+26, x2:x+w*0.43, y2:y+h*0.60, stroke:"var(--steel)", "stroke-width":"5"}, g);
+  // turbine runner
+  const rx=x+w*0.43, ry=y+h*0.62;
+  const runner = el("g",{class:"spin spin-fast"}, g);
+  el("circle",{cx:rx, cy:ry, r:20, fill:"#AEB6BA", class:"edge"}, runner);
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4;
+    el("line",{x1:rx+Math.cos(a)*7, y1:ry+Math.sin(a)*7, x2:rx+Math.cos(a)*19, y2:ry+Math.sin(a)*19,
+      stroke:"var(--steel)", "stroke-width":"3.4"}, runner);
+  }
+  // draft tube out to the tailrace
+  el("path",{d:`M${rx} ${ry+20} L${rx} ${y+h-10} L${x+w+40} ${y+h-10}`, fill:"none",
+    stroke:"var(--river)", "stroke-width":"13"}, g);
+  el("path",{d:`M${rx} ${ry+20} L${rx} ${y+h-10} L${x+w+40} ${y+h-10}`, fill:"none",
+    stroke:"var(--river-lite)", "stroke-width":"4.5", class:"flowline"}, g);
+}
+const gPH = group("g-ph", svg, "dimmable");   buildPowerhouse(gPH, PH_X, PH_Y, PH_W, PH_H);
+const gPHres = group("g-ph-res", svg, "dimmable");
+buildPowerhouse(gPHres, RES_PH_X, RES_PH_Y, RES_PH_W, RES_PH_H);
+
+/* ---- tailrace ---- */
+const gTail = group("g-tail", svg, "dimmable");
+el("path",{d:`M${TAIL_X} ${PH_Y+PH_H-10} L${TAIL_X+40} ${bedY(TAIL_X+40)}`, fill:"none",
+  stroke:"var(--river)", "stroke-width":"13", "stroke-linecap":"round"}, gTail);
+el("path",{d:`M${TAIL_X} ${PH_Y+PH_H-10} L${TAIL_X+40} ${bedY(TAIL_X+40)}`, fill:"none",
+  stroke:"var(--river-lite)", "stroke-width":"4.5", class:"flowline"}, gTail);
+
+/* ---- reservoir variant ---- */
+const gRes = group("g-res", svg, "dimmable");
+// The impounded water is bounded below by the valley floor, not by a straight edge, so
+// it is a path rebuilt on each season step rather than a rect that would float free of
+// the bed as the level drops.
+function lakePath(surfY){
+  const pts=[[0,surfY],[DAM_X-26,surfY]];
+  const back=[];
+  for(const [x,y] of [[DAM_X-26,DAM_BASE]].concat(BED.filter(p=>p[0]<DAM_X-26).reverse()).concat([[0,392]]))
+    back.push([x, Math.max(y, surfY)]);
+  return pathFrom(pts.concat(back))+" Z";
+}
+const resWater = el("path",{d:lakePath(FSL), fill:"var(--river)", opacity:".92"}, gRes);
+// dead storage: the wedge below the intake sill that can never be generated with
+const deadStore = el("path",{d:lakePath(RES_SILL), fill:"#3E5563", opacity:".6"}, gRes);
+el("text",{x:80, y:RES_SILL+26, class:"note", fill:"var(--paper)"}, gRes).textContent="dead storage";
+// full supply level, fixed, so the gap down to the live surface reads as drawdown
+el("line",{x1:0, y1:FSL, x2:DAM_X-26, y2:FSL, stroke:"var(--ochre)",
+  "stroke-width":"2.4", "stroke-dasharray":"8 6"}, gRes);
+el("text",{x:14, y:FSL-8, class:"note", fill:"var(--ochre)"}, gRes).textContent="full supply level";
+const drawdownNote = el("text",{x:14, y:FSL+22, class:"note", fill:"var(--ochre)"}, gRes);
+// dam body, battered downstream face
+el("path",{d:`M${DAM_X-26} ${DAM_BASE} L${DAM_X-26} ${DAM_CREST} L${DAM_X+18} ${DAM_CREST} L${DAM_TOE} ${DAM_BASE} Z`,
+  fill:"var(--concrete)", class:"edge"}, gRes);
+// spillway gates on the crest
+for(let i=0;i<3;i++) el("rect",{x:DAM_X-20+i*15, y:DAM_CREST-16, width:11, height:16,
+  fill:"var(--steel)", class:"edge"}, gRes);
+// intake tower standing in the lake
+el("rect",{x:DAM_X-86, y:FSL-22, width:22, height:RES_SILL-FSL+40, fill:"var(--concrete)", class:"edge"}, gRes);
+el("rect",{x:DAM_X-92, y:FSL-34, width:34, height:14, fill:"var(--concrete)", class:"edge"}, gRes);
+// short pressure tunnel: intake sill, through the abutment, to the toe powerhouse
+const tunD = `M${DAM_X-75} ${RES_SILL} L${DAM_X-75} ${RES_SILL+18} L${RES_PH_X} ${RES_PH_Y+26}`;
+el("path",{d:tunD, fill:"none", stroke:"#CFCabc", "stroke-width":"26", class:"edge"}, gRes);
+el("path",{d:tunD, fill:"none", stroke:"var(--river)", "stroke-width":"14"}, gRes);
+el("path",{d:tunD, fill:"none", stroke:"var(--river-lite)", "stroke-width":"5", class:"flowline"}, gRes);
+// tailrace from the toe powerhouse back into the river
+const resTailD = `M${RES_PH_X+RES_PH_W} ${RES_PH_Y+RES_PH_H-10} L${RES_PH_X+RES_PH_W+70} ${bedY(RES_PH_X+RES_PH_W+70)}`;
+el("path",{d:resTailD, fill:"none", stroke:"var(--river)", "stroke-width":"13", "stroke-linecap":"round"}, gRes);
+el("path",{d:resTailD, fill:"none", stroke:"var(--river-lite)", "stroke-width":"4.5", class:"flowline"}, gRes);
+// head for a storage scheme is lake surface to tailwater, and it visibly shrinks as the
+// reservoir draws down through the dry months -- the most instructive thing on this screen
+const gResHead = group("g-res-head", gRes);
+const resHeadLine = el("line",{x1:RES_HEAD_X, y1:FSL, x2:RES_HEAD_X, y2:RES_PH_Y+RES_PH_H-10, class:"dimline"}, gResHead);
+const resHeadTop = el("line",{x1:RES_HEAD_X-12, y1:FSL, x2:RES_HEAD_X+12, y2:FSL,
+  stroke:"var(--ink)", "stroke-width":"1.8"}, gResHead);
+el("line",{x1:RES_HEAD_X-12, y1:RES_PH_Y+RES_PH_H-10, x2:RES_HEAD_X+12, y2:RES_PH_Y+RES_PH_H-10,
+  stroke:"var(--ink)","stroke-width":"1.8"}, gResHead);
+const resHeadLabel = el("text",{x:RES_HEAD_X+18, y:FSL+70, class:"dimtext"}, gResHead);
+el("text",{x:RES_HEAD_X+18, y:FSL+90, class:"note"}, gResHead).textContent="lake surface to tailwater";
+
+/* ---- switchyard, towers, metering ---- */
+const gYard = group("g-yard", svg, "dimmable");
+el("rect",{x:SWITCH_X, y:706, width:52, height:30, fill:"var(--concrete)", class:"edge"}, gYard);
+el("rect",{x:SWITCH_X+12, y:690, width:26, height:18, fill:"var(--steel)", class:"edge"}, gYard);
+
+const gTx = group("g-tx", svg, "dimmable");
+function tower(x, baseY, h){
+  const w=34;
+  el("path",{d:`M${x-w/2} ${baseY} L${x-8} ${baseY-h} L${x+8} ${baseY-h} L${x+w/2} ${baseY} `,
+    fill:"none", stroke:"var(--steel)", "stroke-width":"4"}, gTx);
+  el("path",{d:`M${x-24} ${baseY-h+18} L${x+24} ${baseY-h+18} M${x-18} ${baseY-h+40} L${x+18} ${baseY-h+40}`,
+    stroke:"var(--steel)", "stroke-width":"3.4"}, gTx);
+  for(let i=0;i<3;i++){
+    const y0=baseY-h*(0.25+i*0.22);
+    el("path",{d:`M${x-w/2+i*3} ${y0} L${x+w/2-i*3} ${y0-16}`, stroke:"var(--steel)", "stroke-width":"1.8"}, gTx);
+    el("path",{d:`M${x+w/2-i*3} ${y0} L${x-w/2+i*3} ${y0-16}`, stroke:"var(--steel)", "stroke-width":"1.8"}, gTx);
+  }
+}
+tower(TOWER_X[0], bedY(TOWER_X[0])-6, 150);
+tower(TOWER_X[1], bedY(TOWER_X[1])-6, 150);
+el("path",{d:`M${SWITCH_X+26} 690 L${TOWER_X[0]} ${bedY(TOWER_X[0])-140} L${TOWER_X[1]} ${bedY(TOWER_X[1])-140} L1600 ${bedY(1600)-150}`,
+  class:"conductor"}, gTx);
+el("path",{d:`M${SWITCH_X+26} 696 L${TOWER_X[0]} ${bedY(TOWER_X[0])-124} L${TOWER_X[1]} ${bedY(TOWER_X[1])-124} L1600 ${bedY(1600)-134}`,
+  class:"conductor"}, gTx);
+
+const gMeter = group("g-meter", svg, "dimmable");
+el("rect",{x:METER_X-16, y:bedY(METER_X)-166, width:32, height:26, fill:"var(--ochre)", class:"edge"}, gMeter);
+el("text",{x:METER_X, y:bedY(METER_X)-148, "text-anchor":"middle",
+  style:"font-size:15px;font-weight:700;fill:#2C231C"}, gMeter).textContent="kWh";
+
+/* ---- gauging station ---- */
+const gGauge = group("g-gauge", svg, "dimmable");
+el("path",{d:"M150 372 l0 -26 l30 0 l0 26", fill:"#8A6A4C", class:"edge"}, gGauge);
+el("path",{d:"M144 346 l21 -16 l21 16 Z", fill:"var(--rock)", class:"edge"}, gGauge);
+el("line",{x1:196, y1:340, x2:196, y2:378, stroke:"var(--steel)", "stroke-width":"3.4"}, gGauge);
+for(let i=0;i<5;i++) el("line",{x1:192, y1:346+i*7, x2:200, y2:346+i*7, stroke:"var(--ink)","stroke-width":"1.4"}, gGauge);
+
+/* ---- the head dimension: the single most important annotation ---- */
+const gHead = group("g-head", svg, "dimmable");
+const HEAD_X = 1000;
+const headLine = el("line",{x1:HEAD_X, y1:HR_Y1, x2:HEAD_X, y2:PH_Y+PH_H-10, class:"dimline"}, gHead);
+el("line",{x1:HEAD_X-12, y1:HR_Y1, x2:HEAD_X+12, y2:HR_Y1, stroke:"var(--ink)","stroke-width":"1.8"}, gHead);
+el("line",{x1:HEAD_X-12, y1:PH_Y+PH_H-10, x2:HEAD_X+12, y2:PH_Y+PH_H-10, stroke:"var(--ink)","stroke-width":"1.8"}, gHead);
+const headLabel = el("text",{x:HEAD_X+18, y:(HR_Y1+PH_Y+PH_H-10)/2, class:"dimtext"}, gHead);
+const headSub = el("text",{x:HEAD_X+18, y:(HR_Y1+PH_Y+PH_H-10)/2+20, class:"note"}, gHead);
+headSub.textContent="forebay level to tailrace level";
+
+/* ============================== labels ============================== */
+const hotspots = {
+  basin:{name:"Catchment basin", text:"Everything starts with the catchment: area, snow vs rain fed, and the flow-duration curve. Dry-season discharge is the single most valuable hydrological number for an analyst &mdash; it earns 1.75x the wet tariff."},
+  gauging_station:{name:"Gauging station", text:"Flow records here feed the flow-duration curve. Design discharge is usually set at Q40 (the flow exceeded 40% of the time) for RoR schemes; Q45&ndash;Q50 is more conservative."},
+  headworks:{name:"Headworks", text:"The headworks divert water. Head is NOT created here &mdash; the weir only raises water enough to enter the intake. Environmental flow (typically 10% of the minimum monthly flow) must be released downstream and is unavailable for generation."},
+  desander:{name:"Desanding basin", text:"Settles sediment above ~0.2 mm before it reaches the turbines. Himalayan rivers are sediment-heavy; poor desanding shows up years later as turbine-runner replacement capex and higher O&M."},
+  headrace:{name:"Headrace canal", text:"The headrace carries water almost level while the river falls away below. The vertical gap that opens up is the gross head. Longer headrace = more head, but more civil cost and geological risk."},
+  forebay_surge:{name:"Forebay / surge", text:"Small buffer that keeps the penstock full and absorbs pressure surges when turbines close suddenly. In the PRoR configuration this becomes the daily pond."},
+  penstock:{name:"Penstock", text:"The pressure pipe where gross head becomes pressure. Head loss in penstock, tunnel and valves (typically 4&ndash;8%) reduces gross head to net head. Net head is what enters the power formula."},
+  powerhouse:{name:"Powerhouse", text:"P (kW) = 9.81 &times; Q &times; H_net &times; &eta;. Turbine choice follows head: Pelton above ~300 m, Francis ~50&ndash;500 m, Kaplan below ~50 m. Two units let the plant run part-load in the dry season while one is maintained."},
+  tailrace:{name:"Tailrace", text:"Water goes back to the river. Nothing is consumed &mdash; a hydropower plant sells height &times; flow &times; time."},
+  switchyard:{name:"Switchyard", text:"Generator voltage (~11 kV) is stepped up to 33 kV or 132 kV. Transmission losses between here and the metering point are usually the developer's cost."},
+  transmission:{name:"Transmission line", text:"Evacuation risk lives here: if the NEA line or substation is not ready at COD, energy is spilled. Check whether the PPA has a deemed-generation clause &mdash; many small-IPP PPAs do not."},
+  metering_point:{name:"Revenue metering point", text:"This is where kWh become NPR. Monthly metered energy is split into wet and dry (and peak, for PRoR) and multiplied by the PPA rate in force. Everything upstream is cost; this point is revenue."},
+};
+// Label anchor per structure, per mode where it differs. Positions are staggered by
+// hand rather than sat on top of each structure: at full-scheme zoom the labels are
+// wider than the parts they name, so placing each one "correctly" guarantees a pile-up
+// around the headworks. `lead` is the point on the structure the leader line runs to.
+const ANCHORS = {
+  // The floating controls sit over roughly x 25-556, y up to 276 in scene units, so
+  // nothing upstream may be labelled above that line or it disappears behind them.
+  basin:{x:24,y:318, lead:[120,346]},
+  gauging_station:{x:150,y:376, lead:[196,346]},
+  headworks:{x:246,y:318, lead:[WEIR_X+2,376]},
+  desander:{x:406,y:306, lead:[DESANDER_X+60,374]},
+  headrace:{x:648,y:186, lead:[660,headraceY(660)]},
+  forebay_surge:{x:846,y:318, lead:[FOREBAY_X+18,398]},
+  penstock:{x:1058,y:470, lead:[1074,540]},
+  powerhouse:{x:1108,y:606, lead:[PH_X+PH_W/2,PH_Y+20]},
+  tailrace:{x:1300,y:812, lead:[TAIL_X+22,PH_Y+PH_H+4]},
+  switchyard:{x:1176,y:684, lead:[SWITCH_X+26,706]},
+  transmission:{x:1352,y:556, lead:[TOWER_X[0],bedY(TOWER_X[0])-120]},
+  metering_point:{x:1286,y:466, lead:[METER_X,bedY(METER_X)-160]},
+};
+// PRoR moves one structure far enough that its label has to move with it.
+const ANCHORS_PROR = {
+  forebay_surge:{x:640,y:276, lead:[POND_X0+90,POND_CREST+6]},
+};
+const ANCHORS_RES = {
+  headworks:{x:700,y:250, lead:[DAM_X+8,DAM_CREST+34]},
+  forebay_surge:{x:286,y:330, lead:[DAM_X-75,FSL+34]},
+  penstock:{x:404,y:432, lead:[DAM_X-52,RES_SILL+20]},
+  powerhouse:{x:770,y:352, lead:[RES_PH_X+RES_PH_W/2,RES_PH_Y+20]},
+  tailrace:{x:912,y:560, lead:[RES_PH_X+RES_PH_W+40,RES_PH_Y+RES_PH_H-6]},
+  basin:{x:30,y:540, lead:[110,300]},
+  gauging_station:{x:172,y:600, lead:[196,332]},
+};
+function anchorFor(id){
+  const t=APP.plantType;
+  return (t==="Reservoir" && ANCHORS_RES[id]) || (t==="PRoR" && ANCHORS_PROR[id]) || ANCHORS[id];
+}
+const TOUR_BASE = [
+  {id:"basin",title:"The basin decides the dry season", view:[0,180,700,420]},
+  {id:"headworks",title:"Headworks: where the three types differ", view:[120,180,560,400]},
+  {id:"desander",title:"Sediment is deferred capex", view:[330,300,420,300]},
+  {id:"headrace",title:"Head is earned along the headrace", view:[260,330,900,430]},
+  {id:"penstock",title:"Penstock: gross head to net head", view:[880,360,520,400]},
+  {id:"powerhouse",title:"Powerhouse: the power formula", view:[1130,600,380,260]},
+  {id:"metering_point",title:"Metering point: kWh to NPR", view:[1280,520,320,300]},
+];
+// PRoR earns an extra stop, between the headrace and the penstock where the pond sits.
+// `day` marks the stop that runs the 24-hour cycle by itself, which is the only place
+// in the piece where the difference between RoR and PRoR is a behaviour, not a shape.
+const POND_STOP = {id:"forebay_surge", day:true,
+  title:"The pond: the same water, sold in the evening", view:[620,266,600,340]};
+let TOUR = TOUR_BASE.slice();
+function rebuildTour(){
+  TOUR = APP.plantType==="PRoR"
+    ? TOUR_BASE.slice(0,4).concat([POND_STOP], TOUR_BASE.slice(4))
+    : TOUR_BASE.slice();
+  TOUR.forEach((s,i)=>{ s.n=i+1; });
+  if(APP.tourIndex >= TOUR.length) APP.tourIndex = TOUR.length-1;
+  const steps=document.getElementById("tour-steps");
+  steps.innerHTML = TOUR.map((s,i)=>
+    `<button class="tour-dot" data-i="${i}" aria-current="${i===APP.tourIndex}" `+
+    `aria-label="Stop ${s.n}: ${s.title}">${s.n}</button>`).join("");
+  steps.querySelectorAll(".tour-dot").forEach(b=>
+    b.addEventListener("click", ()=>{ stopPlay(); goToStop(+b.dataset.i); }));
+}
+// Reservoir stops reframed for the mid-valley dam: stop 4 has no canal to show, so it
+// shows the drawdown range instead, which is that scheme's equivalent lesson.
+const TOUR_VIEW_RES = { 1:[0,150,760,430], 2:[380,150,560,400], 4:[60,180,760,420],
+                        5:[430,300,420,300], 6:[600,330,420,280] };
+
+const gLabels = group("g-labels");
+const labelEls = {};
+const leaderEls = {};
+function drawLabels(){
+  gLabels.innerHTML = "";
+  for(const k of Object.keys(leaderEls)) delete leaderEls[k];
+  const res = APP.plantType==="Reservoir";
+  for(const [id,h] of Object.entries(hotspots)){
+    // a storage scheme has neither the contour canal nor the RoR desanding basins, so
+    // their labels go with them; a label pointing at nothing on screen is a defect
+    if(res && (id==="headrace" || id==="desander")) continue;
+    const a = anchorFor(id);
+    const stop = TOUR.find(s=>s.id===id);
+    // leader drawn in scene space, outside the counter-scaled label group, so it
+    // stretches between a fixed structure point and a label that keeps its own size
+    if(a.lead){
+      leaderEls[id] = el("line",{x1:a.x+10, y1:a.y, x2:a.lead[0], y2:a.lead[1],
+        stroke:"var(--ink)", "stroke-width":"1", opacity:".5"}, gLabels);
+    }
+    const g = el("g",{class:"lbl", tabindex:"0", role:"button",
+      "aria-label":h.name+". "+h.text.slice(0,80)}, gLabels);
+    const padL = stop?26:10;
+    const t = el("text",{x:a.x+padL-2, y:a.y+4, "text-anchor":"start"}, g);
+    t.textContent = h.name;
+    const wpx = h.name.length*8.2 + padL + 12;
+    const r = el("rect",{x:a.x-2, y:a.y-14, width:wpx, height:24, rx:5}, g);
+    g.insertBefore(r, t);
+    if(stop){
+      el("circle",{cx:a.x+12, cy:a.y-2, r:9, class:"badge"}, g);
+      const bt = el("text",{x:a.x+12, y:a.y+3, "text-anchor":"middle", class:"badge-t"}, g);
+      bt.textContent = stop.n;
+    }
+    g.addEventListener("click", ()=>focusStructure(id));
+    g.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();focusStructure(id);} });
+    labelEls[id]=g;
+  }
+}
+
+/* ============================== view / tour ============================== */
+let viewTween=null;
+function setView(v, animate=true){
+  const from={...VB}, to={x:v[0],y:v[1],w:v[2],h:v[3]};
+  if(prefersReducedMotion || !animate){ Object.assign(VB,to); applyVB(); return; }
+  viewTween={from,to,start:performance.now(),dur:900};
+}
+function applyVB(){
+  svg.setAttribute("viewBox", `${VB.x} ${VB.y} ${VB.w} ${VB.h}`);
+  // Labels are drawn in scene units, so zooming in magnifies them along with the
+  // drawing and they end up filling the frame. Counter-scale each one about its own
+  // anchor so type stays the same size on screen at every zoom level.
+  const k = VB.w/1600;
+  // Zoomed out there is no room for twelve labels, so the secondary ones drop away and
+  // only the seven tour stops stay. They come back as soon as the view is tight enough.
+  const showAll = k < 0.62;
+  for(const [id,g] of Object.entries(labelEls)){
+    const a = anchorFor(id);
+    if(!a) continue;
+    g.setAttribute("transform", `translate(${a.x*(1-k)} ${a.y*(1-k)}) scale(${k})`);
+    const vis = showAll || TOUR.some(t=>t.id===id);
+    g.style.display = vis ? "" : "none";
+    if(leaderEls[id]) leaderEls[id].style.display = vis ? "" : "none";
+  }
+  pondNote.setAttribute("transform", `translate(${PN_X*(1-k)} ${PN_Y*(1-k)}) scale(${k})`);
+}
+function stepView(now){
+  if(!viewTween) return;
+  const t=clamp((now-viewTween.start)/viewTween.dur,0,1);
+  const e = t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+  VB.x=lerp(viewTween.from.x,viewTween.to.x,e); VB.y=lerp(viewTween.from.y,viewTween.to.y,e);
+  VB.w=lerp(viewTween.from.w,viewTween.to.w,e); VB.h=lerp(viewTween.from.h,viewTween.to.h,e);
+  applyVB();
+  if(t>=1) viewTween=null;
+}
+// A 2:1 profile in a column that is rarely 2:1 will letterbox, and cropping is not an
+// option -- the whole point is seeing catchment and metering point at once. So the
+// letterbox is dressed instead: #scene carries a sky-to-ground gradient behind the
+// drawing, and the bands read as more sky above and more ground below.
+const WHOLE_VIEW=[0,120,1600,800];
+function setFocus(id){
+  svg.classList.toggle("touring", !!id);
+  for(const [k,g] of Object.entries(labelEls)) g.classList.toggle("focused", k===id);
+  const map={basin:["g-back","g-river","g-gauge"], gauging_station:["g-gauge","g-river"],
+    headworks:["g-weir","g-pond","g-res","g-river"], desander:["g-desander"],
+    headrace:["g-headrace","g-river","g-head"], forebay_surge:["g-forebay","g-pond","g-penstock","g-ph"],
+    penstock:["g-penstock","g-head","g-res"], powerhouse:["g-ph","g-ph-res","g-head"],
+    tailrace:["g-tail","g-river"], switchyard:["g-yard"], transmission:["g-tx"],
+    metering_point:["g-meter","g-tx"]};
+  const keep = new Set(map[id]||[]);
+  document.querySelectorAll("#scene .dimmable").forEach(g=>
+    g.classList.toggle("focused", !id || keep.has(g.id)));
+}
+function goToStop(idx, animate=true){
+  APP.tourIndex=idx;
+  const stop=TOUR[idx];
+  const v = (APP.plantType==="Reservoir" && TOUR_VIEW_RES[stop.n]) || stop.view;
+  setView(v, animate);
+  setFocus(stop.id);
+  document.querySelectorAll(".tour-dot").forEach((d,i)=>d.setAttribute("aria-current",String(i===idx)));
+  document.getElementById("tour-title").textContent = stop.n+". "+stop.title;
+  if(stop.day) startDayClock(); else stopDayClock();
+  APP.panelTab="look"; setActiveTab("look"); renderPanel(stop.id);
+}
+function focusStructure(id){
+  const idx=TOUR.findIndex(s=>s.id===id);
+  if(idx>=0){ stopPlay(); goToStop(idx); return; }
+  stopPlay(); stopDayClock();
+  const a=anchorFor(id);
+  setView([a.x-260, a.y-140, 560, 320]);
+  setFocus(id);
+  APP.panelTab="look"; setActiveTab("look"); renderPanel(id);
+}
+function showWhole(){
+  stopPlay(); stopDayClock(); APP.tourIndex=-1;
+  setView(WHOLE_VIEW); setFocus(null);
+  document.querySelectorAll(".tour-dot").forEach(d=>d.setAttribute("aria-current","false"));
+  document.getElementById("tour-title").textContent="Whole scheme";
+}
+
+/* ============================== plant type ============================== */
+const FOREBAY_TEXT = {
+  name:"Forebay / surge",
+  text:"Small buffer that keeps the penstock full and absorbs pressure surges when turbines close suddenly. It holds minutes, not hours &mdash; it cannot shift energy from one part of the day to another."};
+const POND_TEXT = {
+  name:"Daily pond",
+  text:"Four to six hours of the plant's own discharge, held back through the day and released through the evening peak block. The pond generates nothing: annual energy is almost unchanged, because the river delivers what it delivers. What changes is <em>when</em> the kWh arrive, and the dry-season peak rate is 10.55 against 8.40 off-peak. That is the whole PRoR case &mdash; an earthwork bought to move existing energy into a better-paid column."};
+function applyPlantType(type){
+  APP.plantType=type;
+  const ror=type==="RoR", pror=type==="PRoR", res=type==="Reservoir";
+  Object.assign(hotspots.forebay_surge, pror?POND_TEXT:FOREBAY_TEXT);
+  gWeir.style.display   = res?"none":"";
+  gDesander.style.display = res?"none":"";
+  gHeadrace.style.display = res?"none":"";
+  gForebay.style.display  = ror?"":"none";
+  gPond.style.display     = pror?"":"none";
+  gPenstock.style.display = res?"none":"";
+  gPH.style.display       = res?"none":"";
+  gTail.style.display     = res?"none":"";
+  gRes.style.display      = res?"":"none";
+  gPHres.style.display    = res?"":"none";
+  gHead.style.display     = res?"none":"";
+  document.querySelectorAll("#type-switch button").forEach(b=>
+    b.setAttribute("aria-pressed", String(b.dataset.type===type)));
+  document.getElementById("cap-readout").textContent =
+    ror ? "\u2248 10 MW" : pror ? "\u2248 10 MW + daily pond" : "\u2248 100 MW class";
+  // The daily cycle runs all year; only the premium it earns is seasonal, so the clock
+  // stays available in every month rather than vanishing outside the dry season.
+  document.getElementById("tod-block").classList.toggle("show", pror);
+  if(!pror) stopDayClock();
+  const atId = APP.tourIndex>=0 ? TOUR[APP.tourIndex].id : null;
+  rebuildTour();     // PRoR gains a stop, so dots and badges are renumbered before drawing
+  if(atId){
+    const i = TOUR.findIndex(t=>t.id===atId);
+    APP.tourIndex = i>=0 ? i : Math.min(APP.tourIndex, TOUR.length-1);
+  }
+  drawLabels();
+  applyVB();   // labels were just rebuilt: re-apply counter-scale and the zoom-level rule
+  if(APP.tourIndex>=0) goToStop(APP.tourIndex,false); else setFocus(null);
+  applySeason(APP.season);
+  renderPanel();
+}
+
+/* ============================== season ============================== */
+function applySeason(i){
+  APP.season=i;
+  const wet=seasonWetness(i), dry=isDryMonth(i);
+  // river swells and brightens through the monsoon
+  riverPath.setAttribute("stroke-width", String(lerp(9,22,wet)));
+  riverPath.setAttribute("stroke", wet>0.5?"var(--river)":"#3F7188");
+  riverFlow.setAttribute("stroke-width", String(lerp(3,6,wet)));
+  riverFlow.style.animationDuration = (prefersReducedMotion?0:lerp(3.2,1.0,wet))+"s";
+  spill.style.display = wet>0.72 ? "" : "none";     // only overtops in high monsoon
+  const accent = wet>0.4 ? "#4E88A6" : "#C8923A";
+  document.documentElement.style.setProperty("--accent", accent);
+  document.documentElement.style.setProperty("--accent-soft",
+    wet>0.4?"rgba(78,136,166,.16)":"rgba(200,146,58,.16)");
+  // reservoir fills through the monsoon and draws down toward the minimum operating
+  // level over the dry months; the head dimension follows the surface down with it
+  const surf = lerp(MOL, FSL, wet);
+  resWater.setAttribute("d", lakePath(surf));
+  deadStore.setAttribute("d", lakePath(RES_SILL));
+  resHeadLine.setAttribute("y1", String(surf));
+  resHeadTop.setAttribute("y1", String(surf)); resHeadTop.setAttribute("y2", String(surf));
+  resHeadLabel.setAttribute("y", String((surf + RES_PH_Y+RES_PH_H-10)/2));
+  // 1 scene unit of fall is scaled so the RoR gross head of 120 m reads as its own dimension
+  const M_PER_UNIT = APP.calc.grossHead / ((PH_Y+PH_H-10) - HR_Y1);
+  resHeadLabel.textContent = `Gross head ${Math.round(((RES_PH_Y+RES_PH_H-10)-surf)*M_PER_UNIT)} m`;
+  drawdownNote.textContent = surf>FSL+6 ? `drawn down ${Math.round((surf-FSL)*M_PER_UNIT)} m` : "";
+  document.querySelectorAll("#season-dial button").forEach((b,idx)=>
+    b.setAttribute("aria-pressed", String(idx===i)));
+  document.getElementById("season-name").textContent = BS_MONTHS[i];
+  document.getElementById("season-caption").textContent =
+    (dry?"Dry season (":"Wet season (")+BS_GREG[i]+") \u2014 "+(dry?"tariff column: dry":"tariff column: wet");
+  document.getElementById("tod-block").classList.toggle("show", APP.plantType==="PRoR");
+  updateHeadLabel();
+  applyTod(APP.tod);
+  renderPanel();
+}
+function updateHeadLabel(){
+  const e = siteEnergy(APP.calc);
+  headLabel.textContent = `Gross head ${APP.calc.grossHead} m \u2192 net ${e.netHead.toFixed(1)} m`;
+}
+
+/* ============================== time of day (PRoR) ==============================
+   Inflow from the headrace is constant; outflow is not. The pond takes the difference,
+   filling through the day and emptying through the six-hour evening peak block. */
+function applyTod(h){
+  APP.tod=h;
+  const pror = APP.plantType==="PRoR";
+  const peak = h>=18 && h<=24;
+  const fill = clamp(peak ? 1-(h-18)/6 : h/18, 0, 1);   // continuous across midnight
+  const surf = lerp(POND_MOL, POND_FSL, fill);
+  pondWater.setAttribute("d",
+    `M${bankL(surf)} ${surf} L${bankR(surf)} ${surf} L${bankR(POND_FLOOR)} ${POND_FLOOR} `+
+    `L${bankL(POND_FLOOR)} ${POND_FLOOR} Z`);
+  pondSurf.setAttribute("d", `M${bankL(surf)+8} ${surf} L${bankR(surf)-8} ${surf}`);
+  pondNote.textContent = (peak ? "peak block \u2014 releasing, pond " : "filling \u2014 pond ")
+    + Math.round(fill*100) + "% full";
+  pondNote.setAttribute("fill", peak ? "var(--ochre)" : "var(--rock)");
+  // the penstock and the runner carry the release schedule: idling by day, hard at 18:00
+  svg.style.setProperty("--fd", (pror ? (peak?0.65:2.9) : 1.5)+"s");
+  svg.style.setProperty("--sd", (pror ? (peak?0.5:2.2) : 1.1)+"s");
+  svg.style.setProperty("--sd-gen", (pror ? (peak?1.2:4.4) : 2.6)+"s");
+  const slider=document.getElementById("tod-slider");
+  if(+slider.value!==h) slider.value=h;
+  document.getElementById("tod-now").textContent =
+    String(Math.floor(h)).padStart(2,"0")+":"+(h%1?"30":"00");
+  // outside the dry season there is no peak column to win, which is itself the lesson
+  const dry = isDryMonth(APP.season);
+  const rate = !dry ? DEFAULTS.tariff.pror.wet
+             : peak ? DEFAULTS.tariff.pror.peakByHours[APP.ppa.prorPeakHours]
+                    : DEFAULTS.tariff.pror.offPeakDry;
+  document.getElementById("tod-tariff").textContent =
+    (!dry ? "wet \u00b7 NPR " : peak ? "peak \u00b7 NPR " : "off-peak \u00b7 NPR ")+rate.toFixed(2);
+  document.getElementById("tod-cycle").textContent = !dry
+    ? "Wet season: the river alone fills the plant, so the pond earns nothing this month."
+    : peak ? "Dry-season peak block: every kWh released now is paid at the peak rate."
+           : "Storing dry-season inflow instead of selling it at the off-peak rate.";
+}
+/* The pond stop plays its own day rather than waiting to be scrubbed: this is the one
+   difference between RoR and PRoR that is a behaviour and cannot be seen in a still. */
+const DAY_MS = 16000;
+let dayClock = null;
+function startDayClock(){
+  if(APP.plantType!=="PRoR" || prefersReducedMotion) return;
+  dayClock = { t0: performance.now() - APP.tod/24*DAY_MS };
+}
+function stopDayClock(){ dayClock = null; }
+function stepDay(now){
+  if(!dayClock) return;
+  applyTod(Math.round((((now-dayClock.t0)%DAY_MS)/DAY_MS*24)*2)/2);
+}
+
+/* ============================== UI wiring ============================== */
+document.querySelectorAll("#type-switch button").forEach(b=>
+  b.addEventListener("click", ()=>applyPlantType(b.dataset.type)));
+document.getElementById("season-dial").innerHTML = BS_MONTHS.map((m,i)=>
+  `<button data-i="${i}" aria-pressed="false" title="${BS_GREG[i]}">${m.slice(0,3)}</button>`).join("");
+document.querySelectorAll("#season-dial button").forEach(b=>
+  b.addEventListener("click", ()=>applySeason(+b.dataset.i)));
+document.getElementById("tod-slider").addEventListener("input", e=>{
+  stopDayClock();          // scrubbing by hand takes the clock over
+  applyTod(+e.target.value);
+});
+document.addEventListener("keydown", e=>{
+  if(["INPUT","SELECT","TEXTAREA"].includes(document.activeElement.tagName)) return;
+  if(e.key==="1") applyPlantType("RoR");
+  if(e.key==="2") applyPlantType("PRoR");
+  if(e.key==="3") applyPlantType("Reservoir");
+  if(e.key==="ArrowRight") applySeason((APP.season+1)%12);
+  if(e.key==="ArrowLeft") applySeason((APP.season+11)%12);
+  if(e.key==="0") showWhole();
+});
+document.getElementById("tour-prev").addEventListener("click", ()=>{
+  stopPlay(); goToStop(Math.max(0,(APP.tourIndex<0?0:APP.tourIndex)-1)); });
+document.getElementById("tour-next").addEventListener("click", ()=>{
+  stopPlay(); goToStop(Math.min(TOUR.length-1, APP.tourIndex+1)); });
+document.getElementById("tour-out").addEventListener("click", showWhole);
+let playTimer=null;
+function stopPlay(){ APP.tourPlaying=false; document.getElementById("tour-play").textContent="\u25B6";
+  if(playTimer) clearTimeout(playTimer); }
+document.getElementById("tour-play").addEventListener("click", ()=>{
+  if(APP.tourPlaying){ stopPlay(); return; }
+  APP.tourPlaying=true; document.getElementById("tour-play").textContent="\u23F8";
+  const advance=()=>{ if(!APP.tourPlaying) return;
+    goToStop((APP.tourIndex+1)%TOUR.length);
+    playTimer=setTimeout(advance, prefersReducedMotion?2000:4600); };
+  advance();
+});
+document.getElementById("panel-toggle").addEventListener("click", ()=>{
+  const p=document.getElementById("panel"), collapsed=p.classList.toggle("collapsed");
+  const t=document.getElementById("panel-toggle");
+  t.textContent = collapsed?"+":"\u2212"; t.setAttribute("aria-expanded", String(!collapsed));
+});
+function setActiveTab(tab){
+  APP.panelTab=tab;
+  document.querySelectorAll("#tabs button").forEach(b=>
+    b.setAttribute("aria-selected", String(b.dataset.tab===tab)));
+  renderPanel();
+}
+document.querySelectorAll("#tabs button").forEach(b=>
+  b.addEventListener("click", ()=>setActiveTab(b.dataset.tab)));
+
+/* ============================== panel ============================== */
+const GLOSSARY = [
+["Availability factor","Fraction of hours the plant is able to run; 1 minus planned and forced outage.","Multiplies straight into energy and revenue; 0.95 is normal, above 0.97 in a DPR is optimistic."],
+["Bikram Sambat (BS)","Nepali calendar; fiscal year runs Shrawan&ndash;Asar (mid-July to mid-July), written FY 2082/83.","PPA seasons and financial statements are on BS months; the dry season straddles the fiscal year end."],
+["BOOT","Build-Own-Operate-Transfer: the plant is handed to GoN free of cost when the licence expires.","No terminal value in the DCF beyond licence expiry."],
+["Blended tariff","Annual revenue divided by annual energy (NPR/kWh).","One number that captures dry share and type premium; compare across companies."],
+["COD / RCOD","Commercial Operation Date; Required COD is the PPA deadline.","Delay triggers liquidated damages and can forfeit the tax holiday and escalations."],
+["Contract energy","Monthly energy NEA commits to buy at the PPA rate.","Energy above it is paid at the excess-energy price; model excess conservatively."],
+["Deemed generation","Payment for energy the plant could have produced but NEA could not evacuate.","Absent in many small-IPP PPAs; transmission delay then hits revenue directly."],
+["Design discharge","Flow (m&sup3;/s) the plant is built to pass at full output, usually Q40.","Sets installed MW; a Q40 plant spills in monsoon and runs part-load in winter."],
+["Dry energy / wet energy","Energy delivered in the PPA-defined dry and wet seasons.","Dry tariff is 1.75x wet for RoR; dry share drives revenue and DSCR."],
+["DSCR","Cash available for debt service / debt service, tested annually or semi-annually.","For RoR the binding test is the dry-season half; check the sculpting."],
+["Environmental flow","Minimum flow that must bypass the intake (typically 10% of minimum monthly flow).","Reduces usable dry-season discharge; priced at RoR rates for reservoirs."],
+["ERC","Electricity Regulatory Commission; approves tariffs and PPA terms since 2019.","Rate changes now come from ERC directives, not only NEA board decisions."],
+["Escalation","3% simple increase on the base tariff for 8 years, then flat.","Nominal revenue is flat after year 9 while opex inflates; margins compress late."],
+["Excess energy","Metered energy above contract energy in a month.","Paid at PPA-specific terms; do not assume the posted rate."],
+["Flow-duration curve","Plot of discharge vs % of time equalled or exceeded; Q40 is the flow exceeded 40% of the time.","The chart behind every energy estimate; ask which years it uses."],
+["Gross head / net head","Vertical drop forebay-to-tailrace; net head subtracts friction losses.","Head is fixed by construction; the only variable is water."],
+["Installed capacity","Rated output in MW at design discharge and net head.","Determines capacity royalty regardless of generation."],
+["Live storage / dead storage","Reservoir volume usable for generation vs volume below the intake.","Sedimentation eats live storage over the licence life."],
+["PLF","Plant load factor: annual energy / (installed MW &times; 8,760 h).","Sanity check for DPR energy claims; compare only within the same plant type."],
+["Pondage","Small storage (hours) allowing daily peaking without seasonal storage.","Cheapest route to the PRoR dry-season premium."],
+["PPA","Power Purchase Agreement between the developer and NEA.","Read the season definition, escalation anchor and take-or-pay basis before modelling."],
+["PRoR","Peaking Run-of-River: RoR with a daily pond concentrating generation into peak hours.","Dry tariff up to 10.55 vs 8.40."],
+["Q40 / Q45","Design flow exceeded 40% / 45% of the time.","Q45 designs have a higher PLF but lower installed MW; Q40 is the NEA norm."],
+["Reservoir (storage) project","Dam creating seasonal storage; must deliver &ge;35% dry energy to be priced as storage.","Highest tariff and least seasonal cash flow, but longest and riskiest construction."],
+["RoR","Run-of-River: no storage; generation follows the river.","Most NEPSE hydro IPPs; the model is a hydrology model with a tariff overlay."],
+["Royalty","Capacity royalty (NPR/kW/yr) plus energy royalty (% of revenue), stepping up after year 15.","A 2% deduction in early years becomes ~10%+ later; model the step."],
+["Take-or-pay / take-and-pay","Whether NEA pays for contracted energy it does not off-take.","Take-and-pay shifts curtailment risk to the developer."],
+["Tax holiday","100% income-tax exemption for 10 years, 50% for 5 more, for projects reaching COD by the cut-off.","Effective tax rate is a step function; check the COD date against the current cut-off."],
+];
+
+function renderPanel(focusId){
+  const body=document.getElementById("panel-body");
+  if(APP.panelTab==="look") body.innerHTML=renderLook(focusId);
+  else if(APP.panelTab==="calc") body.innerHTML=renderCalc();
+  else if(APP.panelTab==="ppa") body.innerHTML=renderPPA();
+  else body.innerHTML=renderGlossary();
+  wireDynamicInputs();
+}
+function renderLook(focusId){
+  const id = focusId || (APP.tourIndex>=0 ? TOUR[APP.tourIndex].id : null);
+  const h = id && hotspots[id];
+  if(!h) return `<h2>Welcome to the site</h2><p>This is a longitudinal profile of a generic Nepali scheme: upstream and high on the left, the NEA metering point downstream on the right. Click any label, or start the guided tour below.</p>
+    <p class="why">The dashed dimension in the middle is the gross head &mdash; the vertical distance the water falls between the forebay and the tailrace. Everything upstream of the meter is cost; the meter is revenue.</p>
+    <p class="why">Press 1 / 2 / 3 to switch plant type, &larr; / &rarr; to move through the Bikram Sambat year, 0 to zoom back out.</p>`;
+  return `<h2>${h.name}</h2><p>${h.text}</p>`;
+}
+function fieldNum(key,label,step,obj){
+  return `<div class="field"><label for="in-${key}">${label}</label>
+    <input type="number" id="in-${key}" data-k="${key}" step="${step}" value="${obj[key]}"></div>`;
+}
+function renderCalc(){
+  const c=APP.calc, e=siteEnergy(c);
+  return `
+  <h2>Energy &amp; PLF calculator</h2>
+  <fieldset><legend>Site inputs</legend>
+    ${fieldNum("grossHead","Gross head (m)",1,c)}
+    ${fieldNum("headLossFrac","Head loss (fraction)",0.01,c)}
+    ${fieldNum("designQ","Design discharge (m&sup3;/s)",0.1,c)}
+    ${fieldNum("eff","Overall efficiency",0.01,c)}
+    ${fieldNum("availability","Availability factor",0.01,c)}
+    ${fieldNum("dryAvgQ","Avg dry-season discharge (m&sup3;/s)",0.1,c)}
+    ${fieldNum("wetOutFrac","Avg wet output (fraction of capacity)",0.01,c)}
+  </fieldset>
+  <div class="arith">H_net = ${c.grossHead} &times; (1 &minus; ${c.headLossFrac}) = ${e.netHead.toFixed(1)} m<br>
+  P = 9.81 &times; ${c.designQ} &times; ${e.netHead.toFixed(1)} &times; ${c.eff} = ${powerKw(c.designQ,e.netHead,c.eff).toFixed(0)} kW</div>
+  <div class="out-line"><span class="k">Net head</span><span class="v">${e.netHead.toFixed(1)} m</span></div>
+  <div class="out-line"><span class="k">Installed capacity</span><span class="v">${e.installedMw.toFixed(1)} MW</span></div>
+  <div class="out-line"><span class="k season-dry">Dry-season energy</span><span class="v">${gwh(e.dryEnergyKwh).toFixed(2)} GWh</span></div>
+  <div class="out-line"><span class="k season-wet">Wet-season energy</span><span class="v">${gwh(e.wetEnergyKwh).toFixed(2)} GWh</span></div>
+  <div class="out-line"><span class="k">Annual energy</span><span class="v">${gwh(e.annualEnergyKwh).toFixed(2)} GWh</span></div>
+  <div class="out-line"><span class="k">PLF</span><span class="v">${(e.plf*100).toFixed(1)}%</span></div>
+  <div class="out-line"><span class="k">Dry-energy share</span><span class="v">${(e.dryShare*100).toFixed(1)}%</span></div>
+  ${dryComplianceFlag(e)}
+  ${fleetScale()}`;
+}
+/* Figures from the register this page is built alongside, so the worked model above can
+   be read against the fleet it exists to explain rather than in a vacuum. Injected at
+   build time by hydro.py; absent when the template is opened directly, which is why the
+   parse is guarded rather than assumed. */
+function fleetScale(){
+  if(!FLEET) return "";
+  return `<h3>For scale, from the register</h3>
+  <div class="out-line"><span class="k">Median contracted PLF</span><span class="v">${FLEET.cplfMed}% <span class="why">${FLEET.cplfN} plants</span></span></div>
+  <div class="out-line"><span class="k">Median achieved capacity factor</span><span class="v">${FLEET.cfMed}% <span class="why">${FLEET.cfN} plants</span></span></div>
+  <div class="out-line"><span class="k">Fleet dry-season share of generation</span><span class="v">${FLEET.dryShare}%</span></div>
+  <p class="why">${FLEET.n} plants, FY ${FLEET.fy}, retrieved ${FLEET.retrieved}. Contracted PLF is
+  what the PPA promises; capacity factor is what the meters actually recorded. The distance between
+  those two medians is most of what the ledger is about &mdash; and the dry share above is the fleet
+  answering the same question this page asks at the catchment.</p>`;
+}
+function dryComplianceFlag(e){
+  const min=DEFAULTS.season.minDryShare[APP.ppa.seasonOption];
+  if(e.dryShare>=min) return `<div class="flag ok">Passes the Option ${APP.ppa.seasonOption} minimum dry-energy share (&ge;${(min*100).toFixed(0)}%).</div>`;
+  const comp=shortfallComp(e.dryShare,min,e.dryEnergyKwh,e.annualEnergyKwh,DEFAULTS.tariff.ror.wet);
+  return `<div class="flag warn">Below the Option ${APP.ppa.seasonOption} minimum dry share (${(min*100).toFixed(0)}%). Shortfall compensation &asymp; NPR ${cr(comp).toFixed(2)} crore, computed as (annual &minus; dry&divide;min) &times; wet rate.</div>`;
+}
+function renderPPA(){
+  const e=siteEnergy(APP.calc), p=APP.ppa;
+  const rorRev1=revenueRor(e.dryEnergyKwh,e.wetEnergyKwh,DEFAULTS.tariff.ror,1);
+  const rorRevY=revenueRor(e.dryEnergyKwh,e.wetEnergyKwh,DEFAULTS.tariff.ror,p.escYear);
+  const prorTar={dry:DEFAULTS.tariff.pror.peakByHours[p.prorPeakHours],wet:DEFAULTS.tariff.pror.wet};
+  const prorRev1=revenuePror(e.dryEnergyKwh,e.wetEnergyKwh,e.installedMw,prorTar,1,p.prorBlockOnly);
+  const royalty1=royaltyFor(e.installedMw,rorRev1,false);
+  const royalty16=royaltyFor(e.installedMw,rorRev1,true);
+  const resTar=DEFAULTS.tariff.reservoir[p.reservoirRegime];
+  const resRev=p.reservoirDryGwh*1e6*resTar.dry + p.reservoirWetGwh*1e6*resTar.wet;
+  const resAnnual=(p.reservoirDryGwh+p.reservoirWetGwh)*1e6;
+  const resBlend=resRev/resAnnual;
+  const bars=[{label:"RoR",val:rorRev1/e.annualEnergyKwh,color:"#4E88A6"},
+              {label:"PRoR",val:prorRev1/e.annualEnergyKwh,color:"#C8923A"},
+              {label:"Reservoir&sup1;",val:resBlend,color:"#4F7A48"}];
+  const maxV=Math.max(...bars.map(b=>b.val),1);
+  const barsSvg=bars.map((b,i)=>{
+    const bw=54,gap=18,x0=30+i*(bw+gap),h=Math.round(b.val/maxV*90);
+    return `<rect x="${x0}" y="${110-h}" width="${bw}" height="${h}" fill="${b.color}"/>
+      <text x="${x0+bw/2}" y="122" font-size="9" text-anchor="middle">${b.label}</text>
+      <text x="${x0+bw/2}" y="${104-h}" font-size="9" text-anchor="middle">${b.val.toFixed(2)}</text>`;
+  }).join("");
+  return `
+  <h2>PPA &amp; revenue</h2>
+  <fieldset><legend>PPA season option</legend>
+    <div class="radio-row"><label><input type="radio" name="seasonOpt" value="1" ${p.seasonOption===1?"checked":""}> Option 1 (6 wet/6 dry)</label></div>
+    <div class="radio-row"><label><input type="radio" name="seasonOpt" value="2" ${p.seasonOption===2?"checked":""}> Option 2 (8 wet/4 dry)</label></div>
+  </fieldset>
+  <div class="rev-card"><h3>Run-of-river</h3>
+    <div class="out-line"><span class="k season-dry">Dry revenue</span><span class="v">NPR ${cr(e.dryEnergyKwh*DEFAULTS.tariff.ror.dry).toFixed(2)} cr</span></div>
+    <div class="out-line"><span class="k season-wet">Wet revenue</span><span class="v">NPR ${cr(e.wetEnergyKwh*DEFAULTS.tariff.ror.wet).toFixed(2)} cr</span></div>
+    <div class="out-line"><span class="k">Year-1 total</span><span class="v">NPR ${cr(rorRev1).toFixed(2)} cr</span></div>
+    <div class="out-line"><span class="k">Blended tariff</span><span class="v">NPR ${(rorRev1/e.annualEnergyKwh).toFixed(2)}/kWh</span></div>
+  </div>
+  <fieldset><legend>Escalation / project year</legend>
+    <div class="field"><label for="in-escYear">Project year (1&ndash;${DEFAULTS.escalation.count+1}+)</label>
+    <input type="number" id="in-escYear" data-k="escYear" min="1" max="30" step="1" value="${p.escYear}"></div>
+  </fieldset>
+  <div class="out-line"><span class="k">RoR revenue, year ${p.escYear}</span><span class="v">NPR ${cr(rorRevY).toFixed(2)} cr</span></div>
+  <fieldset><legend>PRoR peaking</legend>
+    <div class="field wide"><label for="in-peakHours">Guaranteed peaking hours</label>
+      <select id="in-peakHours" data-k="prorPeakHours">
+        <option value="1" ${p.prorPeakHours==="1"?"selected":""}>1&ndash;&lt;2 h (8.50)</option>
+        <option value="2" ${p.prorPeakHours==="2"?"selected":""}>2&ndash;&lt;3 h (8.80)</option>
+        <option value="3" ${p.prorPeakHours==="3"?"selected":""}>3&ndash;&lt;4 h (9.40)</option>
+        <option value="4to6" ${p.prorPeakHours==="4to6"?"selected":""}>4&ndash;6 h (10.55)</option>
+      </select></div>
+    <div class="radio-row"><label><input type="checkbox" id="in-blockOnly" ${p.prorBlockOnly?"checked":""}> Apply premium to peak block only (else: all dry energy)</label></div>
+  </fieldset>
+  <div class="rev-card"><h3>Peaking run-of-river</h3>
+    <div class="out-line"><span class="k">Year-1 total</span><span class="v">NPR ${cr(prorRev1).toFixed(2)} cr</span></div>
+    <div class="out-line"><span class="k">vs RoR</span><span class="v">${((prorRev1/rorRev1-1)*100).toFixed(1)}%</span></div>
+    <div class="out-line"><span class="k">Simple payback on pond</span><span class="v">${(DEFAULTS.pror.incrementalPondCr/((prorRev1-rorRev1)/1e7)).toFixed(1)} yr</span></div>
+  </div>
+  <fieldset><legend>Reservoir (illustrative 100 MW scale)</legend>
+    <div class="field wide"><label for="in-resRegime">Tariff regime</label>
+      <select id="in-resRegime" data-k="reservoirRegime">
+        <option value="erc2082" ${p.reservoirRegime==="erc2082"?"selected":""}>ERC 2082 ceiling (&le;100 MW)</option>
+        <option value="legacy" ${p.reservoirRegime==="legacy"?"selected":""}>Legacy NEA uniform</option>
+      </select></div>
+    ${fieldNum("reservoirDryGwh","Dry energy (GWh)",1,p)}
+    ${fieldNum("reservoirWetGwh","Wet energy (GWh)",1,p)}
+  </fieldset>
+  <div class="rev-card"><h3>Reservoir</h3>
+    <div class="out-line"><span class="k">Revenue</span><span class="v">NPR ${cr(resRev).toFixed(2)} cr</span></div>
+    <div class="out-line"><span class="k">Blended tariff</span><span class="v">NPR ${resBlend.toFixed(2)}/kWh</span></div>
+    <div class="out-line"><span class="k">Dry share</span><span class="v">${(p.reservoirDryGwh/(p.reservoirDryGwh+p.reservoirWetGwh)*100).toFixed(0)}%</span></div>
+  </div>
+  <h3>Blended tariff comparison</h3>
+  <svg id="cmp-chart" viewBox="0 0 260 130"><g>${barsSvg}
+    <line x1="20" y1="122" x2="250" y2="122" stroke="var(--line)"/></g></svg>
+  <p class="why">&sup1; A 10 MW reservoir is unrealistic in Nepal; the reservoir bar uses the 100 MW illustrative scale above so the per-kWh comparison stays meaningful.</p>
+  <h3>Royalty (10 MW RoR example, year 1 revenue)</h3>
+  <table class="mini"><caption>NPR per year, split capacity + energy</caption>
+  <tr><th>Period</th><th>Capacity</th><th>Energy</th><th>Total</th></tr>
+  <tr><td>Years 1&ndash;15</td><td>${cr(e.installedMw*1000*100).toFixed(2)} cr</td><td>${cr(0.0175*rorRev1).toFixed(2)} cr</td><td>${cr(royalty1).toFixed(2)} cr</td></tr>
+  <tr><td>After year 15</td><td>${cr(e.installedMw*1000*1000).toFixed(2)} cr</td><td>${cr(0.10*rorRev1).toFixed(2)} cr</td><td>${cr(royalty16).toFixed(2)} cr</td></tr>
+  </table>
+  <button id="copy-btn">Copy assumptions</button>`;
+}
+function renderGlossary(){
+  return `<h2>Glossary</h2>
+  <input type="text" id="gloss-search" placeholder="Search terms&hellip;">
+  <dl id="gloss-list">${GLOSSARY.map(([t,d,w])=>
+    `<div class="gloss-item" data-t="${t.toLowerCase()}"><dt>${t}</dt><dd>${d}</dd><dd class="why">${w}</dd></div>`).join("")}</dl>`;
+}
+function wireDynamicInputs(){
+  document.querySelectorAll('[id^="in-"][data-k]').forEach(inp=>{
+    inp.addEventListener("input", ()=>{
+      const k=inp.dataset.k;
+      if(k in APP.calc) APP.calc[k]=parseFloat(inp.value)||0;
+      else if(k==="prorPeakHours") APP.ppa.prorPeakHours=inp.value;
+      else if(k==="reservoirRegime") APP.ppa.reservoirRegime=inp.value;
+      else if(k in APP.ppa) APP.ppa[k]=parseFloat(inp.value)||0;
+      updateHeadLabel();
+      renderPanel();
+    });
+  });
+  document.querySelectorAll('input[name="seasonOpt"]').forEach(r=>
+    r.addEventListener("change", ()=>{ APP.ppa.seasonOption=+r.value; renderPanel(); }));
+  const blockOnly=document.getElementById("in-blockOnly");
+  if(blockOnly) blockOnly.addEventListener("change", ()=>{ APP.ppa.prorBlockOnly=blockOnly.checked; renderPanel(); });
+  const search=document.getElementById("gloss-search");
+  if(search) search.addEventListener("input", ()=>{
+    const q=search.value.toLowerCase();
+    document.querySelectorAll(".gloss-item").forEach(it=>
+      it.style.display = it.dataset.t.includes(q)?"":"none");
+  });
+  const copyBtn=document.getElementById("copy-btn");
+  if(copyBtn) copyBtn.addEventListener("click", ()=>{
+    const e=siteEnergy(APP.calc);
+    const rows=[["Gross head (m)",APP.calc.grossHead],["Head loss",APP.calc.headLossFrac],
+      ["Design Q (m3/s)",APP.calc.designQ],["Efficiency",APP.calc.eff],
+      ["Availability",APP.calc.availability],["Dry avg Q (m3/s)",APP.calc.dryAvgQ],
+      ["Wet output frac",APP.calc.wetOutFrac],["Net head (m)",e.netHead.toFixed(1)],
+      ["Installed MW",e.installedMw],["Dry energy (GWh)",gwh(e.dryEnergyKwh).toFixed(2)],
+      ["Wet energy (GWh)",gwh(e.wetEnergyKwh).toFixed(2)],["Annual energy (GWh)",gwh(e.annualEnergyKwh).toFixed(2)],
+      ["PLF",(e.plf*100).toFixed(1)+"%"],["Dry share",(e.dryShare*100).toFixed(1)+"%"]];
+    const text=rows.map(r=>r.join("\t")).join("\n");
+    navigator.clipboard?.writeText(text).then(()=>{
+      copyBtn.textContent="Copied"; copyBtn.dataset.done="1";
+      setTimeout(()=>{copyBtn.textContent="Copy assumptions"; copyBtn.dataset.done="";},1600);
+    }).catch(()=>{ copyBtn.textContent="Select panel text to copy"; });
+  });
+}
+function renderFlags(){
+  const flags=[
+    "PRoR premium application (all dry energy vs peak block only) depends on the signed PPA.",
+    "Escalation anchor (COD vs PPA date) depends on the signed PPA.",
+    "Royalty tiers taken from the Hydropower Development Policy 2058; confirm against the licence.",
+    "Tax-holiday COD cut-off is extended by Finance Acts; confirm the current date.",
+    "Reservoir rates above 100 MW are cost-based and project-specific under the ERC 2082 directive.",
+    "Capex-per-MW ranges are indicative; use the project DPR.",
+    "Drawn as a longitudinal profile with the vertical exaggerated for readability. Schematic, not to scale and not engineering-grade."
+  ];
+  document.getElementById("flags-list").innerHTML="<ul>"+flags.map(f=>`<li>${f}</li>`).join("")+"</ul>";
+}
+
+/* ============================== init ============================== */
+let FLEET = null;
+try { FLEET = JSON.parse(document.getElementById("fleet").textContent); } catch(e) {}
+// Absolute, so the link works from the deployed site, from a local file open and
+// from an Artifact copy alike. Hidden inside the ledger's own iframe, where it
+// would only be a link back to the page you are already on.
+if(window.top === window.self) document.getElementById("back-link").hidden = false;
+applyPlantType("RoR");
+applySeason(5);
+setActiveTab("look");
+renderFlags();
+VB.x=WHOLE_VIEW[0]; VB.y=WHOLE_VIEW[1]; VB.w=WHOLE_VIEW[2]; VB.h=WHOLE_VIEW[3];
+applyVB();
+setFocus(null);
+
+function frame(now){ stepView(now); stepDay(now); requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+</script>
+
+</body>
+</html>
