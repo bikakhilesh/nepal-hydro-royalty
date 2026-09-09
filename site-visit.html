@@ -294,7 +294,11 @@ const installedMwFromQ = (Q,H,eff)=> Math.round(powerKw(Q,H,eff)/100)/10;
 function siteEnergy(inp){
   const Hn = netHead(inp.grossHead, inp.headLossFrac);
   const instMw = installedMwFromQ(inp.designQ, Hn, inp.eff);
-  const dryKw = powerKw(inp.dryAvgQ, Hn, inp.eff);
+  // Water in excess of the turbines' own design flow is spilled, not generated --
+  // capped here, or a design smaller than the average dry flow (a real choice, not
+  // just a hypothetical: see the flow-duration picker at the basin) would compute
+  // more dry-season power than the plant can physically pass.
+  const dryKw = Math.min(powerKw(inp.dryAvgQ, Hn, inp.eff), instMw*1000);
   const dryE = dryKw * DEFAULTS.season.dryHours * inp.availability;
   const wetE = instMw*1000 * inp.wetOutFrac * DEFAULTS.season.wetHours * inp.availability;
   const annual = dryE + wetE;
@@ -324,6 +328,21 @@ function royaltyFor(instMw, revenue, after15){
 function shortfallComp(dryShare, minShare, dryE, annualE, wetRate){
   if(dryShare >= minShare) return 0;
   return Math.max(0, annualE - dryE/minShare) * wetRate;
+}
+// Generic Himalayan-shaped flow-duration curve: multiple of mean annual flow at each
+// exceedance percentile. Illustrative only -- every real river has its own curve, built
+// from years of gauged stage readings converted through a rating curve (stage -> Q).
+const FDC_PTS = [[5,3.3],[10,2.6],[20,2.0],[30,1.6],[40,1.3],[50,1.05],
+                 [65,0.75],[80,0.5],[90,0.35],[95,0.25],[99,0.15]];
+const FDC_QMEAN = 8.0;   // m3/s -- picked so Q40 lands close to this page's own designQ
+function fdcQ(pct){
+  const pts = FDC_PTS;
+  if(pct<=pts[0][0]) return pts[0][1]*FDC_QMEAN;
+  for(let i=0;i<pts.length-1;i++){
+    const [x0,y0]=pts[i], [x1,y1]=pts[i+1];
+    if(pct>=x0 && pct<=x1) return lerp(y0,y1,(pct-x0)/(x1-x0))*FDC_QMEAN;
+  }
+  return pts[pts.length-1][1]*FDC_QMEAN;
 }
 const gwh = kwh => kwh/1e6;
 const cr  = npr => npr/1e7;
@@ -642,6 +661,77 @@ el("path",{d:"M144 346 l21 -16 l21 16 Z", fill:"var(--rock)", class:"edge"}, gGa
 el("line",{x1:196, y1:340, x2:196, y2:378, stroke:"var(--steel)", "stroke-width":"3.4"}, gGauge);
 for(let i=0;i<5;i++) el("line",{x1:192, y1:346+i*7, x2:200, y2:346+i*7, stroke:"var(--ink)","stroke-width":"1.4"}, gGauge);
 
+/* ---- flow-duration curve: the calculation the gauging station feeds ----
+   The "design at Q40" line in the gauging-station text was a claim with no arithmetic
+   behind it. This picks a percentile on a generic exceedance curve, sets designQ from
+   it, and reruns the same siteEnergy() the calculator tab uses -- the trade-off it
+   describes (smaller, steadier design vs bigger, more idle capacity) becomes a number
+   you produced yourself rather than a sentence you're asked to take on faith. */
+const gFdc = group("g-fdc", svg, "dimmable");
+const FDC_X=30, FDC_Y=436, FDC_W=234, FDC_H=112;
+const FDC_CX0=FDC_X+16, FDC_CW=FDC_W-30, FDC_CY0=FDC_Y+26, FDC_CH=38, FDC_CY1=FDC_CY0+FDC_CH;
+const fdcPx = pct => FDC_CX0 + (pct/100)*FDC_CW;
+const fdcPy = mult => FDC_CY0 + (1 - clamp(mult,0,3.5)/3.5)*FDC_CH;
+el("rect",{x:FDC_X, y:FDC_Y, width:FDC_W, height:FDC_H, rx:6, fill:"var(--panel-bg)",
+  stroke:"var(--line)", "stroke-width":"1.4"}, gFdc);
+el("text",{x:FDC_X+10, y:FDC_Y+14, class:"note", style:"font-weight:600;fill:var(--ink)"}, gFdc)
+  .textContent = "Design discharge: pick a percentile";
+el("line",{x1:FDC_CX0, y1:FDC_CY1, x2:FDC_CX0+FDC_CW, y2:FDC_CY1, stroke:"var(--rock)",
+  "stroke-width":"1.2"}, gFdc);
+el("path",{d:pathFrom(FDC_PTS.map(([p,m])=>[fdcPx(p),fdcPy(m)])), fill:"none",
+  stroke:"var(--river)", "stroke-width":"2"}, gFdc);
+el("text",{x:FDC_CX0, y:FDC_CY1+10, class:"note", style:"font-size:10px"}, gFdc).textContent="0% of year";
+el("text",{x:FDC_CX0+FDC_CW, y:FDC_CY1+10, "text-anchor":"end", class:"note",
+  style:"font-size:10px"}, gFdc).textContent="100%";
+const fdcMarker = el("circle",{r:4, fill:"var(--ochre)", stroke:"var(--paper)",
+  "stroke-width":"1.4"}, gFdc);
+fdcMarker.style.display = "none";
+const fdcReadout = el("text",{x:FDC_X+10, y:FDC_Y+FDC_H-6, class:"note",
+  style:"font-size:11px"}, gFdc);
+const FDC_BTN_PCTS = [40,50,65,90];
+const fdcButtons = {};
+FDC_BTN_PCTS.forEach((p,i)=>{
+  const bw=(FDC_W-20-3*6)/4, bx=FDC_X+10+i*(bw+6), by=FDC_Y+FDC_H-30;
+  const g = el("g",{class:"lbl", tabindex:"0", role:"button",
+    "aria-label":"Design at Q"+p}, gFdc);
+  const r = el("rect",{x:bx, y:by, width:bw, height:20, rx:4, fill:"#D8D2C4"}, g);
+  const t = el("text",{x:bx+bw/2, y:by+14, "text-anchor":"middle",
+    style:"font-size:11px;font-weight:600;fill:var(--ink)"}, g);
+  t.textContent = "Q"+p;
+  g.addEventListener("click", ()=>selectFdc(p));
+  g.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();selectFdc(p);} });
+  fdcButtons[p] = {rect:r, text:t};
+});
+let fdcPct = null;   // no selection at load: the worked example keeps its own designQ
+function selectFdc(pct){
+  fdcPct = pct;
+  APP.calc.designQ = Math.round(fdcQ(pct)*100)/100;
+  const inQ = document.getElementById("in-designQ");
+  if(inQ) inQ.value = APP.calc.designQ;
+  updateHeadLabel();
+  drawFdcMarker();
+  renderPanel();
+}
+function drawFdcMarker(){
+  Object.entries(fdcButtons).forEach(([p,b])=>{
+    const on = +p===fdcPct;
+    b.rect.setAttribute("fill", on?"var(--accent)":"#D8D2C4");
+    b.text.setAttribute("fill", on?"var(--paper)":"var(--ink)");
+  });
+  if(fdcPct==null){
+    fdcMarker.style.display = "none";
+    fdcReadout.textContent = "Same river, three plants — pick a percentile.";
+    return;
+  }
+  fdcMarker.style.display = "";
+  const mult = fdcQ(fdcPct)/FDC_QMEAN;
+  fdcMarker.setAttribute("cx", fdcPx(fdcPct));
+  fdcMarker.setAttribute("cy", fdcPy(mult));
+  const e = siteEnergy(APP.calc);
+  fdcReadout.textContent = `Q${fdcPct} → ${APP.calc.designQ.toFixed(1)} m³/s → `+
+    `${e.installedMw.toFixed(1)} MW → PLF ${(e.plf*100).toFixed(0)}%`;
+}
+
 /* ---- the head dimension: the single most important annotation ---- */
 const gHead = group("g-head", svg, "dimmable");
 const HEAD_X = 1000;
@@ -655,7 +745,7 @@ headSub.textContent="forebay level to tailrace level";
 /* ============================== labels ============================== */
 const hotspots = {
   basin:{name:"Catchment basin", text:"Everything starts with the catchment: area, snow vs rain fed, and the flow-duration curve. Dry-season discharge is the single most valuable hydrological number for an analyst &mdash; it earns 1.75x the wet tariff."},
-  gauging_station:{name:"Gauging station", text:"Flow records here feed the flow-duration curve. Design discharge is usually set at Q40 (the flow exceeded 40% of the time) for RoR schemes; Q45&ndash;Q50 is more conservative."},
+  gauging_station:{name:"Gauging station", text:"Flow records here feed the flow-duration curve. Design discharge is usually set at Q40 (the flow exceeded 40% of the time) for RoR schemes; Q45&ndash;Q50 is more conservative. Try the picker on the diagram &mdash; same river, same head, three different design choices."},
   headworks:{name:"Headworks", text:"The headworks divert water. Head is NOT created here &mdash; the weir only raises water enough to enter the intake. Environmental flow (typically 10% of the minimum monthly flow) must be released downstream and is unavailable for generation."},
   desander:{name:"Desanding basin", text:"Settles sediment above ~0.2 mm before it reaches the turbines. Himalayan rivers are sediment-heavy; poor desanding shows up years later as turbine-runner replacement capex and higher O&M."},
   headrace:{name:"Headrace canal", text:"The headrace carries water almost level while the river falls away below. The vertical gap that opens up is the gross head. Longer headrace = more head, but more civil cost and geological risk."},
@@ -818,7 +908,7 @@ const WHOLE_VIEW=[0,120,1600,800];
 function setFocus(id){
   svg.classList.toggle("touring", !!id);
   for(const [k,g] of Object.entries(labelEls)) g.classList.toggle("focused", k===id);
-  const map={basin:["g-back","g-river","g-gauge"], gauging_station:["g-gauge","g-river"],
+  const map={basin:["g-back","g-river","g-gauge","g-fdc"], gauging_station:["g-gauge","g-river","g-fdc"],
     headworks:["g-weir","g-pond","g-res","g-river"], desander:["g-desander"],
     headrace:["g-headrace","g-river","g-head"], forebay_surge:["g-forebay","g-pond","g-penstock","g-ph"],
     penstock:["g-penstock","g-head","g-res"], powerhouse:["g-ph","g-ph-res","g-head"],
@@ -869,6 +959,7 @@ function applyPlantType(type){
   gWeir.style.display   = res?"none":"";
   gDesander.style.display = res?"none":"";
   gHeadrace.style.display = res?"none":"";
+  gFdc.style.display      = res?"none":"";
   gForebay.style.display  = ror?"":"none";
   gPond.style.display     = pror?"":"none";
   gPenstock.style.display = res?"none":"";
@@ -1282,6 +1373,7 @@ try { FLEET = JSON.parse(document.getElementById("fleet").textContent); } catch(
 // from an Artifact copy alike. Hidden inside the ledger's own iframe, where it
 // would only be a link back to the page you are already on.
 if(window.top === window.self) document.getElementById("back-link").hidden = false;
+drawFdcMarker();
 applyPlantType("RoR");
 applySeason(5);
 setActiveTab("look");
