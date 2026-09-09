@@ -668,35 +668,54 @@ for(let i=0;i<5;i++) el("line",{x1:192, y1:346+i*7, x2:200, y2:346+i*7, stroke:"
    describes (smaller, steadier design vs bigger, more idle capacity) becomes a number
    you produced yourself rather than a sentence you're asked to take on faith. */
 const gFdc = group("g-fdc", svg, "dimmable");
-const FDC_X=30, FDC_Y=436, FDC_W=234, FDC_H=112;
-const FDC_CX0=FDC_X+16, FDC_CW=FDC_W-30, FDC_CY0=FDC_Y+26, FDC_CH=38, FDC_CY1=FDC_CY0+FDC_CH;
+// Sized to clear the gauging-station hotspot's own tight focus box (a 560x320 window
+// centered on its anchor) as well as the tour's wider stop-1 framing -- the tighter of
+// the two, not the one it happened to be drawn against first.
+const FDC_X=30, FDC_Y=400, FDC_W=234, FDC_H=150;
+const FDC_CX0=FDC_X+18, FDC_CW=FDC_W-34, FDC_CY0=FDC_Y+34, FDC_CH=46, FDC_CY1=FDC_CY0+FDC_CH;
 const fdcPx = pct => FDC_CX0 + (pct/100)*FDC_CW;
 const fdcPy = mult => FDC_CY0 + (1 - clamp(mult,0,3.5)/3.5)*FDC_CH;
 el("rect",{x:FDC_X, y:FDC_Y, width:FDC_W, height:FDC_H, rx:6, fill:"var(--panel-bg)",
   stroke:"var(--line)", "stroke-width":"1.4"}, gFdc);
-el("text",{x:FDC_X+10, y:FDC_Y+14, class:"note", style:"font-weight:600;fill:var(--ink)"}, gFdc)
-  .textContent = "Design discharge: pick a percentile";
+el("text",{x:FDC_X+10, y:FDC_Y+15, class:"note", style:"font-weight:600;fill:var(--ink)"}, gFdc)
+  .textContent = "How much river counts as “always there”?";
+// axis: a bare line with no numbers reads as decoration, not data -- name both ends in
+// words instead of forcing a reader to infer them from an unlabelled curve.
 el("line",{x1:FDC_CX0, y1:FDC_CY1, x2:FDC_CX0+FDC_CW, y2:FDC_CY1, stroke:"var(--rock)",
   "stroke-width":"1.2"}, gFdc);
+el("line",{x1:FDC_CX0, y1:FDC_CY0-4, x2:FDC_CX0, y2:FDC_CY1, stroke:"var(--rock)",
+  "stroke-width":"1.2"}, gFdc);
+el("text",{x:FDC_CX0-4, y:FDC_CY0+2, "text-anchor":"end", class:"note",
+  style:"font-size:9px"}, gFdc).textContent="more";
+el("text",{x:FDC_CX0-4, y:FDC_CY1, "text-anchor":"end", class:"note",
+  style:"font-size:9px"}, gFdc).textContent="less";
+el("text",{x:FDC_CX0-4, y:(FDC_CY0+FDC_CY1)/2-2, "text-anchor":"end", class:"note",
+  style:"font-size:9px"}, gFdc).textContent="water";
 el("path",{d:pathFrom(FDC_PTS.map(([p,m])=>[fdcPx(p),fdcPy(m)])), fill:"none",
-  stroke:"var(--river)", "stroke-width":"2"}, gFdc);
-el("text",{x:FDC_CX0, y:FDC_CY1+10, class:"note", style:"font-size:10px"}, gFdc).textContent="0% of year";
-el("text",{x:FDC_CX0+FDC_CW, y:FDC_CY1+10, "text-anchor":"end", class:"note",
-  style:"font-size:10px"}, gFdc).textContent="100%";
-const fdcMarker = el("circle",{r:4, fill:"var(--ochre)", stroke:"var(--paper)",
+  stroke:"var(--river)", "stroke-width":"2.4"}, gFdc);
+el("text",{x:FDC_CX0, y:FDC_CY1+11, class:"note", style:"font-size:9px"}, gFdc).textContent="rare (big flood)";
+el("text",{x:FDC_CX0+FDC_CW, y:FDC_CY1+11, "text-anchor":"end", class:"note",
+  style:"font-size:9px"}, gFdc).textContent="always there";
+el("text",{x:FDC_CX0+FDC_CW/2, y:FDC_CY1+22, "text-anchor":"middle", class:"note",
+  style:"font-size:9.5px"}, gFdc).textContent="← % of the year this much water is flowing →";
+// crosshair: ties the picked button to a specific point on the curve, rather than
+// leaving the reader to guess which bump in the line a button corresponds to
+const fdcGuideX = el("line",{stroke:"var(--ochre)", "stroke-width":"1.2", "stroke-dasharray":"3 3"}, gFdc);
+const fdcGuideY = el("line",{stroke:"var(--ochre)", "stroke-width":"1.2", "stroke-dasharray":"3 3"}, gFdc);
+const fdcMarker = el("circle",{r:4.5, fill:"var(--ochre)", stroke:"var(--paper)",
   "stroke-width":"1.4"}, gFdc);
-fdcMarker.style.display = "none";
-const fdcReadout = el("text",{x:FDC_X+10, y:FDC_Y+FDC_H-6, class:"note",
-  style:"font-size:11px"}, gFdc);
+fdcGuideX.style.display = fdcGuideY.style.display = fdcMarker.style.display = "none";
+const fdcReadout = el("text",{x:FDC_X+10, y:FDC_Y+146, class:"dimtext",
+  style:"font-size:12px"}, gFdc);
 const FDC_BTN_PCTS = [40,50,65,90];
 const fdcButtons = {};
 FDC_BTN_PCTS.forEach((p,i)=>{
-  const bw=(FDC_W-20-3*6)/4, bx=FDC_X+10+i*(bw+6), by=FDC_Y+FDC_H-30;
+  const bw=(FDC_W-20-3*6)/4, bx=FDC_X+10+i*(bw+6), by=FDC_Y+112;
   const g = el("g",{class:"lbl", tabindex:"0", role:"button",
     "aria-label":"Design at Q"+p}, gFdc);
-  const r = el("rect",{x:bx, y:by, width:bw, height:20, rx:4, fill:"#D8D2C4"}, g);
-  const t = el("text",{x:bx+bw/2, y:by+14, "text-anchor":"middle",
-    style:"font-size:11px;font-weight:600;fill:var(--ink)"}, g);
+  const r = el("rect",{x:bx, y:by, width:bw, height:22, rx:4, fill:"#D8D2C4"}, g);
+  const t = el("text",{x:bx+bw/2, y:by+15, "text-anchor":"middle",
+    style:"font-size:11.5px;font-weight:600;fill:var(--ink)"}, g);
   t.textContent = "Q"+p;
   g.addEventListener("click", ()=>selectFdc(p));
   g.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();selectFdc(p);} });
@@ -719,14 +738,17 @@ function drawFdcMarker(){
     b.text.setAttribute("fill", on?"var(--paper)":"var(--ink)");
   });
   if(fdcPct==null){
-    fdcMarker.style.display = "none";
+    fdcGuideX.style.display = fdcGuideY.style.display = fdcMarker.style.display = "none";
     fdcReadout.textContent = "Same river, three plants — pick a percentile.";
     return;
   }
-  fdcMarker.style.display = "";
-  const mult = fdcQ(fdcPct)/FDC_QMEAN;
-  fdcMarker.setAttribute("cx", fdcPx(fdcPct));
-  fdcMarker.setAttribute("cy", fdcPy(mult));
+  fdcGuideX.style.display = fdcGuideY.style.display = fdcMarker.style.display = "";
+  const mult = fdcQ(fdcPct)/FDC_QMEAN, mx = fdcPx(fdcPct), my = fdcPy(mult);
+  fdcMarker.setAttribute("cx", mx); fdcMarker.setAttribute("cy", my);
+  fdcGuideX.setAttribute("x1", mx); fdcGuideX.setAttribute("x2", mx);
+  fdcGuideX.setAttribute("y1", my); fdcGuideX.setAttribute("y2", FDC_CY1);
+  fdcGuideY.setAttribute("x1", FDC_CX0); fdcGuideY.setAttribute("x2", mx);
+  fdcGuideY.setAttribute("y1", my); fdcGuideY.setAttribute("y2", my);
   const e = siteEnergy(APP.calc);
   fdcReadout.textContent = `Q${fdcPct} → ${APP.calc.designQ.toFixed(1)} m³/s → `+
     `${e.installedMw.toFixed(1)} MW → PLF ${(e.plf*100).toFixed(0)}%`;
