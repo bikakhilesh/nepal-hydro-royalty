@@ -622,7 +622,17 @@ const resHeadTop = el("line",{x1:RES_HEAD_X-12, y1:FSL, x2:RES_HEAD_X+12, y2:FSL
 el("line",{x1:RES_HEAD_X-12, y1:RES_PH_Y+RES_PH_H-10, x2:RES_HEAD_X+12, y2:RES_PH_Y+RES_PH_H-10,
   stroke:"var(--ink)","stroke-width":"1.8"}, gResHead);
 const resHeadLabel = el("text",{x:RES_HEAD_X+18, y:FSL+70, class:"dimtext"}, gResHead);
-el("text",{x:RES_HEAD_X+18, y:FSL+90, class:"note"}, gResHead).textContent="lake surface to tailwater";
+const resHeadSub = el("text",{x:RES_HEAD_X+18, y:FSL+90, class:"note"}, gResHead);
+resHeadSub.textContent="lake surface to tailwater";
+// resHeadLabel's own y moves every season (it tracks the shrinking dimension's
+// midpoint as the reservoir draws down), so it can't take a fixed counter-scale
+// anchor the way its subtitle can -- it re-anchors on its own current position
+// instead, called from here and from applyVB() alike.
+function updateResHeadTransform(){
+  const k = VB.w/1600;
+  const rx=+resHeadLabel.getAttribute("x"), ry=+resHeadLabel.getAttribute("y");
+  resHeadLabel.setAttribute("transform", `translate(${rx*(1-k)} ${ry*(1-k)}) scale(${k})`);
+}
 
 /* ---- switchyard, towers, metering ---- */
 const gYard = group("g-yard", svg, "dimmable");
@@ -917,6 +927,12 @@ function applyVB(){
     if(leaderEls[id]) leaderEls[id].style.display = vis ? "" : "none";
   }
   pondNote.setAttribute("transform", `translate(${PN_X*(1-k)} ${PN_Y*(1-k)}) scale(${k})`);
+  const HL_X=HEAD_X+18, HL_Y=(HR_Y1+PH_Y+PH_H-10)/2;
+  headLabel.setAttribute("transform", `translate(${HL_X*(1-k)} ${HL_Y*(1-k)}) scale(${k})`);
+  headSub.setAttribute("transform", `translate(${HL_X*(1-k)} ${(HL_Y+20)*(1-k)}) scale(${k})`);
+  const RS_X=RES_HEAD_X+18, RS_Y=FSL+90;
+  resHeadSub.setAttribute("transform", `translate(${RS_X*(1-k)} ${RS_Y*(1-k)}) scale(${k})`);
+  updateResHeadTransform();
 }
 function stepView(now){
   if(!viewTween) return;
@@ -1053,6 +1069,7 @@ function applySeason(i){
   resHeadLine.setAttribute("y1", String(surf));
   resHeadTop.setAttribute("y1", String(surf)); resHeadTop.setAttribute("y2", String(surf));
   resHeadLabel.setAttribute("y", String((surf + RES_PH_Y+RES_PH_H-10)/2));
+  updateResHeadTransform();   // label just moved: re-anchor it at its new position
   // 1 scene unit of fall is scaled so the RoR gross head of 120 m reads as its own dimension
   const M_PER_UNIT = APP.calc.grossHead / ((PH_Y+PH_H-10) - HR_Y1);
   resHeadLabel.textContent = `Gross head ${Math.round(((RES_PH_Y+RES_PH_H-10)-surf)*M_PER_UNIT)} m`;
