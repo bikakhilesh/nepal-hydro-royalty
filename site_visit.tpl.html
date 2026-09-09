@@ -503,20 +503,20 @@ el("path",{d:pondBasin, fill:"none", stroke:"var(--concrete)", "stroke-width":"1
 for(const [y,txt] of [[POND_FSL,"full supply level"],[POND_MOL,"minimum operating level"]]){
   el("line",{x1:bankL(y)-20, y1:y, x2:bankR(y)+64, y2:y, stroke:"var(--ochre)",
     "stroke-width":"1.6", "stroke-dasharray":"8 6"}, gPond);
-  el("text",{x:bankR(y)+70, y:y+5, class:"note", fill:"var(--ochre)"}, gPond).textContent=txt;
+  el("text",{x:bankR(y)+70, y:y+5, class:"note", style:"fill:var(--ochre)"}, gPond).textContent=txt;
 }
 // the band between them is the live storage: the only part of the pond that is tradable
 el("path",{d:`M${POND_X0+30} ${POND_FSL} L${POND_X0+30} ${POND_MOL} `+
              `M${POND_X0+22} ${POND_FSL} L${POND_X0+38} ${POND_FSL} `+
              `M${POND_X0+22} ${POND_MOL} L${POND_X0+38} ${POND_MOL}`,
   stroke:"var(--ochre)", "stroke-width":"2", fill:"none"}, gPond);
-el("text",{x:POND_X0+44, y:(POND_FSL+POND_MOL)/2+5, class:"note", fill:"var(--ochre)"}, gPond)
+el("text",{x:POND_X0+44, y:(POND_FSL+POND_MOL)/2+5, class:"note", style:"fill:var(--ochre)"}, gPond)
   .textContent="live storage";
 // offtake to the penstock, low enough to stay submerged at minimum operating level
 el("rect",{x:POND_X1-46, y:396, width:34, height:30, fill:"var(--concrete)", class:"edge"}, gPond);
 const PN_X=POND_X0+4, PN_Y=POND_CREST-14;
-const pondNote = el("text",{x:PN_X, y:PN_Y, class:"dimtext", fill:"var(--ink)",
-  "font-size":"17"}, gPond);
+const pondNote = el("text",{x:PN_X, y:PN_Y, class:"dimtext",
+  style:"fill:var(--ink);font-size:17px"}, gPond);
 
 /* ---- penstock ---- */
 const gPenstock = group("g-penstock", svg, "dimmable");
@@ -589,12 +589,12 @@ function lakePath(surfY){
 const resWater = el("path",{d:lakePath(FSL), fill:"var(--river)", opacity:".92"}, gRes);
 // dead storage: the wedge below the intake sill that can never be generated with
 const deadStore = el("path",{d:lakePath(RES_SILL), fill:"#3E5563", opacity:".6"}, gRes);
-el("text",{x:80, y:RES_SILL+26, class:"note", fill:"var(--paper)"}, gRes).textContent="dead storage";
+el("text",{x:80, y:RES_SILL+26, class:"note", style:"fill:var(--paper)"}, gRes).textContent="dead storage";
 // full supply level, fixed, so the gap down to the live surface reads as drawdown
 el("line",{x1:0, y1:FSL, x2:DAM_X-26, y2:FSL, stroke:"var(--ochre)",
   "stroke-width":"2.4", "stroke-dasharray":"8 6"}, gRes);
-el("text",{x:14, y:FSL-8, class:"note", fill:"var(--ochre)"}, gRes).textContent="full supply level";
-const drawdownNote = el("text",{x:14, y:FSL+22, class:"note", fill:"var(--ochre)"}, gRes);
+el("text",{x:14, y:FSL-8, class:"note", style:"fill:var(--ochre)"}, gRes).textContent="full supply level";
+const drawdownNote = el("text",{x:14, y:FSL+22, class:"note", style:"fill:var(--ochre)"}, gRes);
 // dam body, battered downstream face
 el("path",{d:`M${DAM_X-26} ${DAM_BASE} L${DAM_X-26} ${DAM_CREST} L${DAM_X+18} ${DAM_CREST} L${DAM_TOE} ${DAM_BASE} Z`,
   fill:"var(--concrete)", class:"edge"}, gRes);
@@ -713,7 +713,7 @@ FDC_BTN_PCTS.forEach((p,i)=>{
   const bw=(FDC_W-20-3*6)/4, bx=FDC_X+10+i*(bw+6), by=FDC_Y+112;
   const g = el("g",{class:"lbl", tabindex:"0", role:"button",
     "aria-label":"Design at Q"+p}, gFdc);
-  const r = el("rect",{x:bx, y:by, width:bw, height:22, rx:4, fill:"#D8D2C4"}, g);
+  const r = el("rect",{x:bx, y:by, width:bw, height:22, rx:4, style:"fill:#D8D2C4"}, g);
   const t = el("text",{x:bx+bw/2, y:by+15, "text-anchor":"middle",
     style:"font-size:11.5px;font-weight:600;fill:var(--ink)"}, g);
   t.textContent = "Q"+p;
@@ -734,8 +734,8 @@ function selectFdc(pct){
 function drawFdcMarker(){
   Object.entries(fdcButtons).forEach(([p,b])=>{
     const on = +p===fdcPct;
-    b.rect.setAttribute("fill", on?"var(--accent)":"#D8D2C4");
-    b.text.setAttribute("fill", on?"var(--paper)":"var(--ink)");
+    b.rect.style.fill = on?"var(--accent)":"#D8D2C4";
+    b.text.style.fill = on?"var(--paper)":"var(--ink)";
   });
   if(fdcPct==null){
     fdcGuideX.style.display = fdcGuideY.style.display = fdcMarker.style.display = "none";
@@ -767,10 +767,10 @@ headSub.textContent="forebay level to tailrace level";
 /* ============================== labels ============================== */
 const hotspots = {
   basin:{name:"Catchment basin", text:"Everything starts with the catchment: area, snow vs rain fed, and the flow-duration curve. Dry-season discharge is the single most valuable hydrological number for an analyst &mdash; it earns 1.75x the wet tariff."},
-  gauging_station:{name:"Gauging station", text:"Flow records here feed the flow-duration curve. Design discharge is usually set at Q40 (the flow exceeded 40% of the time) for RoR schemes; Q45&ndash;Q50 is more conservative. Try the picker on the diagram &mdash; same river, same head, three different design choices."},
+  gauging_station:{name:"Gauging station", text:"Flow records here feed the flow-duration curve. Design discharge is usually set at Q40 (the flow exceeded 40% of the time) for RoR schemes; Q45&ndash;Q50 is more conservative. Try the picker on the diagram &mdash; same river, same head, three different design choices.</p><p class=\"why\">Before any of that: a staff gauge reads water level, a current meter measures discharge at several levels to build a rating curve (stage &rarr; discharge), and years of daily readings converted through that curve are the flow record a design is based on. Nepal has fewer than 100 gauging stations, so most sites are ungauged &mdash; flow is instead estimated by transferring records from a gauged neighbour by catchment area, by regression, or by methods built for Nepal specifically (MHSP, HYDEST). This has to happen before a design discharge, and therefore an installed capacity, can be chosen at all."},
   headworks:{name:"Headworks", text:"The headworks divert water. Head is NOT created here &mdash; the weir only raises water enough to enter the intake. Environmental flow (typically 10% of the minimum monthly flow) must be released downstream and is unavailable for generation."},
-  desander:{name:"Desanding basin", text:"Settles sediment above ~0.2 mm before it reaches the turbines. Himalayan rivers are sediment-heavy; poor desanding shows up years later as turbine-runner replacement capex and higher O&M."},
-  headrace:{name:"Headrace canal", text:"The headrace carries water almost level while the river falls away below. The vertical gap that opens up is the gross head. Longer headrace = more head, but more civil cost and geological risk."},
+  desander:{},
+  headrace:{},
   forebay_surge:{name:"Forebay / surge", text:"Small buffer that keeps the penstock full and absorbs pressure surges when turbines close suddenly. In the PRoR configuration this becomes the daily pond."},
   penstock:{name:"Penstock", text:"The pressure pipe where gross head becomes pressure. Head loss in penstock, tunnel and valves (typically 4&ndash;8%) reduces gross head to net head. Net head is what enters the power formula."},
   powerhouse:{name:"Powerhouse", text:"P (kW) = 9.81 &times; Q &times; H_net &times; &eta;. Turbine choice follows head: Pelton above ~300 m, Francis ~50&ndash;500 m, Kaplan below ~50 m. Two units let the plant run part-load in the dry season while one is maintained."},
@@ -846,8 +846,13 @@ function rebuildTour(){
 }
 // Reservoir stops reframed for the mid-valley dam: stop 4 has no canal to show, so it
 // shows the drawdown range instead, which is that scheme's equivalent lesson.
-const TOUR_VIEW_RES = { 1:[0,150,760,430], 2:[380,150,560,400], 4:[60,180,760,420],
-                        5:[430,300,420,300], 6:[600,330,420,280] };
+const TOUR_VIEW_RES = { 1:[0,150,760,430], 2:[380,150,560,400], 3:[0,240,660,360],
+                        4:[60,180,760,420], 5:[430,300,420,300], 6:[600,330,420,280] };
+// Two stop titles change meaning for a storage scheme: there is no desanding basin
+// (sediment settles in the reservoir itself) and no headrace (head comes from the
+// lake surface, which moves). Same numbering, same tour, different lesson.
+const TOUR_TITLE_RES = { 3:"Sediment settles in the lake, not a basin",
+                          4:"Head moves with the lake, not a canal" };
 
 const gLabels = group("g-labels");
 const labelEls = {};
@@ -947,7 +952,8 @@ function goToStop(idx, animate=true){
   setView(v, animate);
   setFocus(stop.id);
   document.querySelectorAll(".tour-dot").forEach((d,i)=>d.setAttribute("aria-current",String(i===idx)));
-  document.getElementById("tour-title").textContent = stop.n+". "+stop.title;
+  const title = (APP.plantType==="Reservoir" && TOUR_TITLE_RES[stop.n]) || stop.title;
+  document.getElementById("tour-title").textContent = stop.n+". "+title;
   if(stop.day) startDayClock(); else stopDayClock();
   APP.panelTab="look"; setActiveTab("look"); renderPanel(stop.id);
 }
@@ -971,6 +977,18 @@ function showWhole(){
 const FOREBAY_TEXT = {
   name:"Forebay / surge",
   text:"Small buffer that keeps the penstock full and absorbs pressure surges when turbines close suddenly. It holds minutes, not hours &mdash; it cannot shift energy from one part of the day to another."};
+const DESANDER_TEXT = {
+  name:"Desanding basin",
+  text:"Settles sediment above ~0.2 mm before it reaches the turbines. Himalayan rivers are sediment-heavy; poor desanding shows up years later as turbine-runner replacement capex and higher O&M."};
+const RES_DESANDER_TEXT = {
+  name:"Reservoir sedimentation",
+  text:"A storage scheme has no separate desanding basin &mdash; sediment settles in the reservoir itself. The dark wedge below the intake sill is dead storage: volume the licence paid for as live capacity that a few decades of silt quietly convert into a permanent floor. Downstream sediment flushing and periodic dredging are the usual defences, and neither is cheap."};
+const HEADRACE_TEXT = {
+  name:"Headrace canal",
+  text:"The headrace carries water almost level while the river falls away below. The vertical gap that opens up is the gross head. Longer headrace = more head, but more civil cost and geological risk."};
+const RES_HEADRACE_TEXT = {
+  name:"Reservoir regulation",
+  text:"A storage scheme earns no head along a canal &mdash; head comes from the lake surface itself, and that surface moves. Full supply level to minimum operating level is the whole usable range: draw the lake down for the dry-season tariff premium and gross head falls with it, which is exactly the trade-off the season dial on the right is showing."};
 const POND_TEXT = {
   name:"Daily pond",
   text:"Four to six hours of the plant's own discharge, held back through the day and released through the evening peak block. The pond generates nothing: annual energy is almost unchanged, because the river delivers what it delivers. What changes is <em>when</em> the kWh arrive, and the dry-season peak rate is 10.55 against 8.40 off-peak. That is the whole PRoR case &mdash; an earthwork bought to move existing energy into a better-paid column."};
@@ -978,6 +996,8 @@ function applyPlantType(type){
   APP.plantType=type;
   const ror=type==="RoR", pror=type==="PRoR", res=type==="Reservoir";
   Object.assign(hotspots.forebay_surge, pror?POND_TEXT:FOREBAY_TEXT);
+  Object.assign(hotspots.desander, res?RES_DESANDER_TEXT:DESANDER_TEXT);
+  Object.assign(hotspots.headrace, res?RES_HEADRACE_TEXT:HEADRACE_TEXT);
   gWeir.style.display   = res?"none":"";
   gDesander.style.display = res?"none":"";
   gHeadrace.style.display = res?"none":"";
@@ -1067,7 +1087,7 @@ function applyTod(h){
   pondSurf.setAttribute("d", `M${bankL(surf)+8} ${surf} L${bankR(surf)-8} ${surf}`);
   pondNote.textContent = (peak ? "peak block \u2014 releasing, pond " : "filling \u2014 pond ")
     + Math.round(fill*100) + "% full";
-  pondNote.setAttribute("fill", peak ? "var(--ochre)" : "var(--rock)");
+  pondNote.style.fill = peak ? "var(--ochre)" : "var(--rock)";
   // the penstock and the runner carry the release schedule: idling by day, hard at 18:00
   svg.style.setProperty("--fd", (pror ? (peak?0.65:2.9) : 1.5)+"s");
   svg.style.setProperty("--sd", (pror ? (peak?0.5:2.2) : 1.1)+"s");
