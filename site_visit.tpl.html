@@ -302,7 +302,7 @@ function siteEnergy(inp){
   const dryE = dryKw * DEFAULTS.season.dryHours * inp.availability;
   const wetE = instMw*1000 * inp.wetOutFrac * DEFAULTS.season.wetHours * inp.availability;
   const annual = dryE + wetE;
-  const plf = annual / (instMw*1000*8760);
+  const plf = instMw>0 ? annual / (instMw*1000*8760) : 0;
   const dryShare = annual>0 ? dryE/annual : 0;
   return { netHead:Hn, installedMw:instMw, dryKw, dryEnergyKwh:dryE, wetEnergyKwh:wetE,
            annualEnergyKwh:annual, plf, dryShare };
@@ -345,6 +345,9 @@ function fdcQ(pct){
   return pts[pts.length-1][1]*FDC_QMEAN;
 }
 const gwh = kwh => kwh/1e6;
+// Every ratio below can divide by zero once a field is cleared or zeroed; show a dash
+// rather than NaN/Infinity, which a reader can only interpret as the page having crashed.
+const num = (v, digits=2) => Number.isFinite(v) ? v.toFixed(digits) : "\u2014";
 const cr  = npr => npr/1e7;
 
 (function selfCheck(){
@@ -1223,11 +1226,38 @@ const GLOSSARY = [
 
 function renderPanel(focusId){
   const body=document.getElementById("panel-body");
+  const keep=captureFocus(body);
   if(APP.panelTab==="look") body.innerHTML=renderLook(focusId);
   else if(APP.panelTab==="calc") body.innerHTML=renderCalc();
   else if(APP.panelTab==="ppa") body.innerHTML=renderPPA();
   else body.innerHTML=renderGlossary();
   wireDynamicInputs();
+  restoreFocus(keep);
+}
+/* The panel is rebuilt from scratch on every keystroke, which throws away the element
+   the keystroke came from. Carry the caret back across the rebuild, and carry the raw
+   text with it: state holds parseFloat("0.") === 0, and writing that back mid-edit
+   would delete the "." the moment the user typed it. */
+function captureFocus(body){
+  const a=document.activeElement;
+  if(!a || !a.id || !body.contains(a)) return null;
+  const keep={node:a, id:a.id, start:null, end:null};
+  // selectionStart throws on <input type="number"> in Chrome and Firefox
+  try{ keep.start=a.selectionStart; keep.end=a.selectionEnd; }catch(e){}
+  return keep;
+}
+function restoreFocus(keep){
+  if(!keep) return;
+  const fresh=document.getElementById(keep.id);
+  if(!fresh) return;
+  // Put the original element back rather than copying its value onto the new one. A
+  // number input mid-edit reports value "" while still showing the text the user typed
+  // ("0." is not yet a valid number), so copying the value would swallow the decimal
+  // point on the keystroke that produced it. The node keeps its own raw buffer, and its
+  // listener, which was attached when it was built and is not re-attached here.
+  if(fresh!==keep.node) fresh.replaceWith(keep.node);
+  keep.node.focus();
+  if(keep.start!=null){ try{ keep.node.setSelectionRange(keep.start, keep.end); }catch(e){} }
 }
 function renderLook(focusId){
   const id = focusId || (APP.tourIndex>=0 ? TOUR[APP.tourIndex].id : null);
@@ -1242,7 +1272,7 @@ function fieldNum(key,label,step,obj){
     <input type="number" id="in-${key}" data-k="${key}" step="${step}" value="${obj[key]}"></div>`;
 }
 function renderCalc(){
-  const c=APP.calc, e=siteEnergy(c);
+  const c=APP.calc;
   return `
   <h2>Energy &amp; PLF calculator</h2>
   <fieldset><legend>Site inputs</legend>
@@ -1254,6 +1284,13 @@ function renderCalc(){
     ${fieldNum("dryAvgQ","Avg dry-season discharge (m&sup3;/s)",0.1,c)}
     ${fieldNum("wetOutFrac","Avg wet output (fraction of capacity)",0.01,c)}
   </fieldset>
+  <div id="calc-out">${calcOutputs()}</div>`;
+}
+/* Everything derived from the inputs, kept in its own container so a keystroke can
+   refresh it without touching the fields above -- see refreshOutputs(). */
+function calcOutputs(){
+  const c=APP.calc, e=siteEnergy(c);
+  return `
   <div class="arith">H_net = ${c.grossHead} &times; (1 &minus; ${c.headLossFrac}) = ${e.netHead.toFixed(1)} m<br>
   P = 9.81 &times; ${c.designQ} &times; ${e.netHead.toFixed(1)} &times; ${c.eff} = ${powerKw(c.designQ,e.netHead,c.eff).toFixed(0)} kW</div>
   <div class="out-line"><span class="k">Net head</span><span class="v">${e.netHead.toFixed(1)} m</span></div>
@@ -1265,6 +1302,15 @@ function renderCalc(){
   <div class="out-line"><span class="k">Dry-energy share</span><span class="v">${(e.dryShare*100).toFixed(1)}%</span></div>
   ${dryComplianceFlag(e)}
   ${fleetScale()}`;
+}
+/* A keystroke updates the numbers, never the fields it came from. The calculator's own
+   tab can do that in place; the PPA tab interleaves its fieldsets with its result cards,
+   so it still rebuilds -- renderPanel's focus handoff covers that, and every field there
+   takes a whole number, which survives the round trip that a half-typed decimal does not. */
+function refreshOutputs(){
+  const out=document.getElementById("calc-out");
+  if(out) out.innerHTML=calcOutputs();
+  else renderPanel();
 }
 /* Figures from the register this page is built alongside, so the worked model above can
    be read against the fleet it exists to explain rather than in a vacuum. Injected at
@@ -1302,12 +1348,14 @@ function renderPPA(){
   const bars=[{label:"RoR",val:rorRev1/e.annualEnergyKwh,color:"#4E88A6"},
               {label:"PRoR",val:prorRev1/e.annualEnergyKwh,color:"#C8923A"},
               {label:"Reservoir&sup1;",val:resBlend,color:"#4F7A48"}];
-  const maxV=Math.max(...bars.map(b=>b.val),1);
+  // a single NaN in the list would poison Math.max and collapse every bar
+  const barVal = b => Number.isFinite(b.val) ? b.val : 0;
+  const maxV=Math.max(...bars.map(barVal),1);
   const barsSvg=bars.map((b,i)=>{
-    const bw=54,gap=18,x0=30+i*(bw+gap),h=Math.round(b.val/maxV*90);
+    const bw=54,gap=18,x0=30+i*(bw+gap),h=Math.round(barVal(b)/maxV*90);
     return `<rect x="${x0}" y="${110-h}" width="${bw}" height="${h}" fill="${b.color}"/>
       <text x="${x0+bw/2}" y="122" font-size="9" text-anchor="middle">${b.label}</text>
-      <text x="${x0+bw/2}" y="${104-h}" font-size="9" text-anchor="middle">${b.val.toFixed(2)}</text>`;
+      <text x="${x0+bw/2}" y="${104-h}" font-size="9" text-anchor="middle">${num(b.val)}</text>`;
   }).join("");
   return `
   <h2>PPA &amp; revenue</h2>
@@ -1319,7 +1367,7 @@ function renderPPA(){
     <div class="out-line"><span class="k season-dry">Dry revenue</span><span class="v">NPR ${cr(e.dryEnergyKwh*DEFAULTS.tariff.ror.dry).toFixed(2)} cr</span></div>
     <div class="out-line"><span class="k season-wet">Wet revenue</span><span class="v">NPR ${cr(e.wetEnergyKwh*DEFAULTS.tariff.ror.wet).toFixed(2)} cr</span></div>
     <div class="out-line"><span class="k">Year-1 total</span><span class="v">NPR ${cr(rorRev1).toFixed(2)} cr</span></div>
-    <div class="out-line"><span class="k">Blended tariff</span><span class="v">NPR ${(rorRev1/e.annualEnergyKwh).toFixed(2)}/kWh</span></div>
+    <div class="out-line"><span class="k">Blended tariff</span><span class="v">NPR ${num(rorRev1/e.annualEnergyKwh)}/kWh</span></div>
   </div>
   <fieldset><legend>Escalation / project year</legend>
     <div class="field"><label for="in-escYear">Project year (1&ndash;${DEFAULTS.escalation.count+1}+)</label>
@@ -1338,8 +1386,8 @@ function renderPPA(){
   </fieldset>
   <div class="rev-card"><h3>Peaking run-of-river</h3>
     <div class="out-line"><span class="k">Year-1 total</span><span class="v">NPR ${cr(prorRev1).toFixed(2)} cr</span></div>
-    <div class="out-line"><span class="k">vs RoR</span><span class="v">${((prorRev1/rorRev1-1)*100).toFixed(1)}%</span></div>
-    <div class="out-line"><span class="k">Simple payback on pond</span><span class="v">${(DEFAULTS.pror.incrementalPondCr/((prorRev1-rorRev1)/1e7)).toFixed(1)} yr</span></div>
+    <div class="out-line"><span class="k">vs RoR</span><span class="v">${num((prorRev1/rorRev1-1)*100,1)}%</span></div>
+    <div class="out-line"><span class="k">Simple payback on pond</span><span class="v">${num(DEFAULTS.pror.incrementalPondCr/((prorRev1-rorRev1)/1e7),1)} yr</span></div>
   </div>
   <fieldset><legend>Reservoir (illustrative 100 MW scale)</legend>
     <div class="field wide"><label for="in-resRegime">Tariff regime</label>
@@ -1352,8 +1400,8 @@ function renderPPA(){
   </fieldset>
   <div class="rev-card"><h3>Reservoir</h3>
     <div class="out-line"><span class="k">Revenue</span><span class="v">NPR ${cr(resRev).toFixed(2)} cr</span></div>
-    <div class="out-line"><span class="k">Blended tariff</span><span class="v">NPR ${resBlend.toFixed(2)}/kWh</span></div>
-    <div class="out-line"><span class="k">Dry share</span><span class="v">${(p.reservoirDryGwh/(p.reservoirDryGwh+p.reservoirWetGwh)*100).toFixed(0)}%</span></div>
+    <div class="out-line"><span class="k">Blended tariff</span><span class="v">NPR ${num(resBlend)}/kWh</span></div>
+    <div class="out-line"><span class="k">Dry share</span><span class="v">${num(p.reservoirDryGwh/(p.reservoirDryGwh+p.reservoirWetGwh)*100,0)}%</span></div>
   </div>
   <h3>Blended tariff comparison</h3>
   <svg id="cmp-chart" viewBox="0 0 260 130"><g>${barsSvg}
@@ -1382,7 +1430,7 @@ function wireDynamicInputs(){
       else if(k==="reservoirRegime") APP.ppa.reservoirRegime=inp.value;
       else if(k in APP.ppa) APP.ppa[k]=parseFloat(inp.value)||0;
       updateHeadLabel();
-      renderPanel();
+      refreshOutputs();
     });
   });
   document.querySelectorAll('input[name="seasonOpt"]').forEach(r=>
