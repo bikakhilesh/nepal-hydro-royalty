@@ -48,6 +48,7 @@ MCHL,Menchhiyam Hydropower Limited,Menchhiyam Hydropower Pvt. Ltd.,148,1,4.72,Up
 MEHL,Manakamana Engineering Hydropower Limited,Manakamana Engineering HP,108,1,5.0,Ghatte Khola,Dolakha,lookup,matched on name
 MEL,Modi Energy Limited,Modi Energy Pvt . Ltd Naxal,120,1,20.0,Lower Modi Khola,Parbat,lookup,researched: Lower Modi Khola 20MW; three Modi companies in the register
 MEN,Mountain Energy Nepal Limited,"Mountain Energy Nepal Ltd. Sunrise Bizz Park, 3rd Floor",42;112,2,47.0,Tadikhola HP | Mistry Khola,Myagdi | Nuwakot,lookup,researched: Tadikhola 5MW + Mistry Khola 42MW; collides with MHNL on name
+MEPDL,Mount Everest Power Development Limited,"Mount Everest Power Development P.Ltd. Mahalaxmisthan , Lalitpur-13",172,1,12.0,Dudhkunda Khola HEP,Solukhumbu,auto,
 MHCL,Molung Hydropower Company Limited,,,0,7.0,Molung Khola,Okhaldhunga,operating,no RMS filings
 MHL,Mandakini Hydropower Limited,"Mandakini Hydropower Ltd. Sinamangal-9, Kathmandu",74,1,4.0,Sardi Khola HPP,,lookup,matched on name
 MHNL,Mountain Hydro Nepal Limited,Mountain Hydro Power Nepal P Ltd. New Baneshwor,96,1,22.1,Lower Hewa,Panchthar,lookup,researched: Lower Hewa 22.1MW (Tallo Hewa); collides with MEN on name
