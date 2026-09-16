@@ -247,6 +247,13 @@ def _merge_on(fresh, fname, keys, got, label):
 
 
 def cmd_scrape(workers=6, latest_only=False, years=2):
+    # scrape_one is the first thing in this file to call pd.read_html, and it does
+    # so from inside a thread pool. read_html's own parser setup is lazy and
+    # independent of BeautifulSoup's -- dropdowns() below already calls
+    # BeautifulSoup(html,"lxml") safely single-threaded, but that does not touch
+    # this. Running it once, single-threaded, on a throwaway table first means
+    # every worker thread finds it already done instead of racing to do it.
+    pd.read_html(io.StringIO("<table><tr><td>1</td></tr></table>"))
     d = dropdowns()
     plants  = d[[k for k in d if "plant" in k][0]]
     fiscals = d[[k for k in d if "fiscal" in k or "year" in k][0]]
@@ -315,11 +322,19 @@ def cmd_scrape(workers=6, latest_only=False, years=2):
     if failed:
         # The guard reports *that* rows disappeared; this is the only place the
         # reason a request failed is available at all, and until now it was
-        # computed and thrown away. Grouped rather than listed -- 200 lines of
-        # the same timeout is not more informative than one line naming it.
+        # computed and thrown away. Grouped by exception class, with one full
+        # message per class -- 200 lines of the same traceback is not more
+        # informative than one line naming it, but the class name alone was not
+        # enough to tell an import race from a timeout last time this ran.
         from collections import Counter
-        reasons = Counter(reason.split("(", 1)[0] for _, reason in failed)
-        print("  failure reasons: " + ", ".join(f"{n}x {r}" for r, n in reasons.most_common()))
+        by_class = {}
+        for _, reason in failed:
+            cls = reason.split("(", 1)[0]
+            by_class.setdefault(cls, reason)
+        counts = Counter(reason.split("(", 1)[0] for _, reason in failed)
+        print("  failure reasons: " + ", ".join(f"{n}x {c}" for c, n in counts.most_common()))
+        for cls, example in by_class.items():
+            print(f"    {cls}: {example[:200]}")
     clean()
 
 
