@@ -312,6 +312,14 @@ def cmd_scrape(workers=6, latest_only=False, years=2):
                           .reset_index(drop=True))
     summary.to_csv(P("rms_summary.csv"), index=False)
     print(f"monthly {monthly.shape} | failures {len(failed)}")
+    if failed:
+        # The guard reports *that* rows disappeared; this is the only place the
+        # reason a request failed is available at all, and until now it was
+        # computed and thrown away. Grouped rather than listed -- 200 lines of
+        # the same timeout is not more informative than one line naming it.
+        from collections import Counter
+        reasons = Counter(reason.split("(", 1)[0] for _, reason in failed)
+        print("  failure reasons: " + ", ".join(f"{n}x {r}" for r, n in reasons.most_common()))
     clean()
 
 
