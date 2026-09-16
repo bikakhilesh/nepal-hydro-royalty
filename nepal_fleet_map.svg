@@ -8875,6 +8875,7 @@
 <circle cx="499.8" cy="371.6" r="5.5" fill="#2a78d6" fill-opacity=".38" stroke="#2a78d6" stroke-width="1.4"/>
 <circle cx="1148.7" cy="595.7" r="5.5" fill="#2a78d6" fill-opacity=".38" stroke="#2a78d6" stroke-width="1.4"/>
 <circle cx="949.6" cy="505.0" r="5.5" fill="#2a78d6" fill-opacity=".38" stroke="#2a78d6" stroke-width="1.4"/>
+<circle cx="533.2" cy="424.2" r="5.5" fill="#eb6834" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="651.5" cy="403.8" r="5.5" fill="#2a78d6" fill-opacity=".38" stroke="#2a78d6" stroke-width="1.4"/>
 <circle cx="611.7" cy="377.0" r="5.4" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="659.0" cy="398.4" r="5.4" fill="#2a78d6" fill-opacity=".38" stroke="#2a78d6" stroke-width="1.4"/>
@@ -8977,5 +8978,5 @@
 <circle cx="527.0" cy="385.5" r="3.8" fill="#2a78d6" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="577.5" cy="385.0" r="3.6" fill="#eb6834" fill-opacity=".85" stroke="#ffffff" stroke-width="1.6"/>
 <circle cx="521.5" cy="443.1" r="3.5" fill="#eb6834" fill-opacity=".38" stroke="#eb6834" stroke-width="1.4"/>
-<text x="24" y="684" fill="#5f7883" font-size="12">196 plants · 213 rivers · 52 peaks · 409 grid lines · DoED RMS + OpenStreetMap</text>
+<text x="24" y="684" fill="#5f7883" font-size="12">197 plants · 213 rivers · 52 peaks · 409 grid lines · DoED RMS + OpenStreetMap</text>
 </svg>
