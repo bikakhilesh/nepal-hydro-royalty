@@ -1114,7 +1114,11 @@ CITED_FIX = {
     # powerhouse itself, and honestly labelled as such below.
     "Upper Piluwa 3 HPP": (27.2980, 87.4072, "Piluwa/Sikhuwa Khola confluence (one end of the cited river reach, not the powerhouse)"),
     "Madhya Bhotekoshi HPP": (27.881306, 85.9095, "author-supplied coordinates (27°52'52.7\"N 85°54'34.2\"E)"),
-    "Aandikhola HP": (27.941556, 83.663111, "author-supplied coordinates (27°56'29.6\"N 83°39'47.2\"E)"),
+    # RMS's own PlantName for this one moved from "Aandikhola" to "Andhikhola"
+    # sometime after 02 Sep 2026 (same PlantId, same 9,400 kW nameplate) -- keyed
+    # on the current spelling so this fix isn't silently dropped the next time a
+    # scrape actually gets past the guard and rewrites PlantName under it.
+    "Andhikhola HP": (27.941556, 83.663111, "author-supplied coordinates (27°56'29.6\"N 83°39'47.2\"E)"),
     "Thoppal Khola HP": (27.85, 84.841667, "author-supplied coordinates (27°51'00\"N 84°50'30\"E)"),
     "Ilam Puwa Khola HP": (26.986389, 87.894167, "author-supplied coordinates (26°59'11\"N 87°53'39\"E), agrees with the author's own alternate decimal (26.9865, 87.8943)"),
     "Upper Mai": (26.9727, 87.9636, "author-supplied decimal coordinates"),
