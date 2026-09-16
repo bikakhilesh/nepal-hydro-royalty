@@ -3,7 +3,7 @@ PlantId,PlantName,Cap_kW,District,Province,lat,lon,precision,source,matched_to
 5,Piluwa Khola HP,3200.0,Sankhuwasabha,Province 1,27.2675,87.324,river,"on Piluwa Khola, nearest Sankhuwasabha",Piluwa Khola
 6,Ridi Khola HP,2400.0,Palpa,Lumbini,27.9343,83.4402,river,"on Ridi Khola, nearest Palpa",Ridi Khola
 7,Upper Bhotekoshi,45000.0,Sindhupalchok,Bagmati,27.8729,85.8821,river,"on Bhote Koshi, nearest Sindhupalchok",Bhote Koshi
-8,Aandikhola HP,9400.0,,Province 1,27.941556,83.663111,plus,"cited: author-supplied coordinates (27°56'29.6""N 83°39'47.2""E)",
+8,Andhikhola HP,9400.0,,Province 1,27.941556,83.663111,plus,"cited: author-supplied coordinates (27°56'29.6""N 83°39'47.2""E)",
 9,Khimti I HP,60000.0,Dolakha,Bagmati,27.5499382,86.1678367,exact,OSM,Khimti I Hydropower Plant
 10,Indrawati 3,7500.0,Sindhupalchok,Province 1,27.8057,85.5754,river,"on Indrawati River, nearest Sindhupalchok",Indrawati River
 12,Chaku Khola  Small HP,3200.0,Sindhupalchok,Province 1,27.875512,85.929516,plus,Google Maps VWGH+6R2,
