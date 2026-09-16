@@ -204,7 +204,14 @@ def scrape_one(fiscal_id, plant_id):
     summ = {"PlantId": plant_id, "FiscalId": fiscal_id}
     for label in SUMMARY_LABELS:
         summ[label] = _summary_value(txt, label)
-    try: tables = pd.read_html(io.StringIO(html))
+    # flavor="lxml": already the only HTML parser this file depends on (bs4 uses
+    # it two lines up). Leaving flavor unset makes read_html retry with bs4+
+    # html5lib on ANY failure of the first attempt, including the ordinary case
+    # of a fiscal year with nothing filed yet -- and html5lib is not installed,
+    # so that retry raised ImportError instead of the ValueError caught below.
+    # A newly-opened fiscal year hits this for every plant, which is what a
+    # `latest_only` run does the moment Shrawan turns over.
+    try: tables = pd.read_html(io.StringIO(html), flavor="lxml")
     except ValueError: tables = []
     if not tables: return pd.DataFrame(), summ
     df = max(tables, key=len).copy()
@@ -247,13 +254,6 @@ def _merge_on(fresh, fname, keys, got, label):
 
 
 def cmd_scrape(workers=6, latest_only=False, years=2):
-    # scrape_one is the first thing in this file to call pd.read_html, and it does
-    # so from inside a thread pool. read_html's own parser setup is lazy and
-    # independent of BeautifulSoup's -- dropdowns() below already calls
-    # BeautifulSoup(html,"lxml") safely single-threaded, but that does not touch
-    # this. Running it once, single-threaded, on a throwaway table first means
-    # every worker thread finds it already done instead of racing to do it.
-    pd.read_html(io.StringIO("<table><tr><td>1</td></tr></table>"))
     d = dropdowns()
     plants  = d[[k for k in d if "plant" in k][0]]
     fiscals = d[[k for k in d if "fiscal" in k or "year" in k][0]]
