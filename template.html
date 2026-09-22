@@ -128,9 +128,7 @@ table.ytab th{position:static;background:var(--surface-2);font-size:10px;cursor:
   padding:7px 10px;white-space:nowrap}
 table.ytab td{padding:6px 10px;white-space:nowrap}
 table.ytab tr:last-child td{border-bottom:none}
-table.ytab tr.ytot td{font-weight:600;background:var(--surface-2);border-top:1px solid var(--line)}
-table.ytab.calc td{white-space:normal}
-.tierpill{display:inline-block;min-width:20px;text-align:center;padding:0 6px;border-radius:9px;
+table.ytab tr.ytot td{font-weight:600;background:var(--surface-2);border-top:1px solid var(--line)}.tierpill{display:inline-block;min-width:20px;text-align:center;padding:0 6px;border-radius:9px;
   font-size:10px;font-weight:600;font-family:"IBM Plex Mono",monospace}
 .tier1{background:var(--s1-fill);color:var(--s1)}
 .tier2{background:var(--s2-fill);color:var(--s2)}
@@ -2406,25 +2404,6 @@ function fact(k, v, sub){
     (v===null||v===undefined||v===''?'\u2014':v)+'</div>'+
     (sub?'<div class="fs">'+sub+'</div>':'')+'</div>';
 }
-function contractCheck(p){
-  var plf = p.cplf!=null ? p.cplf : p.dplf;
-  if(plf==null || !p.kw) return '';          // never measured against a PLF nobody documented
-  var basis = p.cplf!=null ? 'Contracted' : 'Design';
-  var maxK = p.kw*24*365, conK = plf*maxK;
-  // print exact kW and the full 4-dp PLF, so the arithmetic shown is the arithmetic done
-  var rows = [
-    ['Maximum energy', String(+(p.kw/1000).toFixed(3))+' MW × 1,000 × 24 × 365 = '+fmt(maxK)+' kWh'],
-    [basis+' energy', String(+(plf*100).toFixed(2))+'% × '+fmt(maxK)+' = '+fmt(conK)+' kWh ('+fmt(conK/1e6,2)+' GWh)']];
-  if(p.eyr){
-    var genK = p.eyr[1]*1e6;
-    rows.push(['Generated, FY '+p.eyr[0], fmt(p.eyr[1],3)+' GWh × 1,000,000 = '+fmt(genK)+' kWh']);
-    rows.push(['Efficiency', fmt(genK)+' ÷ '+fmt(conK)+' = <b>'+fmt(100*genK/conK,1)+'%</b>']);
-  } else rows.push(['Efficiency', 'no complete filing year to measure against']);
-  return '<div class="ywrap"><div class="ycap">Energy against the '+basis.toLowerCase()+' PLF</div>'+
-    '<table class="ytab calc"><tbody>'+rows.map(function(r){
-      return '<tr><td>'+r[0]+'</td><td class="mono">'+r[1]+'</td></tr>';
-    }).join('')+'</tbody></table></div>';
-}
 // Bikram Sambat dates arrive as DD/MM/YYYY on most rows and YYYY/MM/DD on a few,
 // so take whichever component is a plausible 4-digit BS year - same rule as the build.
 function bsYear(s){
@@ -2645,7 +2624,6 @@ function renderProject(){
         fact('Cost per MW', p.cost_mw!=null?fmt(p.cost_mw,0):null,
              p.cost_mw!=null?('NPR m'+(p.psrc?' · '+p.psrc:'')):'not on file')+
       '</div>'+
-      contractCheck(p)+
       plfChartHtml(p)+
       rpmChartHtml(p)+
       yearsTable(p.id, p)+

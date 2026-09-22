@@ -1643,9 +1643,6 @@ def build_payload():
     bad = ((fy_q.ann > 0) & ~whole) | (fy_q.gen > fy_q.cap * 8760)
     fy_q["q"] = np.where(bad, -1, np.where(whole & (fy_q.gen > 0), 1, 0))
     yq = {(int(k[0]), k[1]): int(v) for k, v in fy_q.q.items()}
-    fy_ok = (fy_q[fy_q.q == 1].reset_index()
-               .sort_values("FiscalYear", key=lambda col: col.map(FY)).groupby("PlantId").tail(1))
-    eyr = {int(t.PlantId): [t.FiscalYear, r(t.gen/1e6, 3)] for t in fy_ok.itertuples()}
     meta = m.set_index("PlantId")
     coord = c.set_index("PlantId") if len(c) else None
     g_ = lambda row, k: None if k not in row.index or pd.isna(row[k]) else str(row[k])
@@ -1653,7 +1650,7 @@ def build_payload():
     for x in pl.itertuples():
         pid = int(x.pid)
         rec = {"id": pid, "name": x.PlantName, "mw": r(x.kw/1000, 1), "kw": r(x.kw, 0),
-               "eyr": eyr.get(pid), "gwh": r(x.gwh, 0),
+               "gwh": r(x.gwh, 0),
                "cf": r(x.cf, 3), "rev_bn": r(x.rev, 2), "roy_bn": r(x.roy, 3),
                "yrs": int(x.yrs), "bal_m": r(last.Balance.get(x.PlantName, np.nan)/1e6, 1),
                "last_fy": last.FiscalYear.get(x.PlantName),
