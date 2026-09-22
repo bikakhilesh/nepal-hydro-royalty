@@ -1633,13 +1633,23 @@ def build_payload():
     s2 = s.copy(); s2["_o"] = s2.FiscalYear.map(FY)
     last = s2.sort_values("_o").groupby("PlantName").tail(1).set_index("PlantName")
     refs = plf_refs()
+    # latest year fit to measure a PLF against: 12 monthly rows or one lone annual row (an
+    # annual row beside monthly ones double-counts), and no more than the nameplate could make
+    fy_ok = (d.groupby(["PlantId","FiscalYear"])
+               .agg(gen=("Generation_kWh","sum"), cap=("Capacity_kW","first"),
+                    mo=("Period","nunique"), rows=("Period","size"), ann=("IsAnnualFiling","sum")))
+    fy_ok = fy_ok[(((fy_ok.mo == 12) & (fy_ok.ann == 0)) | ((fy_ok.ann == 1) & (fy_ok.rows == 1)))
+                  & (fy_ok.gen > 0) & (fy_ok.gen <= fy_ok.cap * 8760)].reset_index()
+    fy_ok = fy_ok.sort_values("FiscalYear", key=lambda col: col.map(FY)).groupby("PlantId").tail(1)
+    eyr = {int(t.PlantId): [t.FiscalYear, r(t.gen/1e6, 3)] for t in fy_ok.itertuples()}
     meta = m.set_index("PlantId")
     coord = c.set_index("PlantId") if len(c) else None
     g_ = lambda row, k: None if k not in row.index or pd.isna(row[k]) else str(row[k])
     plants = []
     for x in pl.itertuples():
         pid = int(x.pid)
-        rec = {"id": pid, "name": x.PlantName, "mw": r(x.kw/1000, 1), "gwh": r(x.gwh, 0),
+        rec = {"id": pid, "name": x.PlantName, "mw": r(x.kw/1000, 1), "kw": r(x.kw, 0),
+               "eyr": eyr.get(pid), "gwh": r(x.gwh, 0),
                "cf": r(x.cf, 3), "rev_bn": r(x.rev, 2), "roy_bn": r(x.roy, 3),
                "yrs": int(x.yrs), "bal_m": r(last.Balance.get(x.PlantName, np.nan)/1e6, 1),
                "last_fy": last.FiscalYear.get(x.PlantName),
