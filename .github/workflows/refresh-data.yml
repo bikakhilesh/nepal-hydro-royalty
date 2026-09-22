@@ -56,6 +56,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          # full history: _retrieved() dates the register by the last commit touching rms_monthly.csv, which a depth-1 clone reports as HEAD
+          fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:
