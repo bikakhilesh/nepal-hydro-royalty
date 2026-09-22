@@ -229,6 +229,10 @@ table.mtab tr:last-child td{border-bottom:none}
 .rpmyr{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ink-3);
   margin-top:5px;white-space:nowrap}
 .rpmempty{color:var(--ink-3);font-size:13px;padding:14px 0}
+.plfbars .rpmbarwrap{position:relative}
+.plftgt{position:absolute;left:-3px;right:-3px;border-top:1.5px dashed var(--ink-2);pointer-events:none;z-index:1}
+.rpmbar.part{opacity:.45}
+@media(max-width:600px){.rpmyr{writing-mode:vertical-rl;transform:rotate(180deg)}}
 #t-years .rpmcell,#t-plants .rpmcell{cursor:help}
 .mapsel{animation:mapselpulse 1.1s ease-out 2}
 @keyframes mapselpulse{
@@ -2053,7 +2057,7 @@ function chartLead(){
 function addTableView(mountId, caption, cols, rows){
   var host = document.getElementById(mountId); if(!host) return;
   var fig = host.closest('figure') || host.parentNode;
-  var old = fig.querySelector('details.tv'); if(old) old.remove();
+  var old = fig.querySelector(':scope > details.tv'); if(old) old.remove();
   var d = document.createElement('details'); d.className = 'tv';
   d.innerHTML = '<summary>'+caption+'</summary><div class="tw"><table class="sortable"><thead><tr>'+
     cols.map(function(c){ return '<th'+(c.n?' class="n"':'')+' tabindex="0">'+c.t+'</th>'; }).join('')+
@@ -2521,6 +2525,56 @@ function wireRpmChart(p){
     [{t:'Fiscal yr'},{t:'NPR m / MW',n:1},{t:'Percentile',n:1},{t:'Plants that year',n:1}],
     rows.map(function(row){ return [row[0], fmt(row[14],2), Math.round(row[15])+'%', row[16]]; }));
 }
+function plfYears(p){
+  var all = D.years[String(p.id)] || [], i0 = -1;
+  for(var i=0;i<all.length;i++){ if(all[i][1] > 0){ i0 = i; break; } }
+  return i0 < 0 ? [] : all.slice(i0).filter(function(r){ return r[1]!=null; });
+}
+function plfFiled(q, mo, ann){
+  return q===-1 ? 'total not trustworthy' : q===1 ? (ann===1 && mo===1 ? 'one annual row' : 'full year')
+                                                  : mo+' of 12 months filed';
+}
+function plfChartHtml(p){
+  var plf = p.cplf!=null ? p.cplf : p.dplf, rows = plfYears(p);
+  if(plf==null || !p.kw || !rows.length) return '';
+  var tgt = plf*p.kw*8760/1e6;
+  // an untrustworthy total is drawn hatched at full height, so it must not set the scale
+  var max = 1.08*rows.reduce(function(m, r){ return r[17]===-1 ? m : Math.max(m, r[1]); }, tgt);
+  var cols = rows.map(function(r){
+    var q = r[17];
+    return '<div class="rpmcol" data-fy="'+r[0]+'" data-g="'+r[1]+'" data-q="'+q+'" data-mo="'+r[11]+'" data-ann="'+r[12]+'">'+
+      '<div class="rpmpct">'+(q===-1 ? '?' : Math.round(100*r[1]/tgt)+'%')+'</div>'+
+      '<div class="rpmbarwrap"><div class="plftgt" style="bottom:'+(100*tgt/max).toFixed(1)+'%"></div>'+
+        '<div class="rpmbar'+(q===-1 ? ' thin' : (q===0 ? ' part' : ''))+'" style="height:'+
+          (q===-1 ? 100 : Math.max(2, 100*r[1]/max)).toFixed(1)+'%"></div></div>'+
+      '<div class="rpmyr">'+r[0]+'</div></div>';
+  }).join('');
+  var any = function(q){ return rows.some(function(r){ return r[17]===q; }); };
+  return '<figure><div class="rpmchart" id="c-plfyr">'+
+    '<div class="rpmhead"><div class="rpmtitle">Generation against the '+(p.cplf!=null?'contracted':'design')+' PLF</div>'+
+    '<div class="rpmsub">GWh by fiscal year &middot; dashed line = '+fmt(tgt,2)+' GWh a year at '+
+      String(+(plf*100).toFixed(2))+'%'+(any(0) ? ' &middot; faded = part year' : '')+
+      (any(-1) ? ' &middot; ? = total not trustworthy' : '')+'</div></div>'+
+    '<div class="rpmbars plfbars">'+cols+'</div></div></figure>';
+}
+function wirePlfChart(p){
+  var host = document.getElementById('c-plfyr'); if(!host) return;
+  var tgt = (p.cplf!=null ? p.cplf : p.dplf)*p.kw*8760/1e6;
+  host.querySelectorAll('.rpmcol').forEach(function(col){
+    col.addEventListener('mousemove', function(e){
+      var g = parseFloat(col.getAttribute('data-g')), q = +col.getAttribute('data-q'),
+          filed = plfFiled(q, +col.getAttribute('data-mo'), +col.getAttribute('data-ann'));
+      showTip(e, 'FY '+col.getAttribute('data-fy'), q===-1
+        ? [fmt(g,1)+' GWh filed, but '+filed+':', 'an annual-scale row beside monthly ones, or more than the nameplate can make']
+        : [fmt(g,2)+' GWh generated · '+filed, fmt(100*g/tgt,1)+'% of the '+fmt(tgt,2)+' GWh a year the PLF implies']);
+    });
+    col.addEventListener('mouseleave', hideTip);
+  });
+  addTableView('c-plfyr', 'Show the year-by-year figures',
+    [{t:'Fiscal yr'},{t:'GWh',n:1},{t:'% of PLF energy',n:1},{t:'Filed'}],
+    plfYears(p).map(function(r){
+      return [r[0], fmt(r[1],2), r[17]===-1 ? '—' : fmt(100*r[1]/tgt,1)+'%', plfFiled(r[17], r[11], r[12])]; }));
+}
 
 function renderProject(){
   var host = document.getElementById('pcard');
@@ -2592,10 +2646,12 @@ function renderProject(){
              p.cost_mw!=null?('NPR m'+(p.psrc?' · '+p.psrc:'')):'not on file')+
       '</div>'+
       contractCheck(p)+
+      plfChartHtml(p)+
       rpmChartHtml(p)+
       yearsTable(p.id, p)+
     '</div>';
   wireRpmChart(p);
+  wirePlfChart(p);
 
   // The map already points at whichever project is showing here, the instant
   // it renders -- not only when the button below is clicked. Scrolling up to

@@ -1633,14 +1633,18 @@ def build_payload():
     s2 = s.copy(); s2["_o"] = s2.FiscalYear.map(FY)
     last = s2.sort_values("_o").groupby("PlantName").tail(1).set_index("PlantName")
     refs = plf_refs()
-    # latest year fit to measure a PLF against: 12 monthly rows or one lone annual row (an
-    # annual row beside monthly ones double-counts), and no more than the nameplate could make
-    fy_ok = (d.groupby(["PlantId","FiscalYear"])
-               .agg(gen=("Generation_kWh","sum"), cap=("Capacity_kW","first"),
-                    mo=("Period","nunique"), rows=("Period","size"), ann=("IsAnnualFiling","sum")))
-    fy_ok = fy_ok[(((fy_ok.mo == 12) & (fy_ok.ann == 0)) | ((fy_ok.ann == 1) & (fy_ok.rows == 1)))
-                  & (fy_ok.gen > 0) & (fy_ok.gen <= fy_ok.cap * 8760)].reset_index()
-    fy_ok = fy_ok.sort_values("FiscalYear", key=lambda col: col.map(FY)).groupby("PlantId").tail(1)
+    # Which year totals can be measured against a PLF. Whole = 12 monthly rows or one lone
+    # annual row; an annual row beside monthly ones double-counts, and no year can exceed what
+    # the nameplate makes running flat out. 1 = whole and fit, 0 = part year, -1 = not trustworthy.
+    fy_q = (d.groupby(["PlantId","FiscalYear"])
+              .agg(gen=("Generation_kWh","sum"), cap=("Capacity_kW","first"),
+                   mo=("Period","nunique"), rows=("Period","size"), ann=("IsAnnualFiling","sum")))
+    whole = ((fy_q.mo == 12) & (fy_q.ann == 0)) | ((fy_q.ann == 1) & (fy_q.rows == 1))
+    bad = ((fy_q.ann > 0) & ~whole) | (fy_q.gen > fy_q.cap * 8760)
+    fy_q["q"] = np.where(bad, -1, np.where(whole & (fy_q.gen > 0), 1, 0))
+    yq = {(int(k[0]), k[1]): int(v) for k, v in fy_q.q.items()}
+    fy_ok = (fy_q[fy_q.q == 1].reset_index()
+               .sort_values("FiscalYear", key=lambda col: col.map(FY)).groupby("PlantId").tail(1))
     eyr = {int(t.PlantId): [t.FiscalYear, r(t.gen/1e6, 3)] for t in fy_ok.itertuples()}
     meta = m.set_index("PlantId")
     coord = c.set_index("PlantId") if len(c) else None
@@ -1680,7 +1684,7 @@ def build_payload():
     moy = (d.groupby(["PlantId","FiscalYear"], as_index=False)
              .agg(gen=("Generation_kWh","sum"), rev=("Revenue_NPR","sum"),
                   roy_m=("Royalty_NPR","sum"), rate=("Rate_NPR_kWh","median"),
-                  months=("Period","size"), annual=("IsAnnualFiling","max")))
+                  months=("Period","nunique"), annual=("IsAnnualFiling","max")))
     su = s.groupby(["PlantId","FiscalYear"], as_index=False).agg(
             eroy=("Energy_Royalty","sum"), croy=("Capacity_Royalty","sum"),
             due=("RoyaltyDue","sum"), recv=("Received","sum"), bal=("Balance","sum"))
@@ -1703,7 +1707,7 @@ def build_payload():
             # gates the lifetime rpm median applies (a whole filing, a plausible
             # implied tariff) -- not that the revenue or capacity is missing.
             yrpm, ypct, yn = rpm_yearly.get((int(pid), t.FiscalYear), (None, None, None))
-            rows.append([t.FiscalYear, r(t.gen/1e6,1) if fin(t.gen) else None,
+            rows.append([t.FiscalYear, r(t.gen/1e6,3) if fin(t.gen) else None,
                          r(t.rev/1e6,1) if fin(t.rev) else None,
                          r(eroy/1e6,2) if fin(eroy) else None,
                          r(t.croy/1e6,2) if fin(t.croy) else None,
@@ -1715,7 +1719,7 @@ def build_payload():
                          int(t.months) if fin(t.months) else 0,
                          1 if (fin(t.annual) and t.annual) else 0,
                          r(t.rate, 2) if fin(t.rate) else None,
-                         yrpm, ypct, yn])
+                         yrpm, ypct, yn, yq.get((int(pid), t.FiscalYear), 0)])
         years[str(int(pid))] = rows
 
     # ── monthly detail (third drill-down level)
