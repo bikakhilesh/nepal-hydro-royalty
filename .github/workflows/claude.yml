@@ -41,7 +41,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          # full history: a rebuild dates the register from git log (see refresh-data.yml)
+          fetch-depth: 0
 
       # nepal_hydro.html and the map files are built, never hand-edited, so give
       # Claude the interpreter the refresh workflow uses. Without it the session
