@@ -114,7 +114,7 @@ def _get(url, params=None, tries=3, timeout=45):
 
 
 def _retrieved(fname="rms_monthly.csv"):
-    """When the register was last read, as a date string.
+    """When the register last changed, as a date string.
 
     From the commit that last touched the scrape, not the file's mtime. git does
     not preserve mtimes, so the mtime version reported the checkout date: every
@@ -1770,7 +1770,7 @@ def build_payload():
         "month_rows": sum(len(v2) for v in months.values() for v2 in v.values()),
         "median_lead": licence["median_lead"], "licence_peak": licence["peak_year"],
         "cod_known": int(m.CodBsYear.notna().sum()), "cod_total": int(len(m)),
-        # when the register was last read, taken from the raw scrape file rather
+        # when the register last changed, taken from the raw scrape file rather
         # than from today - a rebuild does not make the data any fresher
         "retrieved": _retrieved()}
     return payload
