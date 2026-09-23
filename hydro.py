@@ -411,6 +411,12 @@ def clean():
     d["IsAnnualFiling"] = ((per_year <= 3) & (impCF > 1.3)) | (impCF > 2.0)
     d.loc[d.IsAnnualFiling | ~np.isfinite(d.CapacityFactor) | (d.CapacityFactor > 1.5),
           "CapacityFactor"] = np.nan
+    # An annual-sized row among two or more other rows with energy is neither a year nor a
+    # catch-up: its revenue buys one ordinary month at the plant's own tariff (all 31 such rows
+    # fail that test -- Siuri HP's Asar 2082 claims 65 GWh on an NPR 14.7m bill). Drop the
+    # energy, keep the money and the flag, so the year reads as the months it really has.
+    with_e = d.groupby(["PlantName", "FiscalYear"]).Generation_kWh.transform(lambda s: (s > 0).sum())
+    d.loc[d.IsAnnualFiling & (with_e >= 3), ["Generation_kWh", "Metered_kWh"]] = np.nan
 
     keep = ["PlantId","PlantName","Capacity_kW","FiscalId","FiscalYear","BsYear","BsMonth",
             "MonthName","Period","Generation_kWh","Metered_kWh","Revenue_NPR","Royalty_NPR",
@@ -1639,16 +1645,20 @@ def build_payload():
     s2 = s.copy(); s2["_o"] = s2.FiscalYear.map(FY)
     last = s2.sort_values("_o").groupby("PlantName").tail(1).set_index("PlantName")
     refs = plf_refs()
-    # Which year totals can be measured against a PLF. Whole = 12 monthly rows or one lone
-    # annual row; an annual row beside monthly ones double-counts, and no year can exceed what
-    # the nameplate makes running flat out. 1 = whole and fit, 0 = part year, -1 = not trustworthy.
-    fy_q = (d.groupby(["PlantId","FiscalYear"])
+    # Which year totals can be trusted, judged on the rows that carry energy. Whole = 12 months,
+    # or one annual row (a zero placeholder beside it adds nothing); an annual row beside a month
+    # that has energy may count that month twice, and no year can exceed what the nameplate
+    # makes running flat out. 1 = whole, 0 = part year, -1 = not trustworthy.
+    e = d[d.Generation_kWh.notna()].copy()
+    e["pos"] = e.Generation_kWh > 0
+    e["ann"] = e.IsAnnualFiling & e.pos
+    fy_q = (e.groupby(["PlantId","FiscalYear"])
               .agg(gen=("Generation_kWh","sum"), cap=("Capacity_kW","first"),
-                   mo=("Period","nunique"), rows=("Period","size"), ann=("IsAnnualFiling","sum")))
+                   mo=("Period","nunique"), rows=("pos","sum"), ann=("ann","sum")))
     whole = ((fy_q.mo == 12) & (fy_q.ann == 0)) | ((fy_q.ann == 1) & (fy_q.rows == 1))
     bad = ((fy_q.ann > 0) & ~whole) | (fy_q.gen > fy_q.cap * 8760)
     fy_q["q"] = np.where(bad, -1, np.where(whole, 1, 0))
-    yq = {(int(k[0]), k[1]): int(v) for k, v in fy_q.q.items()}
+    yq = {(int(t.Index[0]), t.Index[1]): (int(t.q), int(t.mo), int(t.ann > 0)) for t in fy_q.itertuples()}
     meta = m.set_index("PlantId")
     coord = c.set_index("PlantId") if len(c) else None
     g_ = lambda row, k: None if k not in row.index or pd.isna(row[k]) else str(row[k])
@@ -1685,9 +1695,8 @@ def build_payload():
 
     # ── per plant-year detail
     moy = (d.groupby(["PlantId","FiscalYear"], as_index=False)
-             .agg(gen=("Generation_kWh","sum"), rev=("Revenue_NPR","sum"),
-                  roy_m=("Royalty_NPR","sum"), rate=("Rate_NPR_kWh","median"),
-                  months=("Period","nunique"), annual=("IsAnnualFiling","max")))
+             .agg(gen=("Generation_kWh", lambda s: s.sum(min_count=1)), rev=("Revenue_NPR","sum"),
+                  roy_m=("Royalty_NPR","sum"), rate=("Rate_NPR_kWh","median")))
     su = s.groupby(["PlantId","FiscalYear"], as_index=False).agg(
             eroy=("Energy_Royalty","sum"), croy=("Capacity_Royalty","sum"),
             due=("RoyaltyDue","sum"), recv=("Received","sum"), bal=("Balance","sum"))
@@ -1710,6 +1719,8 @@ def build_payload():
             # gates the lifetime rpm median applies (a whole filing, a plausible
             # implied tariff) -- not that the revenue or capacity is missing.
             yrpm, ypct, yn = rpm_yearly.get((int(pid), t.FiscalYear), (None, None, None))
+            # months and the annual mark count rows with energy, so they describe the GWh shown
+            q, mo, ann = yq.get((int(pid), t.FiscalYear), (0, 0, 0))
             rows.append([t.FiscalYear, r(t.gen/1e6,3) if fin(t.gen) else None,
                          r(t.rev/1e6,1) if fin(t.rev) else None,
                          r(eroy/1e6,2) if fin(eroy) else None,
@@ -1719,10 +1730,9 @@ def build_payload():
                          r(t.bal/1e6,2) if fin(t.bal) else None,
                          r(pct,2) if fin(pct) else None, tier,
                          int(t.age) if fin(t.age) else None,
-                         int(t.months) if fin(t.months) else 0,
-                         1 if (fin(t.annual) and t.annual) else 0,
+                         mo, ann,
                          r(t.rate, 2) if fin(t.rate) else None,
-                         yrpm, ypct, yn, yq.get((int(pid), t.FiscalYear), 0)])
+                         yrpm, ypct, yn, q])
         years[str(int(pid))] = rows
 
     # ── monthly detail (third drill-down level)

@@ -2221,6 +2221,7 @@ function monthsTable(pid, fy){
     '</tbody></table></div>';
 }
 function num(v, nd){ return v===null||v===undefined ? '<span style="color:var(--ink-3)">\u2014</span>' : fmt(v, nd); }
+var UNSURE = ' <span class="partial" title="energy total not trustworthy: an annual row beside a month that also has energy, or more than the nameplate can make">?</span>';
 
 function yearsTable(pid, plant){
   var rows = D.years[String(pid)];
@@ -2238,7 +2239,7 @@ function yearsTable(pid, plant){
         '">'+(mopen?'\u2212':'+')+'</button>'+r[0]+
         (annual ? ' <span class="partial" title="filed as a single annual row">(annual)</span>'
                 : (partial ? ' <span class="partial" title="'+r[11]+' months filed">('+r[11]+'mo)</span>' : ''))+'</td>'+
-      '<td class="n">'+num(r[1],1)+'</td>'+
+      '<td class="n">'+num(r[1],1)+(r[17]===-1 ? UNSURE : '')+'</td>'+
       '<td class="n">'+num(r[2],1)+'</td>'+
       '<td class="n">'+num(r[3],2)+'</td>'+
       '<td class="n">'+num(r[4],2)+'</td>'+
@@ -2256,9 +2257,10 @@ function yearsTable(pid, plant){
     return fmt(t, nd);
   }
   var last = rows[rows.length-1];
+  var unsure = rows.some(function(r){ return r[17]===-1; });
   var tot = '<tr class="ytot">'+
     '<td class="mono">'+rows.length+' yrs</td>'+
-    '<td class="n">'+sum(1,1)+'</td><td class="n">'+sum(2,1)+'</td>'+
+    '<td class="n">'+sum(1,1)+(unsure ? UNSURE : '')+'</td><td class="n">'+sum(2,1)+'</td>'+
     '<td class="n">'+sum(3,2)+'</td><td class="n">'+sum(4,2)+'</td>'+
     '<td class="n">'+sum(5,2)+'</td><td class="n">'+sum(6,2)+'</td>'+
     '<td class="n">'+(last[7]===null?'\u2014':fmt(last[7],2))+'</td>'+
@@ -2276,6 +2278,7 @@ function yearsTable(pid, plant){
     '</tr></thead><tbody>'+body+tot+'</tbody></table>'+
     '<div class="ycap" style="margin-top:10px;letter-spacing:0;text-transform:none;font-weight:400">'+
       'Closing balance is a carry-forward stock, so the total row shows the latest year, not a sum.'+
+      (unsure ? ' ? marks a year whose energy total can’t be trusted.' : '')+
     '</div></div>';
 }
 
@@ -2334,7 +2337,7 @@ function buildYearRows(){
       yRows.push({id:+pid, name:p.name, company:p.company, fy:r[0], gwh:r[1], rev:r[2],
                   eroy:r[3], croy:r[4], due:r[5], recv:r[6], bal:r[7], pct:r[8],
                   tier:r[9], age:r[10], mo:r[11], annual:r[12],
-                  rpm:r[14], rpmPct:r[15], rpmN:r[16]});
+                  rpm:r[14], rpmPct:r[15], rpmN:r[16], q:r[17]});
     });
   });
   return yRows;
@@ -2359,7 +2362,7 @@ function renderYears(){
              : (r.mo>0 && r.mo<12 ? ' <span class="partial">('+r.mo+'mo)</span>' : '');
     return '<tr><td>'+r.name+'</td><td>'+(r.company||'\u2014')+'</td>'+
       '<td class="mono">'+r.fy+mark+'</td>'+
-      '<td class="n">'+num(r.gwh,1)+'</td><td class="n">'+num(r.rev,1)+'</td>'+
+      '<td class="n">'+num(r.gwh,1)+(r.q===-1 ? UNSURE : '')+'</td><td class="n">'+num(r.rev,1)+'</td>'+
       '<td class="n">'+num(r.rpm,2)+'</td>'+
       '<td class="n'+(r.rpmPct==null?'':' rpmcell')+'"'+
         (r.rpmPct==null?'':' data-tip="'+ordinal(r.rpmPct)+' of '+r.rpmN+' plants that filed a whole, plausible-tariff year in '+r.fy+'"')+
@@ -2544,7 +2547,7 @@ function wirePlfChart(p){
       var g = parseFloat(col.getAttribute('data-g')), q = +col.getAttribute('data-q'),
           filed = plfFiled(q, +col.getAttribute('data-mo'), +col.getAttribute('data-ann'));
       showTip(e, 'FY '+col.getAttribute('data-fy'), q===-1
-        ? [fmt(g,1)+' GWh filed, but '+filed+':', 'an annual-scale row beside monthly ones, or more than the nameplate can make']
+        ? [fmt(g,1)+' GWh filed, but '+filed+':', 'an annual row beside a month that also has energy, or more than the nameplate can make']
         : [fmt(g,2)+' GWh generated · '+filed, fmt(100*g/tgt,1)+'% of the '+fmt(tgt,2)+' GWh a year the PLF implies']);
     });
     col.addEventListener('mouseleave', hideTip);

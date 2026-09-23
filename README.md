@@ -212,7 +212,14 @@ official record — read it against the source before relying on a number.
   about a percent, not to the paisa.
 - **Annual filings.** Some NEA plants file a whole year as one row, giving
   impossible monthly capacity factors of 7–10×. Flagged `IsAnnualFiling`,
-  excluded from seasonality, kept in annual totals.
+  excluded from seasonality, kept in annual totals. A zero placeholder beside
+  the annual row (NEA, 080/81–081/82) does not make the year partial.
+  An annual-sized row among two or more other rows with energy is different:
+  one month's bill with a corrupt energy figure. Its revenue buys an ordinary
+  month at the plant's own tariff — all 31 such rows fail that test; Siuri HP's
+  Asar 2082 claims 65 GWh on an NPR 14.7m bill, and Chepe Khola's own remark
+  itemises 3.9 GWh against the 19.5 GWh filed. The energy is dropped and the
+  money kept, so the year reads as the months it really has.
 - **A month filed twice.** 100 plant-months carry two rows, and the remarks say
   why. Where both rows carry the same energy, one month was billed at two rates
   (Upper Machha Khola, Baisakh 2080, at 8.40 and again at 4.80): the energy is
