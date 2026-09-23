@@ -2238,7 +2238,7 @@ function yearsTable(pid, plant){
         '" aria-expanded="'+mopen+'" aria-label="'+(mopen?'Hide':'Show')+' monthly detail for '+r[0]+
         '">'+(mopen?'\u2212':'+')+'</button>'+r[0]+
         (annual ? ' <span class="partial" title="filed as a single annual row">(annual)</span>'
-                : (partial ? ' <span class="partial" title="'+r[11]+' months filed">('+r[11]+'mo)</span>' : ''))+'</td>'+
+                : (partial ? ' <span class="partial" title="'+r[11]+' months with an energy figure">('+r[11]+'mo)</span>' : ''))+'</td>'+
       '<td class="n">'+num(r[1],1)+(r[17]===-1 ? UNSURE : '')+'</td>'+
       '<td class="n">'+num(r[2],1)+'</td>'+
       '<td class="n">'+num(r[3],2)+'</td>'+
@@ -2359,7 +2359,7 @@ function renderYears(){
   document.querySelector('#t-years tbody').innerHTML = rows.map(function(r){
     var balCls = r.bal===null ? '' : (r.bal > 0.05 ? 'stat-crit' : (r.bal < -0.05 ? 'stat-good' : ''));
     var mark = r.annual===1 ? ' <span class="partial">(annual)</span>'
-             : (r.mo>0 && r.mo<12 ? ' <span class="partial">('+r.mo+'mo)</span>' : '');
+             : (r.mo>0 && r.mo<12 ? ' <span class="partial" title="'+r.mo+' months with an energy figure">('+r.mo+'mo)</span>' : '');
     return '<tr><td>'+r.name+'</td><td>'+(r.company||'\u2014')+'</td>'+
       '<td class="mono">'+r.fy+mark+'</td>'+
       '<td class="n">'+num(r.gwh,1)+(r.q===-1 ? UNSURE : '')+'</td><td class="n">'+num(r.rev,1)+'</td>'+
@@ -2514,7 +2514,7 @@ function plfYears(p){
 }
 function plfFiled(q, mo, ann){
   return q===-1 ? 'total not trustworthy' : q===1 ? (ann===1 && mo===1 ? 'one annual row' : 'full year')
-                                                  : mo+' of 12 months filed';
+                                                  : mo+' of 12 months with an energy figure';
 }
 function plfChartHtml(p){
   var plf = p.cplf!=null ? p.cplf : p.dplf, rows = plfYears(p);
@@ -2553,7 +2553,7 @@ function wirePlfChart(p){
     col.addEventListener('mouseleave', hideTip);
   });
   addTableView('c-plfyr', 'Show the year-by-year figures',
-    [{t:'Fiscal yr'},{t:'GWh',n:1},{t:'% of PLF energy',n:1},{t:'Filed'}],
+    [{t:'Fiscal yr'},{t:'GWh',n:1},{t:'% of PLF energy',n:1},{t:'Coverage'}],
     plfYears(p).map(function(r){
       return [r[0], fmt(r[1],2), r[17]===-1 ? '—' : fmt(100*r[1]/tgt,1)+'%', plfFiled(r[17], r[11], r[12])]; }));
 }
