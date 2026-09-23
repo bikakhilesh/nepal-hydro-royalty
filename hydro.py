@@ -359,6 +359,12 @@ def clean():
     d["Generation_kWh"] = col("Total Energy Generation").fillna(
                               _parts.sum(axis=1, min_count=1))
     d["Metered_kWh"]    = col("Metered Energy")
+    # A month filed twice with the same energy is one month billed at two rates (Upper Machha
+    # Khola, Baisakh 2080, at 8.40 and again at 4.80): count the energy once, keep the money as
+    # filed -- royalty was assessed on both rows. Rows whose energy differs are real: a month
+    # split at a season boundary, or a missed excess-energy memo.
+    rebill = d.duplicated(["PlantId", "FiscalId", "BsYear", "BsMonth", "Generation_kWh"]) & (d.Generation_kWh > 0)
+    d.loc[rebill, ["Generation_kWh", "Metered_kWh"]] = np.nan
     # The site serves three schemas. Two are plain NPR; the third bills in USD and
     # must be converted and added to any NPR portion of the same invoice - skipping
     # it silently drops the entire revenue line for foreign-currency PPAs such as
@@ -1641,7 +1647,7 @@ def build_payload():
                    mo=("Period","nunique"), rows=("Period","size"), ann=("IsAnnualFiling","sum")))
     whole = ((fy_q.mo == 12) & (fy_q.ann == 0)) | ((fy_q.ann == 1) & (fy_q.rows == 1))
     bad = ((fy_q.ann > 0) & ~whole) | (fy_q.gen > fy_q.cap * 8760)
-    fy_q["q"] = np.where(bad, -1, np.where(whole & (fy_q.gen > 0), 1, 0))
+    fy_q["q"] = np.where(bad, -1, np.where(whole, 1, 0))
     yq = {(int(k[0]), k[1]): int(v) for k, v in fy_q.q.items()}
     meta = m.set_index("PlantId")
     coord = c.set_index("PlantId") if len(c) else None

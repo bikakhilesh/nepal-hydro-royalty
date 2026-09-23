@@ -213,6 +213,13 @@ official record — read it against the source before relying on a number.
 - **Annual filings.** Some NEA plants file a whole year as one row, giving
   impossible monthly capacity factors of 7–10×. Flagged `IsAnnualFiling`,
   excluded from seasonality, kept in annual totals.
+- **A month filed twice.** 100 plant-months carry two rows, and the remarks say
+  why. Where both rows carry the same energy, one month was billed at two rates
+  (Upper Machha Khola, Baisakh 2080, at 8.40 and again at 4.80): the energy is
+  counted once and the money kept as filed, since royalty was assessed on both.
+  Where the energy differs the rows are real — a month split at a season
+  boundary, or a missed excess-energy memo (*छुट बिल*) — and both count.
+  Dropping repeated months outright would delete real energy.
 - **Column names carry data.** The header row embeds each plant's Previous Due
   value, so bare numeric tokens are stripped from column names.
 - **Two register fields are unedited defaults and are ignored.** Every populated
