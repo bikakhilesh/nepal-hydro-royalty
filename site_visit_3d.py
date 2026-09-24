@@ -16,6 +16,7 @@ drive the model through named nodes:
     anchor__<hotspot>__<variant>    where that hotspot's label sits
     head_{from,top,bot}__<variant>  the gross-head dimension
     pond_{lo,hi}__pror              the daily pond's drawdown range
+    tag__<kV>__<variant>            where each voltage tier's tag sits
 
 Blender is only needed when the geometry changes. The .glb is committed and
 hydro.py inlines it into site-visit.html, so CI never runs this.
@@ -44,8 +45,7 @@ def const_list(name):
 
 BED = const_list("BED")
 WEIR_X, INTAKE_X, DESANDER_X, FOREBAY_X = (const(n) for n in ("WEIR_X", "INTAKE_X", "DESANDER_X", "FOREBAY_X"))
-PH_X, PH_W, SWITCH_X, METER_X = (const(n) for n in ("PH_X", "PH_W", "SWITCH_X", "METER_X"))
-TOWER_X = const_list("TOWER_X")
+PH_X, PH_W, SWITCH_X = (const(n) for n in ("PH_X", "PH_W", "SWITCH_X"))
 HR_Y0, HR_Y1 = const("HR_Y0"), const("HR_Y1")
 DAM_X, DAM_CREST = const("DAM_X"), const("DAM_CREST")
 RES_PH_X, RES_PH_W = const("RES_PH_X"), const("RES_PH_W")
@@ -55,6 +55,10 @@ FSL, POND_X0 = const("FSL"), const("POND_X0")
 RIVER = [[-120, 346], [0, 356], [120, 372]] + BED + [[1760, 762]]
 X0, X1, YN, YF = -60.0, 1660.0, -240.0, 760.0   # diorama footprint; y > 0 is the far bank
 STEP, BASE, SLOPE = 10.0, -900.0, 0.9
+GS_X, GS_D = 1160.0, 322.0                      # grid substation, on the shelf above the valley wall
+# kV tiers, coloured as the ledger's own grid map colours them (magenta 400, blue 220,
+# amber 132), plus a neutral for 33 kV, which the map leaves in the built-grid grey
+KV = {400: 0x9A4FC4, 220: 0x3F6FC9, 132: 0xC9822E, 33: 0x6F7C82}
 
 
 # ── shared shape functions: every structure below is placed with these ───────────
@@ -88,6 +92,7 @@ def river_y(x):
 def bed(x): return -river_y(x)
 def canal(x): return -lerp(HR_Y0, HR_Y1, clamp((x - INTAKE_X) / (FOREBAY_X - INTAKE_X), 0, 1))
 def canal_d(x): return 12 + (canal(x) - bed(x) + 3) / SLOPE     # where the far bank reaches canal level
+GS_E = bed(GS_X) - 3 + SLOPE * 290 + .3 * (GS_D - 302)          # the shelf's own height there
 
 
 def ground(x, y, variant="canal"):
@@ -100,6 +105,9 @@ def ground(x, y, variant="canal"):
     e += 9 * fbm(x / 70, d / 70) * ss(14, 60, d)
     ridge = 1 - abs(2 * fbm(x / 210 + 3, d / 170) - 1)          # sharp crests, soft saddles
     e += ss(330, 700, d) * (40 + 420 * ridge ** 2.2)
+    kg = (ss(GS_X - 88, GS_X - 68, x) * (1 - ss(GS_X + 68, GS_X + 88, x))
+          * ss(GS_D - 60, GS_D - 42, d) * (1 - ss(GS_D + 42, GS_D + 60, d)))
+    e = lerp(e, GS_E, kg)                                     # the substation's terrace
     if variant == "canal":
         # a cut-and-fill bench for the headrace, and a terrace where it ends
         cd, c = canal_d(x), canal(x)
@@ -153,7 +161,6 @@ STEEL = lambda: mat("steel", 0x5C6770, .5, .4)
 PIPE = lambda: mat("penstock", 0xA7ACAA, .45, .5)
 OCHRE = lambda: mat("ochre", 0xC8923A, .6)
 HUT = lambda: mat("hut", 0x8A6A4C)
-WIRE = lambda: mat("conductor", 0xB8923A, .5, .3)
 GLASS = lambda: mat("window", 0x2C3A44, .3)
 
 
@@ -389,32 +396,83 @@ def build():
     sweep("tail__canal", [(PHX + 52, PHY - 14, phg + 1), (PHX + 78, 26, bed(PHX + 78) + 1.2),
                           (PHX + 94, 0, bed(PHX + 94) + .7)], [(-7, 0), (7, 0)], water("tail"), 30)
 
-    # switchyard, two towers, the line, and the meter the whole scheme exists to turn
+    # switchyard at the plant; for the reservoir, beside its own powerhouse
     SYX, SYY = SWITCH_X + 48, 104.0
     syg = ground(SYX, SYY)
-    box("yard_pad", 80, 58, 30, CONCRETE(), SYX, SYY, syg - 26)
-    for k in (-1, 0, 1):
-        box(f"yard_tx{k}", 12, 14, 14, STEEL(), SYX + k * 22, SYY + 10, syg + 4)
-        box(f"yard_bush{k}", 2, 2, 8, STEEL(), SYX + k * 22, SYY + 10, syg + 18, 0, 0)
-    for k in (-1, 1): box(f"yard_post{k}", 3, 3, 44, STEEL(), SYX + 24, SYY + k * 28, syg + 4, 0, 0)
-    box("yard_beam", 3, 62, 3, STEEL(), SYX + 24, SYY, syg + 46, 0, 0)
-    tops = [pylon("pylon_a", TOWER_X[0] + 20, SYY, 130), pylon("pylon_b", TOWER_X[1] + 46, SYY, 130)]
-    MX = METER_X + 52
-    mg = ground(MX, SYY)
-    box("meter_post", 3, 3, 26, STEEL(), MX, SYY, mg, 0, 0)
-    box("meter", 20, 14, 16, OCHRE(), MX, SYY, mg + 26)
-    gable("meter_roof", 24, 18, 5, ROOF(), MX, SYY, mg + 42)
-    supports = [(SYX + 24, syg + 46, 0)] + [(TOWER_X[0] + 20, tops[0], 1), (TOWER_X[1] + 46, tops[1], 1)]
-    for dy, dz in ((-28, -14), (28, -14), (-22, -36), (22, -36)):
-        pts = [(x, SYY + (dy * .9 if k == 0 else dy), (z + (dz + 14) * .3) if k == 0 else z + dz)
-               for x, z, k in supports] + [(X1, SYY + dy, tops[1] + dz - 12)]
-        wire = []
-        for (xa, ya, za), (xb, yb, zb) in zip(pts, pts[1:]):
-            for i in range(14):
-                t = i / 14
-                wire.append((lerp(xa, xb, t), lerp(ya, yb, t), lerp(za, zb, t) - 9 * (1 - (2 * t - 1) ** 2)))
-        wire.append(pts[-1])
-        tube(f"wire{dy}{dz}", wire, .8, WIRE(), 5)
+    RPX0 = RES_PH_X + RES_PH_W * .55
+    RYX, RYY = RPX0 + 112, 100.0
+    ryg = ground(RYX, RYY, "res")
+    for suf, x0, y0, g0 in (("__canal", SYX, SYY, syg), ("__res", RYX, RYY, ryg)):
+        box("yard_pad" + suf, 80, 58, 30, CONCRETE(), x0, y0, g0 - 26)
+        for k in (-1, 0, 1):
+            box(f"yard_tx{k}{suf}", 12, 14, 14, STEEL(), x0 + k * 22, y0 + 10, g0 + 4)
+            box(f"yard_bush{k}{suf}", 2, 2, 8, STEEL(), x0 + k * 22, y0 + 10, g0 + 18, 0, 0)
+        for k in (-1, 1): box(f"yard_post{k}{suf}", 3, 3, 44, STEEL(), x0 + 24, y0 + k * 34, g0 + 4, 0, 0)
+        box("yard_beam" + suf, 3, 74, 3, STEEL(), x0 + 24, y0, g0 + 46, 0, 0)
+
+    # the grid substation: terrace, transformers, gantries, bus, control room, meter
+    g = GS_E
+    box("gs_pad", 140, 84, 8, CONCRETE(), GS_X, GS_D, g - 6)
+    for k, (sx, sy, ox, oy) in enumerate(((140, 1, 0, -42), (140, 1, 0, 42), (1, 84, -70, 0), (1, 84, 70, 0))):
+        box(f"gs_fence{k}", sx, sy, 7, STEEL(), GS_X + ox, GS_D + oy, g + 2, 0, 0)
+    for k in (-1, 1):
+        box(f"gs_tx{k}", 20, 16, 18, STEEL(), GS_X + k * 22, GS_D + 10, g + 2)
+        box(f"gs_bush{k}", 2, 2, 10, STEEL(), GS_X + k * 22, GS_D + 10, g + 20, 0, 0)
+    box("gs_bus", 104, 1.6, 1.6, STEEL(), GS_X, GS_D - 8, g + 30, 0, 0)
+    for gx in (GS_X - 54, GS_X + 54):                           # the 220 kV corridor's in and out
+        for k in (-1, 1): box(f"gs_post{gx:.0f}{k}", 3, 3, 46, STEEL(), gx, GS_D + k * 34, g + 2, 0, 0)
+        box(f"gs_beam{gx:.0f}", 3, 72, 3, STEEL(), gx, GS_D, g + 48, 0, 0)
+    for k in (-1, 1): box(f"gs_inpost{k}", 3, 3, 40, STEEL(), GS_X + k * 38, GS_D - 34, g + 2, 0, 0)
+    box("gs_inbeam", 80, 3, 3, STEEL(), GS_X, GS_D - 34, g + 42, 0, 0)   # the plant's incoming bay
+    box("gs_ctrl", 28, 18, 14, WALL(), GS_X + 44, GS_D + 26, g + 2)
+    gable("gs_ctrl_roof", 32, 22, 6, ROOF(), GS_X + 44, GS_D + 26, g + 16)
+    box("meter_post", 2.4, 2.4, 18, STEEL(), GS_X - 22, GS_D - 44, g + 2, 0, 0)
+    box("meter", 14, 10, 12, OCHRE(), GS_X - 22, GS_D - 44, g + 20)     # revenue meter, incoming bay
+    gable("meter_roof", 18, 14, 4, ROOF(), GS_X - 22, GS_D - 44, g + 32)
+    IN = (GS_X, GS_D - 34, g + 42, -math.pi / 2, False)                # incoming beam runs along x
+
+    # evacuation: 132 kV from run-of-river, 220 kV from the reservoir, up the wall to the bay
+    def evac(base, x0, y0, z0, spec, ph, mat_, r, variant):       # the type tag goes last in every name
+        tx, ty = IN[0], IN[1]
+        rot = math.atan2(ty - y0, tx - x0)
+        sup = [(x0 + 24, y0, z0, 0.0, False)]
+        for i, t in enumerate((1 / 3, 2 / 3)):
+            px, py = lerp(x0, tx, t), lerp(y0, ty, t)
+            sup.append((px, py, pylon(f"{base}_t{i}__{variant}", px, py, rot=rot, variant=variant, **spec), rot, True))
+        line(f"{base}__{variant}", sup + [IN], ph, mat_, r)
+        return sup[1]
+    e132 = evac("evac132", SYX, SYY, syg + 46, T132, PH132, wire(132), 1.0, "canal")
+    e220 = evac("evac220", RYX, RYY, ryg + 46, T220, PH220, wire(220), 1.2, "res")
+
+    # the 220 kV corridor along the shelf, looped in and out of the substation
+    CY = GS_D - 8
+    west = [(x, CY) for x in (60, 380, 700, 990)]
+    east = [(x, CY) for x in (1340,)]
+    def run(name, pts, spec):
+        out = []
+        for i, (px, py) in enumerate(pts):
+            out.append((px, py, pylon(f"{name}_{i}", px, py, **spec), 0.0, True))
+        return out
+    w220 = run("c220w", west, T220)
+    e220c = run("c220e", east, T220)
+    edge = lambda x, y, h: (x, y, ground(x, y) + h, 0.0, True)
+    line("c220_in", [edge(X0, CY, 142)] + w220 + [(GS_X - 54, GS_D, g + 48, 0.0, False)], PH220, wire(220), 1.2)
+    line("c220_out", [(GS_X + 54, GS_D, g + 48, 0.0, False)] + e220c + [edge(X1, CY, 142)], PH220, wire(220), 1.2)
+
+    # the 400 kV backbone, a tier above, passing the substation rather than entering it
+    BY = 404.0
+    b400 = run("c400", [(x, BY) for x in (160, 560, 960, 1360)], T400)
+    line("c400", [edge(X0, BY, 176)] + b400 + [edge(X1, BY, 176)], PH400, wire(400), 1.5)
+
+    # a 33 kV feeder out of the substation to the villages down-valley, on poles
+    FY = 296.0
+    poles = []
+    for i, px in enumerate((GS_X + 118, GS_X + 230, GS_X + 342, GS_X + 454)):
+        pg = ground(px, FY)
+        box(f"pole{i}", 2.6, 2.6, 44, CONCRETE(), px, FY, pg, 0, 0)
+        box(f"pole{i}_arm", 2, 24, 1.6, STEEL(), px, FY, pg + 38, 0, 0)
+        poles.append((px, FY, pg + 44, 0.0, True))
+    line("f33", [(GS_X + 70, GS_D + 20, g + 30, 0.0, False)] + poles + [edge(X1, FY, 44)], PH33, wire(33), .7)
 
     # gauging station: on the near bank for the river schemes, above the lake otherwise
     for nm, gx, gy in (("gauge__canal", 165, -44), ("gauge__res", 130, 214)):
@@ -464,12 +522,19 @@ def build():
         "penstock": {"canal": (mid[0], mid[1], mid[2] + 16), "res": (DAM_X + 24, RPY, -470)},
         "powerhouse": {"canal": (PHX, PHY, phg + 78), "res": (RPX + 46, RPY, rpg + 96)},
         "tailrace": {"canal": (PHX + 86, 14, bed(PHX + 86) + 12), "res": (RPX + 80, 12, bed(RPX + 80) + 12)},
-        "switchyard": {"all": (SYX, SYY, syg + 60)},
-        "transmission": {"all": (TOWER_X[0] + 20, SYY, tops[0] + 8)},
-        "metering_point": {"all": (MX, SYY, mg + 52)},
+        "switchyard": {"canal": (SYX, SYY, syg + 60), "res": (RYX, RYY, ryg + 60)},
+        "transmission": {"canal": (e132[0], e132[1], e132[2] + 10), "res": (e220[0], e220[1], e220[2] + 10)},
+        "metering_point": {"all": (GS_X - 22, GS_D - 44, g + 44)},
+        "grid": {"all": (GS_X + 14, GS_D, g + 64)},
     }
     for hid, per in A.items():
         for variant, p in per.items(): anchor(f"anchor__{hid}__{variant}", *p)
+    mid = lambda a, b, dz: ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2 + dz)
+    anchor("tag__400__all", *mid(b400[0], b400[1], 6))
+    anchor("tag__220__all", *mid(w220[1], w220[2], 6))
+    anchor("tag__132__canal", *mid(e132, IN, 4))
+    anchor("tag__220evac__res", *mid(e220, IN, 4))
+    anchor("tag__33__all", *mid(poles[1], poles[2], 4))
 
     # gross head: forebay water level carried across to a dimension over the tailwater,
     # upstream of the powerhouse where the valley is open (downstream is the switchyard)
@@ -502,16 +567,32 @@ def house(name, x, y, g, L, W, H):
     box(base + "_door" + suf, L / 7, 1.2, H * .55, ROOF(), x + L * .33, y - W / 2 - .4, g + 10, 0, 0)
 
 
-def pylon(name, x, y, h):
+# tower sizes per tier: height, footprint, crossarms (drop below the top, span)
+T400 = dict(h=176, base=21, top=6, arms=((-16, 100),))
+T220 = dict(h=142, base=17, top=5, arms=((-12, 56), (-36, 68), (-60, 56)))
+T132 = dict(h=106, base=13, top=4, arms=((-10, 48), (-30, 56)))
+# phase positions per tier: (across the line, drop below the top)
+PH400 = ((-44, -16), (0, -16), (44, -16))
+PH220 = ((-25, -12), (25, -12), (-31, -36), (31, -36), (-25, -60), (25, -60))
+PH132 = ((-21, -10), (21, -10), (-25, -30))
+PH33 = ((-10, -6), (0, 0), (10, -6))
+
+
+def wire(kv): return mat(f"conductor_{kv}", KV[kv], .5, .2)
+
+
+def pylon(name, x, y, h, base=15, top=4.5, arms=((-14, 64), (-36, 52)), rot=0.0, variant="canal"):
     """A lattice tower: a tapering square frame, poked so the wireframe gets its bracing."""
-    g = ground(x, y)
+    g = ground(x, y, variant)
+    c, s_ = math.cos(rot), math.sin(rot)
     rings = 7
     v, f = [], []
     for r in range(rings + 1):
         t = r / rings
-        half = lerp(15, 4.5, t ** .8)
+        half = lerp(base, top, t ** .8)
         z = g + h * t
-        v += [(x - half, y - half, z), (x + half, y - half, z), (x + half, y + half, z), (x - half, y + half, z)]
+        for dx, dy in ((-half, -half), (half, -half), (half, half), (-half, half)):
+            v.append((x + dx * c - dy * s_, y + dx * s_ + dy * c, z))
         if r:
             o0, o1 = (r - 1) * 4, r * 4
             f += [(o0 + k, o0 + (k + 1) % 4, o1 + (k + 1) % 4, o1 + k) for k in range(4)]
@@ -521,10 +602,30 @@ def pylon(name, x, y, h):
     bmesh.ops.poke(bm, faces=bm.faces[:])
     bm.to_mesh(o.data); bm.free()
     w = o.modifiers.new("lattice", "WIREFRAME")
-    w.thickness, w.use_replace = 1.3, True
-    for dz, span in ((-14, 64), (-36, 52)):
-        box(name + f"_arm{dz}", 3, span, 2.6, STEEL(), x, y, g + h + dz, 0, 0)
+    w.thickness, w.use_replace = 1.3 * base / 15, True
+    suf = name[name.index("__"):] if "__" in name else ""
+    for dz, span in arms:
+        box(name.split("__")[0] + f"_arm{dz}" + suf, 3, span, 2.6, STEEL(), x, y, g + h + dz, rot, 0)
     return g + h
+
+
+def line(name, supports, phases, material, r, sag=1 / 34):
+    """Conductors hung between supports: (x, y, z at the top, heading, drop by phase).
+    A gantry beam takes every phase at its own height, so it passes False."""
+    suf = name[name.index("__"):] if "__" in name else ""
+    base = name.split("__")[0]
+    for k, (off, dz) in enumerate(phases):
+        pts = [(x - off * math.sin(rot), y + off * math.cos(rot), z + (dz if drop else 0))
+               for x, y, z, rot, drop in supports]
+        wire_ = []
+        for a, b in zip(pts, pts[1:]):
+            L = math.dist(a[:2], b[:2])
+            n = max(6, int(L / 12))
+            for i in range(n):
+                t = i / n
+                wire_.append((lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t) - L * sag * (1 - (2 * t - 1) ** 2)))
+        wire_.append(pts[-1])
+        tube(f"{base}_{k}{suf}", wire_, r, material, 5)
 
 
 # ── ambient occlusion baked into the terrain colours ──────────────────────────────

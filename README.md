@@ -99,6 +99,15 @@ invented valley — the river on y = 0, the headrace holding its level on the fa
 hillside, the penstock dropping back to the bank. Change the profile's geometry
 and rebuild the model; nothing else needs touching.
 
+It carries the grid as well as the plant. The switchyard's evacuation line —
+132 kV for the river schemes, 220 kV for the reservoir — climbs to a grid
+substation on the shelf above the valley, where the revenue meter sits at the
+incoming bay; the 220 kV corridor loops through it, the 400 kV backbone passes
+behind, and a 33 kV feeder leaves on poles. Every circuit is coloured by voltage
+exactly as the ledger's grid map colours it (magenta 400, blue 220, amber 132),
+with a neutral for 33 kV. The profile, which has no room past its own right edge,
+shows the same network as a single-line diagram in its sky.
+
 Blender is only needed when the geometry changes. The `.glb` is committed and
 `hydro.py` inlines it into `site-visit.html`, so CI never runs Blender and the
 page stays a single file that works from Pages, from a local file open, and as an
@@ -110,7 +119,8 @@ The page drives the model by node name, so the names are the contract:
 `<name>__canal` (both run-of-river types), `__ror`, `__pror`, `__res`;
 `anchor__<hotspot>__<variant>` for each label; `head_{from,top,bot}__<variant>`
 for the gross-head dimension; `pond_{lo,hi}__pror` for the daily pond's range;
-and any material named `water_*` gets the flowing-water texture.
+`tag__<kV>__<variant>` for each voltage tier's tag; and any material named
+`water_*` gets the flowing-water texture.
 
 Three things that cost time here. **Vertex colours are linear**: write sRGB hex
 straight into a colour attribute and the whole terrain goes milky. **Weld any

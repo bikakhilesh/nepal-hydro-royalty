@@ -220,6 +220,8 @@
   .l3.plain{padding-left:9px}
   .l3:hover,.l3:focus-visible,.l3.focused{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);outline:none}
   .l3.dim{opacity:.35}
+  .l3.kv{cursor:default;pointer-events:none;font-size:.7rem;padding:2px 7px;gap:5px}
+  .l3.kv i{display:block;width:14px;height:3px;border-radius:1px}
   .l3.head{cursor:default;pointer-events:none;background:none;border:none;box-shadow:none;padding:0;
     font-weight:700;text-shadow:0 0 3px var(--paper),0 0 3px var(--paper),0 0 2px var(--paper)}
   .l3.head::after{display:none}
@@ -403,6 +405,9 @@ const APP = {
 };
 // The 3D view, once three.js and the model have loaded; every hook below is a no-op until then.
 const V3 = {on:false, api:null};
+// Voltage tiers coloured as the ledger's own grid map colours them (magenta 400, blue
+// 220, amber 132); 33 kV, which the map leaves in built-grid grey, gets a neutral.
+const KV_COL = {400:"#9a4fc4", 220:"#3f6fc9", 132:"#c9822e", 33:"#6f7c82"};
 const BS_MONTHS = ["Baisakh","Jestha","Asar","Shrawan","Bhadra","Asoj",
   "Kartik","Mangsir","Poush","Magh","Falgun","Chaitra"];
 const BS_GREG = ["mid-Apr\u2013mid-May","mid-May\u2013mid-Jun","mid-Jun\u2013mid-Jul","mid-Jul\u2013mid-Aug",
@@ -703,10 +708,62 @@ el("path",{d:`M${SWITCH_X+26} 690 L${TOWER_X[0]} ${bedY(TOWER_X[0])-140} L${TOWE
 el("path",{d:`M${SWITCH_X+26} 696 L${TOWER_X[0]} ${bedY(TOWER_X[0])-124} L${TOWER_X[1]} ${bedY(TOWER_X[1])-124} L1600 ${bedY(1600)-134}`,
   class:"conductor"}, gTx);
 
+// the line's voltage, set per plant type by drawGrid()
+const txTag = el("text",{x:(TOWER_X[0]+TOWER_X[1])/2, y:bedY(TOWER_X[1])-100, "text-anchor":"middle",
+  style:"font-size:12px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--paper);stroke-width:3px"}, gTx);
+
 const gMeter = group("g-meter", svg, "dimmable");
 el("rect",{x:METER_X-16, y:bedY(METER_X)-166, width:32, height:26, fill:"var(--ochre)", class:"edge"}, gMeter);
 el("text",{x:METER_X, y:bedY(METER_X)-148, "text-anchor":"middle",
   style:"font-size:15px;font-weight:700;fill:#2C231C"}, gMeter).textContent="kWh";
+
+/* ---- the grid connection ----
+   The profile ends at its own right edge, so the network the evacuation line feeds is
+   drawn the way a utility draws it: one line per circuit, one pair of windings per
+   transformer, each circuit coloured by voltage. It lives in the empty sky above the
+   downstream end, where nothing else is drawn. */
+const gGrid = group("g-grid", svg, "dimmable");
+function drawGrid(){
+  gGrid.innerHTML = "";
+  const res = APP.plantType==="Reservoir", ev = res ? 220 : 132, y = 226, yb = y + 50;
+  const W = {400:5.6, 220:4.2, 132:3, 33:1.8};
+  const txt = (x, yy, s, style) => { el("text",{x, y:yy, "text-anchor":"middle", class:"note", style}, gGrid).textContent = s; };
+  const wire = (x1, x2, yy, kv, label, lx, arrow) => {
+    el("line",{x1, y1:yy, x2, y2:yy, stroke:KV_COL[kv], "stroke-width":W[kv], "stroke-linecap":"round"}, gGrid);
+    if(arrow) el("path",{d:`M${x2-2} ${yy-6} L${x2+8} ${yy} L${x2-2} ${yy+6} Z`, fill:KV_COL[kv]}, gGrid);
+    txt(lx, yy-9, label, "font-size:10.5px;font-weight:600;fill:var(--ink)");
+  };
+  const xfmr = (x, yy, cap) => {
+    for(const dx of [-5,5]) el("circle",{cx:x+dx, cy:yy, r:7.5, fill:"none", stroke:"var(--ink)", "stroke-width":"1.3"}, gGrid);
+    txt(x, yy+22, cap, "font-size:9.5px");
+  };
+  const stub = (x1, x2, yy, col) => el("line",{x1, y1:yy, x2, y2:yy, stroke:col, "stroke-width":"1.6"}, gGrid);
+  el("rect",{x:1128, y:150, width:458, height:170, rx:6, fill:"var(--panel-bg)",
+    stroke:"var(--line)", "stroke-width":"1.4"}, gGrid);
+  // the plant: a generator at 11 kV, stepped up to the evacuation voltage
+  el("circle",{cx:1158, cy:y, r:11, fill:"var(--paper)", stroke:"var(--ink)", "stroke-width":"1.4"}, gGrid);
+  el("path",{d:`M1152 ${y} q3 -5 6 0 t6 0`, fill:"none", stroke:"var(--ink)", "stroke-width":"1.3"}, gGrid);
+  txt(1158, y+24, "plant", "font-size:9.5px");        // two short lines: one would run into 11/132
+  txt(1158, y+37, "11 kV", "font-size:9.5px");
+  stub(1169, 1186, y, "var(--ink)");
+  xfmr(1198, y, `11/${ev}`);
+  wire(1211, 1336, y, ev, `${ev} kV evacuation`, 1256);
+  // the revenue meter, at the substation's incoming bay
+  el("rect",{x:1306, y:y-7, width:22, height:14, rx:2, fill:"var(--ochre)"}, gGrid);
+  el("text",{x:1317, y:y+3.5, "text-anchor":"middle", style:"font-size:8px;font-weight:700;fill:#2C231C"}, gGrid).textContent = "kWh";
+  // the grid substation's bus; run-of-river needs a 132/220 step up to reach the corridor
+  el("rect",{x:1340, y:y-28, width:5, height:yb-y+28, fill:"var(--ink)"}, gGrid);
+  let x = 1345;
+  if(!res){ stub(1345, 1356, y, KV_COL[132]); xfmr(1366, y, "132/220"); x = 1379; }
+  wire(x, 1470, y, 220, "220 kV corridor", (x+1470)/2);
+  xfmr(1482, y, "220/400");
+  wire(1495, 1566, y, 400, "400 kV backbone", 1530, true);
+  // and down to the local 33 kV feeders
+  stub(1345, 1356, yb, "var(--ink)");
+  xfmr(1368, yb, "step-down");
+  wire(1381, 1470, yb, 33, "33 kV local feeders", 1426, true);
+  txTag.textContent = `${ev} kV`;
+}
 
 /* ---- gauging station ---- */
 const gGauge = group("g-gauge", svg, "dimmable");
@@ -725,13 +782,15 @@ const gFdc = group("g-fdc", svg, "dimmable");
 // Sized to clear the gauging-station hotspot's own tight focus box (a 560x320 window
 // centered on its anchor) as well as the tour's wider stop-1 framing -- the tighter of
 // the two, not the one it happened to be drawn against first.
-const FDC_X=30, FDC_Y=400, FDC_W=234, FDC_H=150;
-const FDC_CX0=FDC_X+18, FDC_CW=FDC_W-34, FDC_CY0=FDC_Y+34, FDC_CH=46, FDC_CY1=FDC_CY0+FDC_CH;
+// The right edge is pinned by the weir at x 266, so when the text outgrew the box it
+// widened leftward into the margin; the plot sits in 32 so the axis words fit inside.
+const FDC_X=14, FDC_Y=400, FDC_W=250, FDC_H=150;
+const FDC_CX0=FDC_X+32, FDC_CW=FDC_W-44, FDC_CY0=FDC_Y+34, FDC_CH=46, FDC_CY1=FDC_CY0+FDC_CH;
 const fdcPx = pct => FDC_CX0 + (pct/100)*FDC_CW;
 const fdcPy = mult => FDC_CY0 + (1 - clamp(mult,0,3.5)/3.5)*FDC_CH;
 el("rect",{x:FDC_X, y:FDC_Y, width:FDC_W, height:FDC_H, rx:6, fill:"var(--panel-bg)",
   stroke:"var(--line)", "stroke-width":"1.4"}, gFdc);
-el("text",{x:FDC_X+10, y:FDC_Y+15, class:"note", style:"font-weight:600;fill:var(--ink)"}, gFdc)
+el("text",{x:FDC_X+10, y:FDC_Y+15, class:"note", style:"font-size:12px;font-weight:600;fill:var(--ink)"}, gFdc)
   .textContent = "How much river counts as “always there”?";
 // axis: a bare line with no numbers reads as decoration, not data -- name both ends in
 // words instead of forcing a reader to infer them from an unlabelled curve.
@@ -760,7 +819,7 @@ const fdcMarker = el("circle",{r:4.5, fill:"var(--ochre)", stroke:"var(--paper)"
   "stroke-width":"1.4"}, gFdc);
 fdcGuideX.style.display = fdcGuideY.style.display = fdcMarker.style.display = "none";
 const fdcReadout = el("text",{x:FDC_X+10, y:FDC_Y+146, class:"dimtext",
-  style:"font-size:12px"}, gFdc);
+  style:"font-size:11px"}, gFdc);
 const FDC_BTN_PCTS = [40,50,65,90];
 const fdcButtons = {};
 FDC_BTN_PCTS.forEach((p,i)=>{
@@ -811,11 +870,14 @@ function drawFdcMarker(){
 /* ---- the head dimension: the single most important annotation ---- */
 const gHead = group("g-head", svg, "dimmable");
 const HEAD_X = 1000;
+// Label beside the top tick. At mid-height the penstock ran through it and the sub-note
+// sat on the powerhouse label; up here the pipe is still left of the dimension line.
+const HEAD_LY = HR_Y1 + 22;
 const headLine = el("line",{x1:HEAD_X, y1:HR_Y1, x2:HEAD_X, y2:PH_Y+PH_H-10, class:"dimline"}, gHead);
 el("line",{x1:HEAD_X-12, y1:HR_Y1, x2:HEAD_X+12, y2:HR_Y1, stroke:"var(--ink)","stroke-width":"1.8"}, gHead);
 el("line",{x1:HEAD_X-12, y1:PH_Y+PH_H-10, x2:HEAD_X+12, y2:PH_Y+PH_H-10, stroke:"var(--ink)","stroke-width":"1.8"}, gHead);
-const headLabel = el("text",{x:HEAD_X+18, y:(HR_Y1+PH_Y+PH_H-10)/2, class:"dimtext"}, gHead);
-const headSub = el("text",{x:HEAD_X+18, y:(HR_Y1+PH_Y+PH_H-10)/2+20, class:"note"}, gHead);
+const headLabel = el("text",{x:HEAD_X+18, y:HEAD_LY, class:"dimtext"}, gHead);
+const headSub = el("text",{x:HEAD_X+18, y:HEAD_LY+20, class:"note"}, gHead);
 headSub.textContent="forebay level to tailrace level";
 
 /* ============================== labels ============================== */
@@ -832,6 +894,7 @@ const hotspots = {
   switchyard:{name:"Switchyard", text:"Generator voltage (~11 kV) is stepped up to 33 kV or 132 kV. Transmission losses between here and the metering point are usually the developer's cost."},
   transmission:{name:"Transmission line", text:"Evacuation risk lives here: if the NEA line or substation is not ready at COD, energy is spilled. Check whether the PPA has a deemed-generation clause &mdash; many small-IPP PPAs do not."},
   metering_point:{name:"Revenue metering point", text:"This is where kWh become NPR. Monthly metered energy is split into wet and dry (and peak, for PRoR) and multiplied by the PPA rate in force. Everything upstream is cost; this point is revenue."},
+  grid:{name:"Grid substation", text:"Nepal's grid runs in tiers. The switchyard steps the generator's ~11 kV up to the evacuation voltage &mdash; 33 kV for the smallest schemes, 132 kV for most run-of-river IPPs, 220 kV for storage-class plants &mdash; and a line carries it to an NEA grid substation, where the revenue meter usually sits. From there it joins the 220 kV corridors along the big river valleys and the 400 kV backbone, which also carries the cross-border links to India. A plant can be finished before its corridor is, and energy it cannot evacuate is spilled: for an analyst, the substation's commissioning date matters as much as the plant's."},
 };
 // Label anchor per structure, per mode where it differs. Positions are staggered by
 // hand rather than sat on top of each structure: at full-scheme zoom the labels are
@@ -852,6 +915,7 @@ const ANCHORS = {
   switchyard:{x:1176,y:684, lead:[SWITCH_X+26,706]},
   transmission:{x:1352,y:556, lead:[TOWER_X[0],bedY(TOWER_X[0])-120]},
   metering_point:{x:1286,y:466, lead:[METER_X,bedY(METER_X)-160]},
+  grid:{x:1136,y:172},                               // titles the single-line diagram
 };
 // PRoR moves one structure far enough that its label has to move with it.
 const ANCHORS_PROR = {
@@ -878,6 +942,7 @@ const TOUR_BASE = [
   {id:"penstock",title:"Penstock: gross head to net head", view:[880,360,520,400]},
   {id:"powerhouse",title:"Powerhouse: the power formula", view:[1130,600,380,260]},
   {id:"metering_point",title:"Metering point: kWh to NPR", view:[1280,520,320,300]},
+  {id:"grid",title:"The grid: where the kWh go next", view:[1110,130,490,250]},
 ];
 // PRoR earns an extra stop, between the headrace and the penstock where the pond sits.
 // `day` marks the stop that runs the 24-hour cycle by itself, which is the only place
@@ -971,7 +1036,7 @@ function applyVB(){
     if(leaderEls[id]) leaderEls[id].style.display = vis ? "" : "none";
   }
   pondNote.setAttribute("transform", `translate(${PN_X*(1-k)} ${PN_Y*(1-k)}) scale(${k})`);
-  const HL_X=HEAD_X+18, HL_Y=(HR_Y1+PH_Y+PH_H-10)/2;
+  const HL_X=HEAD_X+18, HL_Y=HEAD_LY;
   headLabel.setAttribute("transform", `translate(${HL_X*(1-k)} ${HL_Y*(1-k)}) scale(${k})`);
   headSub.setAttribute("transform", `translate(${HL_X*(1-k)} ${(HL_Y+20)*(1-k)}) scale(${k})`);
   const RS_X=RES_HEAD_X+18, RS_Y=FSL+90;
@@ -1000,7 +1065,7 @@ function setFocus(id){
     headrace:["g-headrace","g-river","g-head"], forebay_surge:["g-forebay","g-pond","g-penstock","g-ph"],
     penstock:["g-penstock","g-head","g-res"], powerhouse:["g-ph","g-ph-res","g-head"],
     tailrace:["g-tail","g-river"], switchyard:["g-yard"], transmission:["g-tx"],
-    metering_point:["g-meter","g-tx"]};
+    metering_point:["g-meter","g-tx"], grid:["g-grid","g-tx"]};
   const keep = new Set(map[id]||[]);
   document.querySelectorAll("#scene .dimmable").forEach(g=>
     g.classList.toggle("focused", !id || keep.has(g.id)));
@@ -1071,6 +1136,7 @@ function applyPlantType(type){
   gRes.style.display      = res?"":"none";
   gPHres.style.display    = res?"":"none";
   gHead.style.display     = res?"none":"";
+  drawGrid();
   document.querySelectorAll("#type-switch button").forEach(b=>
     b.setAttribute("aria-pressed", String(b.dataset.type===type)));
   document.getElementById("cap-readout").textContent =
@@ -1252,9 +1318,11 @@ const GLOSSARY = [
 ["Environmental flow","Minimum flow that must bypass the intake (typically 10% of minimum monthly flow).","Reduces usable dry-season discharge; priced at RoR rates for reservoirs."],
 ["ERC","Electricity Regulatory Commission; approves tariffs and PPA terms since 2019.","Rate changes now come from ERC directives, not only NEA board decisions."],
 ["Escalation","3% simple increase on the base tariff for 8 years, then flat.","Nominal revenue is flat after year 9 while opex inflates; margins compress late."],
+["Evacuation line","The line from a plant's switchyard to the grid substation: 33 kV for the smallest schemes, 132 kV for most run-of-river IPPs, 220 kV and up for storage plants.","If it is not energised by COD the energy is spilled; check who builds it and whether the PPA pays deemed generation."],
 ["Excess energy","Metered energy above contract energy in a month.","Paid at PPA-specific terms; do not assume the posted rate."],
 ["Flow-duration curve","Plot of discharge vs % of time equalled or exceeded; Q40 is the flow exceeded 40% of the time.","The chart behind every energy estimate; ask which years it uses."],
 ["Gross head / net head","Vertical drop forebay-to-tailrace; net head subtracts friction losses.","Head is fixed by construction; the only variable is water."],
+["Grid substation","Where an evacuation line joins the national grid. Its transformers link the 132, 220 and 400 kV tiers and step down to 33 kV local feeders.","Usually where the revenue meter sits, so its commissioning date gates the first kWh of revenue."],
 ["Installed capacity","Rated output in MW at design discharge and net head.","Determines capacity royalty regardless of generation."],
 ["Live storage / dead storage","Reservoir volume usable for generation vs volume below the intake.","Sedimentation eats live storage over the licence life."],
 ["PLF","Plant load factor: annual energy / (installed MW &times; 8,760 h).","Sanity check for DPR energy claims; compare only within the same plant type."],
@@ -1629,6 +1697,15 @@ async function init3d(){
       layer.append(d);
       L3.push({id, el:d, node, stop:!!stop, rank: stop ? stop.n : 100 + L3.length, w:0, h:0});
     }
+    for(const [key, kv, text] of [["400",400,"400 kV backbone"], ["220",220,"220 kV corridor"],
+        ["132",132,"132 kV evacuation"], ["220evac",220,"220 kV evacuation"], ["33",33,"33 kV feeder"]]){
+      const node = pick("tag__"+key);
+      if(!node) continue;
+      const d = document.createElement("div"); d.className = "l3 kv";
+      const sw = document.createElement("i"); sw.style.background = KV_COL[kv];
+      d.append(sw, text); layer.append(d);
+      L3.push({id:"tag_"+key, el:d, node, stop:false, always:true, rank:200+L3.length, w:0, h:0});
+    }
     headEl = document.createElement("div"); headEl.className = "l3 head"; layer.append(headEl);
     markLabels();
   }
@@ -1643,7 +1720,7 @@ async function init3d(){
     const cand = [];
     for(const L of L3){
       at(L.node, pv).project(camera);
-      if(!(pv.z < 1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05 && (!far || L.stop || L.id===focusId))){
+      if(!(pv.z < 1 && Math.abs(pv.x) < 1.05 && Math.abs(pv.y) < 1.05 && (!far || L.stop || L.always || L.id===focusId))){
         L.el.style.display = "none"; continue;
       }
       L.sx = (pv.x*.5+.5)*w; L.sy = (-pv.y*.5+.5)*h;
@@ -1698,7 +1775,7 @@ async function init3d(){
 
   // ── camera: an opening view, and a flight to whichever structure has focus ──
   const HOME_T = V(800, -430, -250), HOME_DIR = V(-.09, .68, .73).normalize();
-  const DIST = {basin:1500, headrace:1150, penstock:760, headworks:480, forebay_surge:520,
+  const DIST = {basin:1500, headrace:1150, penstock:760, grid:900, headworks:480, forebay_surge:520,
                 powerhouse:480, transmission:520, metering_point:460, gauging_station:420};
   function homeDist(){ return 2900*Math.max(1, 1.5/camera.aspect); }
   function flyTo(t, p){
