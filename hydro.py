@@ -20,7 +20,7 @@ All HTTP is GET only. The plant register's edit form is read but never submitted
 its POST action and CSRF token are deliberately untouched. Nominatim is called at
 most once per second per its usage policy.
 """
-import io, json, math, os, random, re, subprocess, sys, threading, time, unicodedata
+import base64, io, json, math, os, random, re, subprocess, sys, threading, time, unicodedata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
@@ -2954,7 +2954,13 @@ def export_site_visit(path="site-visit.html", tpl="site_visit.tpl.html", pl=None
     src = open(P(tpl), encoding="utf-8").read()
     if "__FLEET__" not in src:
         raise SystemExit(f"{tpl} has no __FLEET__ placeholder")
-    html = src.replace("__FLEET__", json.dumps(fleet, separators=(",", ":")))
+    # The 3D model is built in Blender by site_visit_3d.py and committed; inlined here so
+    # the page stays one file that works from Pages, from a plain file open and as an
+    # Artifact alike. Without it the page simply has no 3D view.
+    glb = P("site-visit-3d.glb")
+    scene3d = base64.b64encode(open(glb, "rb").read()).decode("ascii") if os.path.exists(glb) else ""
+    html = (src.replace("__FLEET__", json.dumps(fleet, separators=(",", ":")))
+               .replace("__SCENE3D__", scene3d))
     open(P(path), "w", encoding="utf-8").write(html)
     print(f"wrote {path} ({len(html.encode('utf-8')):,} bytes, contract PLF median"
           f" {fleet['cplfMed']}% on {fleet['cplfN']} plants vs achieved"

@@ -10,15 +10,21 @@ This file is only what the README does not yet cover.
 
 ## The one rule to internalise before touching anything
 
-`hydro.py` and `template.html` are the only files edited by hand. Everything
-else is generated or synced, and a hand-edit to it is overwritten by the next
-scheduled run — silently, with no error and no diff to explain where the change
-went. Rebuild instead:
+The sources are `hydro.py`, `template.html`, `site_visit.tpl.html` and
+`map3d.tpl.html`, plus two standalone builders run by hand: `extract_rpgcl.py`
+and `site_visit_3d.py`. Everything else is generated or synced, and a hand-edit
+to it is overwritten by the next scheduled run — silently, with no error and no
+diff to explain where the change went. Rebuild instead:
 
 ```bash
 python hydro.py            # writes nepal_hydro.html + dashboard.json
 python hydro.py --stats    # reconciliation summary, writes nothing
 ```
+
+`site-visit-3d.glb` is the one generated file CI cannot rebuild: it needs
+Blender (`blender -b --factory-startup -P site_visit_3d.py`), so it is committed
+and `hydro.py` inlines it. Rebuild it whenever the profile's geometry in
+`site_visit.tpl.html` changes — the script reads its dimensions from there.
 
 The build is byte-identical across runs and across machines. That makes
 "rebuild, then check `git status` is clean" a real verification rather than a

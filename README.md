@@ -6,7 +6,8 @@ Scrapes the Department of Electricity Development's Royalty Management System
 Two files do everything: **`hydro.py`** (all Python) and **`template.html`**
 (all markup, CSS and JavaScript). A third, **`site_visit.tpl.html`**, is the
 standalone explainer embedded as section 01 — it holds no register data of its
-own, only a few medians injected at build time.
+own, only a few medians injected at build time. Its 3D view is modelled in
+Blender by **`site_visit_3d.py`**.
 
 ## Live
 
@@ -82,6 +83,41 @@ per voltage class renders fine. And sources and layers are added on **`style.loa
 `load`. With `terrain` declared in the initial style MapLibre waits on the DEM
 source and may never fire `load`, so a `load` handler silently never runs — the
 basemap renders and your own layers just never appear.
+
+### The site visit in 3D
+
+```bash
+blender -b --factory-startup -P site_visit_3d.py                         # -> site-visit-3d.glb
+blender -b --factory-startup -P site_visit_3d.py -- --preview x.png --variant res   # and a Cycles still
+```
+
+The site visit opens on a 3D diorama of the scheme, with the 2D profile one click
+away. **The model reads every dimension out of `site_visit.tpl.html`**, so it
+cannot drift from the profile: x runs downstream in the profile's own units,
+elevation is the profile's y turned the right way up, and the third axis is an
+invented valley — the river on y = 0, the headrace holding its level on the far
+hillside, the penstock dropping back to the bank. Change the profile's geometry
+and rebuild the model; nothing else needs touching.
+
+Blender is only needed when the geometry changes. The `.glb` is committed and
+`hydro.py` inlines it into `site-visit.html`, so CI never runs Blender and the
+page stays a single file that works from Pages, from a local file open, and as an
+Artifact (three.js comes from jsdelivr, which the Artifact CSP allows). Where
+three.js or WebGL is unavailable the page quietly stays on the profile. The build
+is deterministic: the same template gives a byte-identical `.glb`.
+
+The page drives the model by node name, so the names are the contract:
+`<name>__canal` (both run-of-river types), `__ror`, `__pror`, `__res`;
+`anchor__<hotspot>__<variant>` for each label; `head_{from,top,bot}__<variant>`
+for the gross-head dimension; `pond_{lo,hi}__pror` for the daily pond's range;
+and any material named `water_*` gets the flowing-water texture.
+
+Three things that cost time here. **Vertex colours are linear**: write sRGB hex
+straight into a colour attribute and the whole terrain goes milky. **Weld any
+mesh built from strips** — unshared edges leave hairline cracks that show what is
+behind them. And **a fill below a canal becomes a curtain**: the bench and the
+pond's terrace are cut into the slope and blended over enough grid cells that the
+grid cannot staircase them.
 
 ## Refresh the data
 
@@ -398,7 +434,9 @@ action and CSRF token are untouched. Nominatim is called at most once per second
 ```
 hydro.py          everything: scrape, clean, geo, match, payload, render
 template.html     page markup, CSS, JS; __PAYLOAD__ is substituted at build
-site_visit.tpl.html  the guided site visit; __FLEET__ is substituted at build
+site_visit.tpl.html  the guided site visit; __FLEET__ and __SCENE3D__ are substituted at build
+site_visit_3d.py  Blender script: the site visit's 3D model, from the template's own dimensions
+site-visit-3d.glb built by site_visit_3d.py and committed, so CI never needs Blender
 nepal_hydro.html  generated — do not edit
 site-visit.html   generated — do not edit
 dashboard.json    generated payload, handy for inspection
